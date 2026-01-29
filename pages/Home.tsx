@@ -99,7 +99,7 @@ export const Home: React.FC = () => {
             <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-4 md:mb-6">Curated Styling Services</h2>
             <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full mb-4 md:mb-6"></div>
             <p className="text-stone-600 text-base md:text-lg max-w-xl mx-auto">
-              Choose a service below to book your session. Click <strong>Book this service</strong> to select and continue to the booking flow.
+              Choose a service below to book your session. Click <strong>View Service Details</strong> to select and continue to the booking flow.
             </p>
           </div>
           
@@ -135,7 +135,7 @@ export const Home: React.FC = () => {
                       className="w-full rounded-full"
                       onClick={() => handleBookService(service.id)}
                     >
-                      Book this service
+                      View Service Details
                     </Button>
                 </div>
               </article>

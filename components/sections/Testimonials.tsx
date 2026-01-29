@@ -135,7 +135,7 @@ export const Testimonials: React.FC = () => {
           {/* Navigation Arrows */}
           <button 
             onClick={scrollPrev}
-            className="absolute -left-4 md:-left-16 top-1/2 -translate-y-1/2 z-20 p-2 text-stone-300 hover:text-sage-600 transition-colors hidden sm:block"
+            className="absolute -left-4 md:-left-16 top-1/2 -translate-y-1/2 z-20 p-2 text-stone-300 hover:text-sage-600 transition-colors hidden sm:block cursor-pointer"
             aria-label="Previous testimonial"
           >
             <ChevronLeft size={40} strokeWidth={1.5} />
@@ -143,7 +143,7 @@ export const Testimonials: React.FC = () => {
           
           <button 
             onClick={scrollNext}
-            className="absolute -right-4 md:-right-16 top-1/2 -translate-y-1/2 z-20 p-2 text-stone-300 hover:text-sage-600 transition-colors hidden sm:block"
+            className="absolute -right-4 md:-right-16 top-1/2 -translate-y-1/2 z-20 p-2 text-stone-300 hover:text-sage-600 transition-colors hidden sm:block cursor-pointer"
             aria-label="Next testimonial"
           >
             <ChevronRight size={40} strokeWidth={1.5} />
@@ -190,7 +190,7 @@ export const Testimonials: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => scrollTo(idx)}
-                className={`h-1.5 transition-all duration-500 rounded-full ${realIndex === idx ? 'w-10 bg-sage-500' : 'w-2 bg-stone-200 hover:bg-stone-300'}`}
+                className={`h-1.5 transition-all duration-500 rounded-full cursor-pointer ${realIndex === idx ? 'w-10 bg-sage-500' : 'w-2 bg-stone-200 hover:bg-stone-300'}`}
                 aria-label={`Go to testimonial ${idx + 1}`}
               />
             ))}

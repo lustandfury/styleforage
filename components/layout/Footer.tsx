@@ -15,19 +15,19 @@ export const Footer: React.FC = () => (
         <div>
           <h4 className="text-stone-100 font-medium mb-3 md:mb-4 text-sm md:text-base">Links</h4>
           <ul className="space-y-2 text-sm">
-            <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
-            <li><a href="#services" className="hover:text-white transition-colors">Services</a></li>
-            <li><a href="#booking" className="hover:text-white transition-colors">Book Now</a></li>
-            <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+            <li><a href="#" className="hover:text-white transition-colors cursor-pointer">Home</a></li>
+            <li><a href="#services" className="hover:text-white transition-colors cursor-pointer">Services</a></li>
+            <li><a href="#booking" className="hover:text-white transition-colors cursor-pointer">Book Now</a></li>
+            <li><a href="#" className="hover:text-white transition-colors cursor-pointer">FAQ</a></li>
           </ul>
         </div>
         <div>
           <h4 className="text-stone-100 font-medium mb-3 md:mb-4 text-sm md:text-base">Connect</h4>
           <div className="flex gap-4">
-            <a href="https://instagram.com/styleforage" aria-label="Follow us on Instagram" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
+            <a href="https://instagram.com/styleforage" aria-label="Follow us on Instagram" className="hover:text-white transition-colors cursor-pointer" target="_blank" rel="noopener noreferrer">
               <Instagram size={20} aria-hidden="true" />
             </a>
-            <a href="mailto:hello@styleforage.com" aria-label="Send us an email" className="hover:text-white transition-colors">
+            <a href="mailto:hello@styleforage.com" aria-label="Send us an email" className="hover:text-white transition-colors cursor-pointer">
               <Mail size={20} aria-hidden="true" />
             </a>
           </div>

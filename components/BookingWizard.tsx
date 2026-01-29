@@ -126,6 +126,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
   const today = getTodayAtMidnight();
   const [visibleStartDate, setVisibleStartDate] = useState(today);
   const [serviceCardExpanded, setServiceCardExpanded] = useState(false);
+  const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
 
   // Handle step sync if prop changes
   useEffect(() => {
@@ -144,24 +145,42 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
 
   const renderServices = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-      {SERVICES.map((service) => (
-        <button 
-          key={service.id}
-          type="button"
-          className="group bg-white rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border border-stone-100 shadow-sm hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 touch-manipulation active:scale-[0.99]"
-          onClick={() => setState(s => ({ ...s, selectedService: service, step: 'date' }))}
-          aria-label={`Select ${service.title} service`}
-        >
-          <div className="aspect-[4/3] overflow-hidden">
-              <img src={service.image} alt={service.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" loading="lazy" />
-          </div>
-          <div className="p-5 sm:p-6 md:p-8">
+      {SERVICES.map((service) => {
+        const isHovered = hoveredServiceId === service.id;
+        return (
+          <button
+            key={service.id}
+            type="button"
+            className="w-full bg-white rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border border-stone-100 shadow-sm hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 touch-manipulation active:scale-[0.99]"
+            onClick={() => setState(s => ({ ...s, selectedService: service, step: 'date' }))}
+            onMouseEnter={() => setHoveredServiceId(service.id)}
+            onMouseLeave={() => setHoveredServiceId(null)}
+            onFocus={() => setHoveredServiceId(service.id)}
+            onBlur={() => setHoveredServiceId(null)}
+            aria-label={`Select ${service.title} — book this service`}
+          >
+            <div className="aspect-[4/3] overflow-hidden">
+              <img
+                src={service.image}
+                alt={service.title}
+                className={`w-full h-full object-cover transition-transform duration-300 ${isHovered ? 'scale-110' : 'scale-100'}`}
+                loading="lazy"
+              />
+            </div>
+            <div className="p-5 sm:p-6 md:p-8">
               <h4 className="font-serif font-bold text-lg sm:text-xl text-stone-900 mb-3 md:mb-4">{service.title}</h4>
               <p className="text-stone-500 text-sm mb-4 md:mb-6 line-clamp-2">{service.description}</p>
-              <span className="block w-full py-3 px-4 sm:px-6 min-h-[48px] flex items-center justify-center bg-stone-900 text-white text-center rounded-full font-medium group-hover:bg-stone-800 transition-colors text-sm sm:text-base">Select Service</span>
-          </div>
-        </button>
-      ))}
+              <span
+                className={`block w-full py-3 px-4 sm:px-6 min-h-[48px] flex items-center justify-center rounded-full font-medium text-sm sm:text-base border-2 border-stone-900 transition-colors duration-300 ${
+                  isHovered ? 'bg-stone-900 text-white' : 'bg-transparent text-stone-900'
+                }`}
+              >
+                Book this service
+              </span>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -217,7 +236,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                           <button
                             type="button"
                             onClick={() => setServiceCardExpanded(s => !s)}
-                            className="flex items-center gap-1 text-sage-600 hover:text-sage-700 text-xs font-medium mt-2 touch-manipulation w-fit"
+                            className="flex items-center gap-1 text-sage-600 hover:text-sage-700 text-xs font-medium mt-2 touch-manipulation w-fit cursor-pointer"
                             aria-expanded={serviceCardExpanded}
                           >
                             {serviceCardExpanded ? (
@@ -304,7 +323,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                         <button 
                           onClick={goToPreviousWeek}
                           disabled={!canGoBack}
-                          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full transition-colors touch-manipulation flex-shrink-0 disabled:pointer-events-none disabled:opacity-50 bg-stone-100 active:bg-stone-200"
+                          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full transition-colors touch-manipulation flex-shrink-0 cursor-pointer disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed bg-stone-100 active:bg-stone-200"
                           aria-label="Previous month"
                         >
                           <ChevronLeft size={22} className={canGoBack ? 'text-stone-600' : 'text-stone-300'} aria-hidden="true" />
@@ -314,7 +333,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                         </h4>
                         <button 
                           onClick={goToNextWeek}
-                          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-stone-100 active:bg-stone-200 transition-colors text-stone-600 touch-manipulation flex-shrink-0 bg-stone-100"
+                          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-stone-100 active:bg-stone-200 transition-colors text-stone-600 touch-manipulation flex-shrink-0 bg-stone-100 cursor-pointer"
                           aria-label="Next month"
                         >
                           <ChevronRight size={22} aria-hidden="true" />
@@ -336,7 +355,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                               aria-label={format(day, 'EEEE, MMMM do, yyyy')}
                               aria-pressed={isSelected}
                               className={`
-                                flex-shrink-0 flex flex-col items-center justify-center min-w-[56px] w-14 h-[60px] sm:h-16 rounded-full border-2 transition-all touch-manipulation
+                                flex-shrink-0 flex flex-col items-center justify-center min-w-[56px] w-14 h-[60px] sm:h-16 rounded-full border-2 transition-all touch-manipulation cursor-pointer
                                 ${isSelected 
                                   ? 'border-stone-900 bg-white text-stone-900' 
                                   : 'border-transparent bg-stone-50 text-stone-700 hover:bg-stone-100 active:bg-stone-100'
@@ -388,10 +407,10 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                               className={`
                                 min-h-[44px] py-3 px-3 sm:px-4 rounded-full text-sm font-medium border-2 transition-all touch-manipulation
                                 ${isSelected 
-                                  ? 'border-stone-900 bg-white text-stone-900' 
+                                  ? 'border-stone-900 bg-white text-stone-900 cursor-pointer' 
                                   : isDisabled
                                     ? 'border-transparent bg-stone-50 text-stone-300 line-through cursor-not-allowed'
-                                    : 'border-transparent bg-stone-50 text-stone-700 hover:bg-stone-100 active:bg-stone-100'
+                                    : 'border-transparent bg-stone-50 text-stone-700 hover:bg-stone-100 active:bg-stone-100 cursor-pointer'
                                 }
                               `}
                             >

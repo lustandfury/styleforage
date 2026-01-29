@@ -57,7 +57,7 @@ export const Header: React.FC = () => {
         <div className="container mx-auto px-4 h-20 grid grid-cols-2 md:grid-cols-3 items-center">
         {/* Logo */}
         <div className="justify-self-start">
-          <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors">
+          <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors cursor-pointer">
             Style Forage
           </Link>
         </div>
@@ -66,19 +66,19 @@ export const Header: React.FC = () => {
         <nav className="hidden md:flex gap-10 text-sm font-semibold text-stone-500 justify-self-center uppercase tracking-widest">
           <button 
             onClick={() => scrollToAnchor('about')} 
-            className="hover:text-sage-600 transition-colors py-2"
+            className="hover:text-sage-600 transition-colors py-2 cursor-pointer"
           >
             About
           </button>
           <button 
             onClick={() => scrollToAnchor('services')} 
-            className="hover:text-sage-600 transition-colors py-2"
+            className="hover:text-sage-600 transition-colors py-2 cursor-pointer"
           >
             Services
           </button>
           <button 
             onClick={() => scrollToAnchor('testimonials')} 
-            className="hover:text-sage-600 transition-colors py-2"
+            className="hover:text-sage-600 transition-colors py-2 cursor-pointer"
           >
             Testimonials
           </button>

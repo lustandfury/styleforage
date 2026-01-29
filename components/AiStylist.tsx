@@ -104,7 +104,7 @@ export const AiStylist: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 bg-stone-900 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-stone-800 hover:scale-105 transition-all z-50 group"
+          className="fixed bottom-6 right-6 h-14 w-14 bg-stone-900 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-stone-800 hover:scale-105 transition-all z-50 group cursor-pointer"
           aria-label="Open AI Stylist"
         >
           <Sparkles className="group-hover:animate-pulse" size={24} />
@@ -132,7 +132,7 @@ export const AiStylist: React.FC = () => {
             <button 
               ref={closeButtonRef}
               onClick={() => setIsOpen(false)}
-              className="text-stone-500 hover:text-stone-900 transition-colors"
+              className="text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
               aria-label="Close chat"
             >
               <X size={20} aria-hidden="true" />
@@ -188,7 +188,7 @@ export const AiStylist: React.FC = () => {
               <button 
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
-                className="absolute right-2 p-2 bg-sage-500 text-white rounded-full disabled:opacity-50 hover:bg-sage-600 transition-colors"
+                className="absolute right-2 p-2 bg-sage-500 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sage-600 transition-colors cursor-pointer"
                 aria-label="Send message"
               >
                 <Send size={16} aria-hidden="true" />
