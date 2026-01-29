@@ -149,7 +149,7 @@ export const Home: React.FC = () => {
       <section className="bg-stone-900 text-stone-100 py-20 md:py-32 relative overflow-hidden">
           <div className="container mx-auto px-4 max-w-5xl relative z-10">
               <div className="text-center mb-12 md:mb-20">
-                <h3 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6">Our Philosophy</h3>
+                <h3 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6">My Philosophy</h3>
                 <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full"></div>
               </div>
               <div className="grid md:grid-cols-3 gap-12 md:gap-16 text-center">

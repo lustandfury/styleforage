@@ -33,10 +33,10 @@ export const Hero: React.FC = () => {
           Personal Styling • Wardrobe Curation
         </div>
         <h1 className="font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-medium text-stone-900 mb-6 md:mb-8 tracking-tight leading-[1.1]">
-          Curating Confidence <br/> <span className="italic text-stone-700">In Every Detail.</span>
+        Effortless style for every<br/> <span className="italic text-stone-700">body & budget</span>
         </h1>
         <p className="text-stone-800 text-base sm:text-lg md:text-2xl max-w-2xl mx-auto mb-10 md:mb-12 leading-relaxed font-light">
-          Personal styling for those who want to feel intentional, current, and completely themselves.
+          Personal styling for women and men who want to feel confident, current, and completely themselves.
         </p>
         <div className="flex justify-center">
           <Button size="lg" className="w-full sm:w-auto px-10 rounded-full shadow-lg shadow-stone-900/10" onClick={scrollToServices}>

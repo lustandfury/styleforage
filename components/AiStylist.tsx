@@ -104,7 +104,7 @@ export const AiStylist: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 bg-stone-900 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-stone-800 hover:scale-105 transition-all z-50 group cursor-pointer"
+          className="fixed bottom-6 right-6 h-14 w-14 bg-stone-900 text-white rounded-full shadow-xl flex items-center justify-center hover:bg-sage-500 hover:scale-105 transition-all z-50 group cursor-pointer"
           aria-label="Open AI Stylist"
         >
           <Sparkles className="group-hover:animate-pulse" size={24} />
