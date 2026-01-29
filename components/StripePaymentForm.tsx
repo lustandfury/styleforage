@@ -87,7 +87,7 @@ const CheckoutForm: React.FC<{
       <Button 
         type="submit"
         size="lg"
-        className="w-full py-6 rounded-full text-xl shadow-xl shadow-sage-500/20"
+        className="w-full py-4 sm:py-6 rounded-full text-base sm:text-xl shadow-xl shadow-sage-500/20 min-h-[48px] touch-manipulation"
         disabled={!stripe || isProcessing}
       >
         {isProcessing ? 'Processing...' : `Confirm & Pay $${amount}`}
@@ -143,8 +143,8 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-white p-10 rounded-3xl border border-stone-100 shadow-xl">
-        <div className="flex flex-col items-center justify-center py-8">
+      <div className="bg-white p-6 sm:p-10 rounded-2xl md:rounded-3xl border border-stone-100 shadow-xl">
+        <div className="flex flex-col items-center justify-center py-6 sm:py-8">
           <div className="w-10 h-10 border-4 border-sage-200 border-t-sage-500 rounded-full animate-spin mb-4"></div>
           <p className="text-stone-500 text-sm">Initializing secure payment...</p>
         </div>
@@ -154,8 +154,8 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
 
   if (initError) {
     return (
-      <div className="bg-white p-10 rounded-3xl border border-stone-100 shadow-xl">
-        <div className="flex flex-col items-center justify-center py-8 text-center">
+      <div className="bg-white p-6 sm:p-10 rounded-2xl md:rounded-3xl border border-stone-100 shadow-xl">
+        <div className="flex flex-col items-center justify-center py-6 sm:py-8 text-center px-2">
           <AlertCircle size={48} className="text-red-400 mb-4" />
           <p className="text-stone-700 font-medium mb-2">Payment Unavailable</p>
           <p className="text-stone-500 text-sm">{initError}</p>
@@ -200,7 +200,7 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   return (
-    <div className="bg-white p-10 rounded-3xl border border-stone-100 shadow-xl">
+    <div className="bg-white p-4 sm:p-6 md:p-10 rounded-2xl md:rounded-3xl border border-stone-100 shadow-xl">
       <Elements
         stripe={stripePromise}
         options={{

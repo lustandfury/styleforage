@@ -25,7 +25,9 @@ Personal styling and wardrobe consultation services website.
    GEMINI_API_KEY=your_gemini_api_key
    STRIPE_SECRET_KEY=sk_test_...
    VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   RESEND_API_KEY=re_...
    ```
+   Optional: `RESEND_FROM_EMAIL` (e.g. `Style Forage <hello@yourdomain.com>`) — defaults to Resend's test sender if not set.
 
 4. Run the app with Netlify Dev (handles both frontend and serverless functions):
    ```bash
@@ -50,5 +52,7 @@ Set these in Netlify Dashboard → Site Settings → Environment Variables:
 | `GEMINI_API_KEY` | Google AI API key for style advice | [Google AI Studio](https://aistudio.google.com/) |
 | `STRIPE_SECRET_KEY` | Stripe secret key (server-side only) | [Stripe Dashboard](https://dashboard.stripe.com/apikeys) |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (client-side) | [Stripe Dashboard](https://dashboard.stripe.com/apikeys) |
+| `RESEND_API_KEY` | Resend API key for booking confirmation emails | [Resend](https://resend.com/api-keys) |
+| `RESEND_FROM_EMAIL` | (Optional) From address for emails (e.g. `Style Forage <hello@yourdomain.com>`) | Your verified domain in Resend |
 
-**Note:** Use test keys (`sk_test_...` and `pk_test_...`) for development. Switch to live keys for production.
+**Note:** Use test keys (`sk_test_...` and `pk_test_...`) for development. Switch to live keys for production. Without `RESEND_API_KEY`, bookings still complete but confirmation emails are skipped.
