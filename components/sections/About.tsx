@@ -31,7 +31,7 @@ export const About: React.FC = () => {
                         <Button>Book a Session</Button>
                       </Link>
                       <a 
-                        href="https://instagram.com" 
+                        href="hhttps://www.instagram.com/styleforage/" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center px-4 py-2 text-stone-700 hover:text-stone-900 font-medium transition-colors"
@@ -45,7 +45,7 @@ export const About: React.FC = () => {
                 <div className="aspect-[4/5] rounded-none md:rounded-lg overflow-hidden relative z-10 shadow-2xl">
                   <img 
                     src="roz.png" 
-                    onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=800&q=80" }}
+                    onError={(e) => { e.currentTarget.src = "/images/Roz-closet.avif" }}
                     alt="Roslyn Costanzo" 
                     className="w-full h-full object-cover"
                     loading="lazy"

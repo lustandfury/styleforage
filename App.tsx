@@ -39,27 +39,41 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Layout component that conditionally renders header/footer based on route
+const AppLayout = () => {
+  const location = useLocation();
+  
+  // Check if we're on a booking page - hide nav for focused checkout experience
+  const isBookingFlow = location.pathname.startsWith('/book/');
+  
+  return (
+    <div className="min-h-screen flex flex-col font-sans text-stone-900">
+      {!isBookingFlow && <Header />}
+      {/* pt-20 added to offset the fixed header height, removed on booking pages */}
+      <main id="main-content" className={`flex-1 ${!isBookingFlow ? 'pt-20' : ''}`} tabIndex={-1}>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/book/:serviceId" element={<BookingPage />} />
+          </Routes>
+        </Suspense>
+      </main>
+      {!isBookingFlow && <Footer />}
+      {!isBookingFlow && (
+        <Suspense fallback={null}>
+          <AiStylist />
+        </Suspense>
+      )}
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <ErrorBoundary>
       <Router>
         <ScrollToTop />
-        <div className="min-h-screen flex flex-col font-sans text-stone-900">
-          <Header />
-          {/* pt-20 added to offset the fixed header height */}
-          <main id="main-content" className="flex-1 pt-20" tabIndex={-1}>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/book/:serviceId" element={<BookingPage />} />
-              </Routes>
-            </Suspense>
-          </main>
-          <Footer />
-          <Suspense fallback={null}>
-            <AiStylist />
-          </Suspense>
-        </div>
+        <AppLayout />
       </Router>
     </ErrorBoundary>
   );

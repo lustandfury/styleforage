@@ -6,13 +6,8 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
-    // Proxy API requests to Vercel dev server in development
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-    },
+    // For local development with Netlify CLI, API requests are handled automatically
+    // Run: netlify dev (which starts both Vite and functions)
   },
   plugins: [react()],
   resolve: {

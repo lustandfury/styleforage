@@ -11,11 +11,14 @@ This document outlines the technical architecture and development standards for 
 ## Tech Stack
 
 - **Framework**: React 18.2.0 (ES6 Modules)
+- **Build Tool**: Vite
+- **Hosting**: Netlify (static site + serverless functions)
 - **Styling**: Tailwind CSS (Utility-first CSS)
 - **Icons**: Lucide React
 - **Date Handling**: date-fns
 - **AI Integration**: Google Gemini API (@google/genai)
-- **Routing**: React Router DOM 6 (HashRouter)
+- **Payments**: Stripe (Elements + Payment Intents)
+- **Routing**: React Router DOM 6 (BrowserRouter)
 
 ## Project Structure
 
@@ -25,7 +28,21 @@ This document outlines the technical architecture and development standards for 
   - `ui/`: Atom-level components (Buttons, Inputs).
 - `pages/`: Page-level components associated with routes.
 - `services/`: External API logic (Gemini API).
+- `netlify/functions/`: Serverless API functions for Netlify.
 - `types.ts`: Shared TypeScript interfaces and enums.
+
+## Deployment
+
+The site is hosted on **Netlify** with the following configuration:
+- **Build command**: `npm run build`
+- **Publish directory**: `dist`
+- **Functions directory**: `netlify/functions`
+
+### Environment Variables (Netlify Dashboard)
+Set these in Netlify's Site Settings → Environment Variables:
+- `GEMINI_API_KEY` - Google AI API key
+- `STRIPE_SECRET_KEY` - Stripe secret/restricted key
+- `VITE_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key (prefixed with VITE_ for client access)
 
 ## Architectural Patterns
 

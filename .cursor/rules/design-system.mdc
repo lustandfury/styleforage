@@ -57,6 +57,45 @@ We use a "Serif for Soul, Sans for Clarity" approach.
 - **Primary**: Dark stone with white text. High contrast for CTA.
 - **Secondary/Outline**: Sage accents or transparent backgrounds for secondary actions.
 
+### 4. Selection Chips
+Pill-shaped interactive elements for selecting dates, times, or options. Uses an **outline style** for selected state to maintain visual clarity without heavy fills.
+
+**Structure:**
+- Shape: `rounded-full` (pill)
+- Border: `border-2` always present (transparent when unselected, visible when selected)
+- Padding: `py-3 px-4` for standard chips, custom sizing for date chips
+
+**States:**
+
+| State | Classes | Description |
+| :--- | :--- | :--- |
+| **Default** | `border-transparent bg-stone-50 text-stone-700` | Unselected, available option |
+| **Hover** | `hover:bg-stone-100` | Interactive feedback |
+| **Selected** | `border-stone-900 bg-white text-stone-900` | Outline style - dark border, white background |
+| **Disabled** | `border-transparent bg-stone-50 text-stone-300 line-through cursor-not-allowed` | Unavailable option with strikethrough |
+
+**Example (Time Slot):**
+```tsx
+<button className={`
+  py-3 px-4 rounded-full border-2 transition-all
+  ${isSelected 
+    ? 'border-stone-900 bg-white text-stone-900' 
+    : isDisabled
+      ? 'border-transparent bg-stone-50 text-stone-300 line-through cursor-not-allowed'
+      : 'border-transparent bg-stone-50 text-stone-700 hover:bg-stone-100'
+  }
+`}>
+  {label}
+</button>
+```
+
+**Usage Guidelines:**
+- Use for date pickers, time slots, multi-select options, and filter chips
+- Outline style keeps UI clean and allows multiple selections to be visible without overwhelming
+- Always include `transition-all` for smooth state changes
+- Include proper `aria-pressed` and `aria-label` for accessibility
+- Show selection count when multi-select is enabled
+
 ## Visual Signatures
 
 - **Glassmorphism**: The header uses `backdrop-blur-md` with `bg-white/95` to feel integrated with the content below it.

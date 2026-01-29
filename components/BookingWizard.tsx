@@ -1,10 +1,10 @@
 
 import { Service, BookingState, TimeSlot } from '../types';
 import { Button } from './ui/Button';
+import { StripePaymentForm } from './StripePaymentForm';
 import React, { useState, useEffect } from 'react';
-// Fix: Removed startOfToday and startOfMonth from imports as they are reported as missing exports in this environment.
-import { format, addDays, endOfMonth, eachDayOfInterval, isSameDay, getDay, isBefore } from 'date-fns';
-import { Check, ChevronLeft, ChevronRight, CreditCard, Clock, Lock, Sparkles } from 'lucide-react';
+import { format, addDays, isSameDay, getDay } from 'date-fns';
+import { Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 
 const SERVICES: Service[] = [
   {
@@ -90,10 +90,17 @@ const SERVICES: Service[] = [
 ];
 
 const TIME_SLOTS: TimeSlot[] = [
-  { time: '09:00 AM', available: true },
-  { time: '11:00 AM', available: true },
-  { time: '02:00 PM', available: true },
-  { time: '04:00 PM', available: true },
+  { time: '8:00AM', available: true },
+  { time: '9:00AM', available: true },
+  { time: '10:00AM', available: false },
+  { time: '11:00AM', available: true },
+  { time: 'Noon', available: true },
+  { time: '1:00PM', available: true },
+  { time: '2:00PM', available: true },
+  { time: '3:00PM', available: false },
+  { time: '4:00PM', available: true },
+  { time: '5:00PM', available: false },
+  { time: '6:00PM', available: true },
 ];
 
 interface BookingWizardProps {
@@ -105,7 +112,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
     step: initialServiceId ? 'date' : 'service',
     selectedService: initialServiceId ? SERVICES.find(s => s.id === initialServiceId) || null : null,
     selectedDate: null,
-    selectedTime: null,
+    selectedTimes: [],
     customerDetails: { name: '', email: '', phone: '', notes: '' }
   });
 
@@ -117,7 +124,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
   };
 
   const today = getTodayAtMidnight();
-  const [currentMonth, setCurrentMonth] = useState(today);
+  const [visibleStartDate, setVisibleStartDate] = useState(today);
 
   // Handle step sync if prop changes
   useEffect(() => {
@@ -128,6 +135,11 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
       }
     }
   }, [initialServiceId]);
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [state.step]);
 
   const renderServices = () => (
     <div className="grid lg:grid-cols-3 gap-8">
@@ -153,117 +165,197 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
   );
 
   const renderCalendar = () => {
-    // Fix: Replaced startOfMonth(currentMonth) with native Date logic to avoid missing export error.
-    const firstDayCurrentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    const days = eachDayOfInterval({
-        start: firstDayCurrentMonth,
-        end: endOfMonth(firstDayCurrentMonth),
-    });
+    // Generate 14 days starting from visibleStartDate for horizontal date picker
+    const visibleDays = Array.from({ length: 14 }, (_, i) => addDays(visibleStartDate, i));
+    const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    
+    // Check if we can go back (not before today)
+    const canGoBack = visibleStartDate > today;
+    
+    const goToPreviousWeek = () => {
+      const newStart = addDays(visibleStartDate, -7);
+      // Don't go before today
+      setVisibleStartDate(newStart < today ? today : newStart);
+    };
+    
+    const goToNextWeek = () => {
+      setVisibleStartDate(addDays(visibleStartDate, 7));
+    };
 
     return (
-        <div className="animate-fade-in max-w-6xl mx-auto py-12">
-             <div className="grid lg:grid-cols-12 gap-12">
-                <div className="lg:col-span-4 space-y-8">
-                  <div className="bg-stone-50 p-8 rounded-3xl border border-stone-100 shadow-sm">
-                    <span className="text-sage-600 font-bold uppercase tracking-widest text-xs block mb-4">Your Selection</span>
-                    <h3 className="font-serif text-2xl text-stone-900 mb-2">{state.selectedService?.title}</h3>
-                    <div className="flex items-center text-stone-500 text-sm mb-6">
-                      <Clock size={16} className="mr-2" />
-                      {state.selectedService ? state.selectedService.durationMin / 60 : 0} Hours
+        <div className="animate-fade-in max-w-5xl mx-auto py-12">
+             <div className="grid lg:grid-cols-12 gap-8">
+                {/* Service Summary Card */}
+                <div className="lg:col-span-5 space-y-6">
+                  <div className="bg-stone-50 rounded-3xl border border-stone-100 shadow-sm overflow-hidden">
+                    {state.selectedService?.image && (
+                      <div className="aspect-[16/9] overflow-hidden">
+                        <img 
+                          src={state.selectedService.image} 
+                          alt={state.selectedService.title} 
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="p-6">
+                      <span className="text-sage-600 font-bold uppercase tracking-widest text-xs block mb-3">Your Selection</span>
+                      <h3 className="font-serif text-xl text-stone-900 mb-3">{state.selectedService?.title}</h3>
+                      
+                      <div className="flex items-center justify-between mb-4 pb-4 border-b border-stone-200">
+                        <div className="flex items-center text-stone-500 text-sm">
+                          <Clock size={14} className="mr-1.5" />
+                          {state.selectedService ? state.selectedService.durationMin / 60 : 0}h
+                        </div>
+                        <div className="text-xl font-serif font-bold text-stone-900">
+                          {state.selectedService?.id === 'corporate-workshops' ? 'Custom' : `$${state.selectedService?.price}`}
+                        </div>
+                      </div>
+                      
+                      <p className="text-stone-600 text-sm leading-relaxed mb-4">
+                        {state.selectedService?.longDescription}
+                      </p>
+                      
+                      {state.selectedService?.features && state.selectedService.features.length > 0 && (
+                        <div className="mb-4">
+                          <span className="text-stone-800 font-bold uppercase tracking-widest text-xs block mb-2">What's Included</span>
+                          <ul className="space-y-1.5">
+                            {state.selectedService.features.slice(0, 4).map((feature, idx) => (
+                              <li key={idx} className="flex items-start text-sm text-stone-600">
+                                <Check size={14} className="mr-2 text-sage-500 flex-shrink-0 mt-0.5" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      <Button variant="outline" size="sm" onClick={() => window.history.back()}>Change Service</Button>
                     </div>
-                    <div className="text-2xl font-serif font-bold text-stone-900 mb-6">
-                      {state.selectedService?.id === 'corporate-workshops' ? 'Custom' : `$${state.selectedService?.price}`}
-                    </div>
-                    <p className="text-stone-600 text-sm leading-relaxed mb-6 italic">
-                      "{state.selectedService?.description}"
-                    </p>
-                    <Button variant="outline" size="sm" onClick={() => window.history.back()}>Change Service</Button>
                   </div>
                 </div>
 
-                <div className="lg:col-span-8 space-y-12">
-                  <div className="bg-white rounded-3xl p-8 border border-stone-100 shadow-sm">
-                    <div className="flex items-center justify-between mb-8">
-                        <h4 className="font-serif text-2xl text-stone-900">{format(firstDayCurrentMonth, 'MMMM yyyy')}</h4>
-                        <div className="flex gap-2">
-                            <button 
-                              onClick={() => setCurrentMonth(addDays(firstDayCurrentMonth, -1))} 
-                              className="p-2 hover:bg-stone-50 rounded-full transition-colors"
-                              aria-label="Previous month"
-                            >
-                              <ChevronLeft size={24} aria-hidden="true" />
-                            </button>
-                            <button 
-                              onClick={() => setCurrentMonth(addDays(firstDayCurrentMonth, 32))} 
-                              className="p-2 hover:bg-stone-50 rounded-full transition-colors"
-                              aria-label="Next month"
-                            >
-                              <ChevronRight size={24} aria-hidden="true" />
-                            </button>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">
-                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <div key={d}>{d}</div>)}
-                    </div>
-                    <div className="grid grid-cols-7 gap-3">
-                        {Array.from({ length: getDay(firstDayCurrentMonth) }).map((_, i) => <div key={i} />)}
-                        {days.map((day) => {
-                             const isSelected = state.selectedDate && isSameDay(day, state.selectedDate);
-                             const isPast = isBefore(day, today);
-                             return (
-                                <button
-                                    key={day.toString()}
-                                    disabled={isPast}
-                                    onClick={() => setState(s => ({ ...s, selectedDate: day, selectedTime: null }))}
-                                    aria-label={format(day, 'EEEE, MMMM do, yyyy')}
-                                    aria-pressed={isSelected}
-                                    className={`
-                                        aspect-square rounded-2xl flex items-center justify-center text-sm font-medium transition-all
-                                        ${isSelected ? 'bg-stone-900 text-white shadow-lg scale-105' : 'hover:bg-sage-50 text-stone-700'}
-                                        ${isPast ? 'text-stone-200 cursor-not-allowed hover:bg-transparent' : ''}
-                                    `}
-                                >
-                                    {format(day, 'd')}
-                                </button>
-                             );
-                        })}
-                    </div>
-                  </div>
+                {/* Booking Card */}
+                <div className="lg:col-span-7">
+                  <div className="bg-white rounded-3xl p-6 md:p-8 border border-stone-100 shadow-sm">
+                    <h3 className="font-serif text-2xl text-stone-900 mb-6">Book Appointment</h3>
+                    
+                    {/* Select Date */}
+                    <div className="mb-8">
+                      <label className="text-xs font-bold text-stone-400 uppercase tracking-widest block mb-4">Select Date</label>
+                      
+                      <div className="flex items-center gap-2 mb-4">
+                        <h4 className="font-serif text-lg text-stone-900">{format(state.selectedDate || visibleStartDate, 'MMMM yyyy')}</h4>
+                        <button 
+                          onClick={goToPreviousWeek}
+                          disabled={!canGoBack}
+                          className={`p-1 rounded-full transition-colors ${canGoBack ? 'hover:bg-stone-100 text-stone-400 hover:text-stone-600' : 'text-stone-200 cursor-not-allowed'}`}
+                          aria-label="Previous week"
+                        >
+                          <ChevronLeft size={18} aria-hidden="true" />
+                        </button>
+                        <button 
+                          onClick={goToNextWeek}
+                          className="p-1 hover:bg-stone-100 rounded-full transition-colors text-stone-400 hover:text-stone-600"
+                          aria-label="Next week"
+                        >
+                          <ChevronRight size={18} aria-hidden="true" />
+                        </button>
+                      </div>
 
-                  {state.selectedDate && (
-                    <div className="bg-stone-50 rounded-3xl p-8 animate-in slide-in-from-top-4 duration-500">
-                      <h4 className="font-serif text-2xl text-stone-900 mb-8">Available Times for {format(state.selectedDate, 'MMMM do')}</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="group" aria-label="Available time slots">
-                          {TIME_SLOTS.map((slot) => (
-                              <button
-                                  key={slot.time}
-                                  onClick={() => setState(s => ({ ...s, selectedTime: slot.time }))}
-                                  aria-label={`Select ${slot.time}`}
-                                  aria-pressed={state.selectedTime === slot.time}
-                                  className={`
-                                      py-4 rounded-2xl text-sm font-bold border transition-all
-                                      ${state.selectedTime === slot.time 
-                                          ? 'bg-sage-500 border-sage-500 text-white shadow-lg scale-105' 
-                                          : 'bg-white border-stone-100 text-stone-700 hover:border-sage-300'
-                                      }
-                                  `}
-                              >
-                                  {slot.time}
-                              </button>
-                          ))}
+                      {/* Horizontal Day Picker */}
+                      <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+                        {visibleDays.map((day) => {
+                          const isSelected = state.selectedDate && isSameDay(day, state.selectedDate);
+                          const dayOfWeek = getDay(day);
+                          
+                          return (
+                            <button
+                              key={day.toString()}
+                              onClick={() => setState(s => ({ ...s, selectedDate: day, selectedTimes: [] }))}
+                              aria-label={format(day, 'EEEE, MMMM do, yyyy')}
+                              aria-pressed={isSelected}
+                              className={`
+                                flex-shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-full border-2 transition-all
+                                ${isSelected 
+                                  ? 'border-stone-900 bg-white text-stone-900' 
+                                  : 'border-transparent bg-stone-50 text-stone-700 hover:bg-stone-100'
+                                }
+                              `}
+                            >
+                              <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-stone-500' : 'text-stone-400'}`}>
+                                {dayNames[dayOfWeek]}
+                              </span>
+                              <span className="text-lg font-semibold">{format(day, 'd')}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
-                  )}
 
-                  <div className="flex justify-end pt-8">
-                      <Button 
-                        size="lg"
-                        className="px-12 rounded-full"
-                        disabled={!state.selectedDate || !state.selectedTime}
-                        onClick={() => setState(s => ({ ...s, step: 'details' }))}
-                      >
-                        Your Details <ChevronRight className="ml-2" />
-                      </Button>
+                    {/* Select Time */}
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <label className="text-xs font-bold text-stone-400 uppercase tracking-widest">Select Available Time(s)</label>
+                        <span className="text-xs text-stone-400">Select all times that work for you</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3" role="group" aria-label="Available time slots">
+                        {TIME_SLOTS.map((slot) => {
+                          const isSelected = state.selectedTimes.includes(slot.time);
+                          const isDisabled = !slot.available;
+                          
+                          // Toggle time selection
+                          const handleTimeClick = () => {
+                            if (isDisabled) return;
+                            setState(s => ({
+                              ...s,
+                              selectedTimes: isSelected
+                                ? s.selectedTimes.filter(t => t !== slot.time)
+                                : [...s.selectedTimes, slot.time]
+                            }));
+                          };
+                          
+                          return (
+                            <button
+                              key={slot.time}
+                              disabled={isDisabled}
+                              onClick={handleTimeClick}
+                              aria-label={`${isSelected ? 'Deselect' : 'Select'} ${slot.time}${isDisabled ? ' (unavailable)' : ''}`}
+                              aria-pressed={isSelected}
+                              className={`
+                                py-3 px-4 rounded-full text-sm font-medium border-2 transition-all
+                                ${isSelected 
+                                  ? 'border-stone-900 bg-white text-stone-900' 
+                                  : isDisabled
+                                    ? 'border-transparent bg-stone-50 text-stone-300 line-through cursor-not-allowed'
+                                    : 'border-transparent bg-stone-50 text-stone-700 hover:bg-stone-100'
+                                }
+                              `}
+                            >
+                              {slot.time}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      {state.selectedTimes.length > 0 && (
+                        <p className="mt-3 text-sm text-stone-500">
+                          {state.selectedTimes.length} time{state.selectedTimes.length > 1 ? 's' : ''} selected
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Book Button */}
+                    <Button 
+                      size="lg"
+                      className="w-full rounded-full py-4"
+                      disabled={!state.selectedDate || state.selectedTimes.length === 0}
+                      onClick={() => setState(s => ({ ...s, step: 'details' }))}
+                    >
+                      Book Appointment
+                    </Button>
                   </div>
                 </div>
              </div>
@@ -359,7 +451,13 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                 <div>
                   <h4 className="font-serif text-xl text-stone-900 mb-1">{state.selectedService?.title}</h4>
                   <div className="text-stone-500 text-sm">
-                    {state.selectedDate && format(state.selectedDate, 'EEEE, MMMM do')} @ {state.selectedTime}
+                    {state.selectedDate && format(state.selectedDate, 'EEEE, MMMM do')}
+                  </div>
+                  <div className="text-stone-500 text-sm mt-1">
+                    {state.selectedTimes.length === 1 
+                      ? `@ ${state.selectedTimes[0]}`
+                      : <>Available: {state.selectedTimes.join(', ')}</>
+                    }
                   </div>
                 </div>
                 <div className="font-serif text-2xl font-bold text-stone-900">
@@ -372,44 +470,21 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
             </div>
         </div>
 
-        <div className="bg-white p-10 rounded-3xl border border-stone-100 shadow-xl space-y-6">
-             <div className="space-y-2">
-                <label className="text-xs font-bold text-stone-400 uppercase tracking-[0.2em]">Card Number</label>
-                <div className="border-2 border-stone-50 bg-stone-50 rounded-2xl p-4 flex items-center">
-                    <CreditCard className="text-stone-300 mr-4" size={24} />
-                    <input 
-                        type="text" 
-                        placeholder="•••• •••• •••• ••••" 
-                        className="flex-1 bg-transparent outline-none text-stone-900 text-lg tracking-widest placeholder:text-stone-200"
-                        defaultValue="4242 4242 4242 4242"
-                    />
-                </div>
-             </div>
-             <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-stone-400 uppercase tracking-[0.2em]">Expiry</label>
-                  <input type="text" placeholder="MM / YY" className="w-full px-4 py-4 bg-stone-50 border-2 border-stone-50 rounded-2xl focus:bg-white focus:outline-none focus:border-sage-300 text-center" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-stone-400 uppercase tracking-[0.2em]">CVC</label>
-                  <input type="text" placeholder="•••" className="w-full px-4 py-4 bg-stone-50 border-2 border-stone-50 rounded-2xl focus:bg-white focus:outline-none focus:border-sage-300 text-center" />
-                </div>
-             </div>
-        </div>
-        
-        <div className="text-center mt-6 mb-12 text-stone-400 flex items-center justify-center gap-2">
-            <Lock size={14} /> <span className="text-xs font-medium uppercase tracking-widest">Encrypted via Stripe</span>
-        </div>
+        <StripePaymentForm
+          amount={state.selectedService?.price || 0}
+          onSuccess={() => setState(s => ({ ...s, step: 'confirmation' }))}
+          onError={(error) => console.error('Payment error:', error)}
+          metadata={{
+            service: state.selectedService?.title,
+            date: state.selectedDate ? format(state.selectedDate, 'yyyy-MM-dd') : '',
+            times: state.selectedTimes.join(', '),
+            customerName: state.customerDetails.name,
+            customerEmail: state.customerDetails.email,
+          }}
+        />
 
-        <div className="flex flex-col gap-4">
-           <Button 
-              size="lg"
-              className="py-6 rounded-full text-xl shadow-xl shadow-sage-500/20"
-              onClick={() => setState(s => ({ ...s, step: 'confirmation' }))}
-           >
-              Confirm & Pay ${state.selectedService?.price}
-           </Button>
-           <Button variant="ghost" onClick={() => setState(s => ({ ...s, step: 'details' }))}>
+        <div className="mt-6">
+           <Button variant="ghost" className="w-full" onClick={() => setState(s => ({ ...s, step: 'details' }))}>
               Go Back
            </Button>
         </div>
@@ -430,9 +505,18 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                 <span className="text-stone-400 font-bold uppercase tracking-widest text-xs">Service</span>
                 <span className="text-stone-900 font-bold">{state.selectedService?.title}</span>
             </div>
-            <div className="flex justify-between">
-                <span className="text-stone-400 font-bold uppercase tracking-widest text-xs">Date & Time</span>
-                <span className="text-stone-900 font-bold">{state.selectedDate && format(state.selectedDate, 'MMMM do')} @ {state.selectedTime}</span>
+            <div className="flex justify-between items-start">
+                <span className="text-stone-400 font-bold uppercase tracking-widest text-xs">
+                  {state.selectedTimes.length > 1 ? 'Date & Availability' : 'Date & Time'}
+                </span>
+                <div className="text-right">
+                  <span className="text-stone-900 font-bold block">{state.selectedDate && format(state.selectedDate, 'MMMM do')}</span>
+                  {state.selectedTimes.length === 1 ? (
+                    <span className="text-stone-600 text-sm block">@ {state.selectedTimes[0]}</span>
+                  ) : (
+                    <span className="text-stone-600 text-sm block">{state.selectedTimes.join(', ')}</span>
+                  )}
+                </div>
             </div>
         </div>
         <Button size="lg" className="rounded-full px-12" onClick={() => window.location.href = '/'}>Return to Home</Button>

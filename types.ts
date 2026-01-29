@@ -18,7 +18,7 @@ export interface BookingState {
   step: 'service' | 'date' | 'details' | 'payment' | 'confirmation';
   selectedService: Service | null;
   selectedDate: Date | null;
-  selectedTime: string | null;
+  selectedTimes: string[];
   customerDetails: {
     name: string;
     email: string;

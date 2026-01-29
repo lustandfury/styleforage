@@ -30,6 +30,9 @@ export const BookingPage: React.FC = () => {
             <ArrowLeft size={18} className="mr-2 transition-transform group-hover:-translate-x-1" />
             Back to Home
           </Link>
+          <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors">
+            Style Forage
+          </Link>
           <div className="text-stone-300 font-serif italic hidden md:block">Step into your best style...</div>
         </div>
       </div>
