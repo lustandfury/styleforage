@@ -119,16 +119,16 @@ export const Testimonials: React.FC = () => {
   return (
     <section 
       id="testimonials" 
-      className="py-24 bg-white relative overflow-hidden"
+      className="py-16 md:py-24 bg-white relative overflow-hidden"
       onMouseEnter={() => setIsUserInteracting(true)}
       onMouseLeave={() => setIsUserInteracting(false)}
       onTouchStart={() => setIsUserInteracting(true)}
     >
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="font-serif text-3xl md:text-4xl text-stone-900 mb-4">Client Love Notes</h2>
+        <div className="text-center mb-8 md:mb-12">
+          <h2 className="font-serif text-3xl md:text-4xl text-stone-900 mb-3 md:mb-4">Client Love Notes</h2>
           <div className="h-1 w-20 bg-sage-500 mx-auto rounded-full"></div>
-          <p className="mt-4 text-stone-500">Real stories from real wardrobes.</p>
+          <p className="mt-3 md:mt-4 text-stone-500 text-sm md:text-base">Real stories from real wardrobes.</p>
         </div>
         
         <div className="relative max-w-4xl mx-auto">
@@ -159,19 +159,19 @@ export const Testimonials: React.FC = () => {
             {testimonials.map((t, idx) => (
               <div 
                 key={`${t.id}-${idx}`} 
-                className="flex-shrink-0 w-full snap-center px-2 md:px-4"
+                className="flex-shrink-0 w-full snap-center px-4"
               >
-                <div className="h-full bg-stone-50 p-8 md:p-12 rounded-3xl relative transition-all duration-500 border border-stone-100 flex flex-col shadow-sm">
-                  <Quote className="absolute top-8 left-8 text-sage-500/10" size={64} />
+                <div className="h-full bg-stone-50 p-6 md:p-12 rounded-3xl relative transition-all duration-500 border border-stone-100 flex flex-col shadow-sm">
+                  <Quote className="absolute top-6 left-6 md:top-8 md:left-8 text-sage-500/10" size={48} aria-hidden />
                   
-                  <div className="relative z-10 flex-grow pt-6">
-                    <p className="text-stone-700 leading-relaxed mb-10 font-light italic text-lg md:text-xl text-center">
+                  <div className="relative z-10 flex-grow pt-4 md:pt-6">
+                    <p className="text-stone-700 leading-relaxed mb-6 md:mb-10 font-light italic text-base md:text-xl text-center">
                       "{t.text}"
                     </p>
                   </div>
 
-                  <div className="flex flex-col items-center gap-4 pt-8 border-t border-stone-200/50 mt-auto">
-                    <div className="h-16 w-16 rounded-full bg-sage-100 flex items-center justify-center text-sage-800 font-serif font-bold text-2xl flex-shrink-0">
+                  <div className="flex flex-col items-center gap-3 md:gap-4 pt-6 md:pt-8 border-t border-stone-200/50 mt-auto">
+                    <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-sage-100 flex items-center justify-center text-sage-800 font-serif font-bold text-xl md:text-2xl flex-shrink-0">
                       {t.name[0]}
                     </div>
                     <div className="text-center">
@@ -185,7 +185,7 @@ export const Testimonials: React.FC = () => {
           </div>
 
           {/* Dot Indicators */}
-          <div className="flex justify-center gap-3 mt-10">
+          <div className="flex justify-center gap-3 mt-8 md:mt-10">
             {originalTestimonials.map((_, idx) => (
               <button
                 key={idx}

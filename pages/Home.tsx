@@ -66,25 +66,25 @@ export const Home: React.FC = () => {
       <Hero />
       
       {/* Thoughtful Approach Section */}
-      <section className="py-24 bg-white border-b border-stone-100">
+      <section className="py-16 md:py-24 bg-white border-b border-stone-100">
         <div className="container mx-auto px-4 text-center">
-             <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-6">A Thoughtful Approach</h2>
-             <p className="max-w-2xl mx-auto text-stone-600 mb-12 leading-relaxed text-lg">
+             <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-4 md:mb-6">A Thoughtful Approach</h2>
+             <p className="max-w-2xl mx-auto text-stone-600 mb-8 md:mb-12 leading-relaxed text-base md:text-lg px-0">
                I take a thoughtful, step-by-step approach. Most clients begin with a closet edit, 
                so we can shop intentionally and build a wardrobe that feels cohesive, wearable, and truly theirs.
              </p>
-             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mt-12">
-                <div className="p-10 bg-stone-50 rounded-2xl transition-all">
-                    <h3 className="font-serif text-2xl mb-4 text-stone-800">The Closet Edit</h3>
-                    <p className="text-stone-500 leading-relaxed">A fresh perspective focused on fit, comfort, and relevance to your life today.</p>
+             <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto mt-8 md:mt-12">
+                <div className="p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left">
+                    <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Closet Edit</h3>
+                    <p className="text-stone-500 text-sm md:text-base leading-relaxed">A fresh perspective focused on fit, comfort, and relevance to your life today.</p>
                 </div>
-                <div className="p-10 bg-stone-50 rounded-2xl transition-all">
-                    <h3 className="font-serif text-2xl mb-4 text-stone-800">Full Style Reset</h3>
-                    <p className="text-stone-500 leading-relaxed">For clients ready for a meaningful refresh and a wardrobe that feels aligned.</p>
+                <div className="p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left">
+                    <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">Full Style Reset</h3>
+                    <p className="text-stone-500 text-sm md:text-base leading-relaxed">For clients ready for a meaningful refresh and a wardrobe that feels aligned.</p>
                 </div>
-                <div className="p-10 bg-stone-50 rounded-2xl transition-all">
-                    <h3 className="font-serif text-2xl mb-4 text-stone-800">Style Refresh</h3>
-                    <p className="text-stone-500 leading-relaxed">A focused update for a season, event, trip, or specific life change.</p>
+                <div className="p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left">
+                    <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">Style Refresh</h3>
+                    <p className="text-stone-500 text-sm md:text-base leading-relaxed">A focused update for a season, event, trip, or specific life change.</p>
                 </div>
              </div>
         </div>
@@ -93,21 +93,21 @@ export const Home: React.FC = () => {
       <About />
 
       {/* Services Grid Section */}
-      <section id="services" className="py-32 bg-stone-50/50 scroll-mt-20">
+      <section id="services" className="py-20 md:py-32 bg-stone-50/50 scroll-mt-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-20">
-            <h2 className="font-serif text-4xl md:text-5xl text-stone-900 mb-6">Curated Styling Services</h2>
-            <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full mb-8"></div>
+          <div className="text-center mb-12 md:mb-20">
+            <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-4 md:mb-6">Curated Styling Services</h2>
+            <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full mb-4 md:mb-6"></div>
+            <p className="text-stone-600 text-base md:text-lg max-w-xl mx-auto">
+              Choose a service below to book your session. Click <strong>Book this service</strong> to select and continue to the booking flow.
+            </p>
           </div>
           
-          <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-12 gap-6 md:gap-8 max-w-6xl mx-auto">
             {SERVICES.map((service) => (
-              <button 
+              <article 
                 key={service.id}
-                type="button"
-                className="group bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col text-left focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
-                onClick={() => handleBookService(service.id)}
-                aria-label={`Book ${service.title} service`}
+                className={`group bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col text-left ${service.id === 'closet-edit' ? 'sm:col-span-2 lg:col-span-8' : 'lg:col-span-4'}`}
               >
                 <div className="aspect-[4/3] overflow-hidden bg-stone-100 relative">
                     <img 
@@ -118,53 +118,60 @@ export const Home: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition-colors" />
                 </div>
-                <div className="p-8 flex flex-col flex-grow">
-                    <h4 className="font-serif font-bold text-2xl text-stone-900 mb-4 group-hover:text-sage-700 transition-colors">{service.title}</h4>
-                    <p className="text-stone-500 mb-8 leading-relaxed flex-grow">{service.description}</p>
-                    <div className="pt-6 border-t border-stone-50 flex items-center justify-between">
-                        <div className="flex items-center text-stone-400 font-medium">
+                <div className="p-6 md:p-8 flex flex-col flex-grow">
+                    <h3 className="font-serif font-bold text-xl md:text-2xl text-stone-900 mb-3 md:mb-4 group-hover:text-sage-700 transition-colors">{service.title}</h3>
+                    <p className="text-stone-500 text-sm md:text-base mb-6 md:mb-8 leading-relaxed flex-grow">{service.description}</p>
+                    <div className="pt-6 border-t border-stone-100 flex items-center justify-between mb-6">
+                        <div className="flex items-center text-stone-400 font-medium text-sm">
                             <Clock size={16} className="mr-2" aria-hidden="true" />
                             <span>{service.durationMin / 60}h</span>
                         </div>
-                        <span className="font-serif font-bold text-2xl text-stone-900">
+                        <span className="font-serif font-bold text-xl md:text-2xl text-stone-900">
                           {service.id === 'corporate-workshops' ? 'Custom' : `$${service.price}`}
                         </span>
                     </div>
+                    <Button
+                      size="md"
+                      className="w-full rounded-full"
+                      onClick={() => handleBookService(service.id)}
+                    >
+                      Book this service
+                    </Button>
                 </div>
-              </button>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
       {/* Philosophy Section */}
-      <section className="bg-stone-900 text-stone-100 py-32 relative overflow-hidden">
+      <section className="bg-stone-900 text-stone-100 py-20 md:py-32 relative overflow-hidden">
           <div className="container mx-auto px-4 max-w-5xl relative z-10">
-              <div className="text-center mb-20">
-                <h3 className="font-serif text-4xl md:text-5xl mb-6">Our Philosophy</h3>
+              <div className="text-center mb-12 md:mb-20">
+                <h3 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6">Our Philosophy</h3>
                 <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full"></div>
               </div>
-              <div className="grid md:grid-cols-3 gap-16 text-center">
-                  <div className="space-y-6 group">
-                      <div className="w-16 h-16 bg-sage-500/10 rounded-full flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
-                        <span className="text-sage-500 font-serif text-3xl">01</span>
+              <div className="grid md:grid-cols-3 gap-12 md:gap-16 text-center">
+                  <div className="space-y-4 md:space-y-6 group">
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-sage-500/10 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-8 transition-transform group-hover:scale-110">
+                        <span className="text-sage-500 font-serif text-2xl md:text-3xl">01</span>
                       </div>
-                      <h4 className="font-serif text-2xl">Comfort First</h4>
-                      <p className="text-stone-400 text-base leading-relaxed">Style shouldn't be painful. We find pieces that move with you and feel amazing.</p>
+                      <h4 className="font-serif text-xl md:text-2xl">Comfort First</h4>
+                      <p className="text-stone-400 text-sm md:text-base leading-relaxed">Style shouldn't be painful. We find pieces that move with you and feel amazing.</p>
                   </div>
-                  <div className="space-y-6 group">
-                      <div className="w-16 h-16 bg-sage-500/10 rounded-full flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
-                        <span className="text-sage-500 font-serif text-3xl">02</span>
+                  <div className="space-y-4 md:space-y-6 group">
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-sage-500/10 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-8 transition-transform group-hover:scale-110">
+                        <span className="text-sage-500 font-serif text-2xl md:text-3xl">02</span>
                       </div>
-                      <h4 className="font-serif text-2xl">Sustainable</h4>
-                      <p className="text-stone-400 text-base leading-relaxed">Buying better, not more. We focus on intentional shopping and timeless quality.</p>
+                      <h4 className="font-serif text-xl md:text-2xl">Sustainable</h4>
+                      <p className="text-stone-400 text-sm md:text-base leading-relaxed">Buying better, not more. We focus on intentional shopping and timeless quality.</p>
                   </div>
-                  <div className="space-y-6 group">
-                      <div className="w-16 h-16 bg-sage-500/10 rounded-full flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110">
-                        <span className="text-sage-500 font-serif text-3xl">03</span>
+                  <div className="space-y-4 md:space-y-6 group">
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-sage-500/10 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-8 transition-transform group-hover:scale-110">
+                        <span className="text-sage-500 font-serif text-2xl md:text-3xl">03</span>
                       </div>
-                      <h4 className="font-serif text-2xl">Authentic</h4>
-                      <p className="text-stone-400 text-base leading-relaxed">Personal style is about defining what makes you unique—not chasing every trend.</p>
+                      <h4 className="font-serif text-xl md:text-2xl">Authentic</h4>
+                      <p className="text-stone-400 text-sm md:text-base leading-relaxed">Personal style is about defining what makes you unique—not chasing every trend.</p>
                   </div>
               </div>
           </div>
