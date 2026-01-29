@@ -1,63 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Style Forage | Personal Styling</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7R9FM2R0EB"></script>
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              sage: {
-                50: '#f4f7f4',
-                100: '#e3ebe3',
-                500: '#8cae8c',
-                900: '#2d3b2d',
-              },
-              sand: {
-                50: '#fdfbf7',
-                100: '#f7f1e6',
-                500: '#d5c0a1',
-              }
-            },
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              serif: ['Playfair Display', 'serif'],
-            },
-            animation: {
-              'fade-in': 'fadeIn 0.5s ease-in-out',
-            },
-            keyframes: {
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              }
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-7R9FM2R0EB');
+    </script>
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: https://images.unsplash.com https://styleforage.com https://www.google-analytics.com;
+      connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com;
+      frame-src 'none';
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    " />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Style Forage | Personal Styling & Wardrobe Consultation</title>
+    <meta name="title" content="Style Forage | Personal Styling & Wardrobe Consultation" />
+    <meta name="description" content="Curating confidence in every detail. Personal styling services including closet edits, wardrobe consultations, and personal shopping for those who want to feel intentional, current, and completely themselves." />
+    <meta name="keywords" content="personal stylist, wardrobe consultation, closet edit, personal shopping, fashion consultant, Toronto stylist" />
+    <meta name="author" content="Roslyn Costanzo" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://styleforage.com/" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://styleforage.com/" />
+    <meta property="og:title" content="Style Forage | Personal Styling & Wardrobe Consultation" />
+    <meta property="og:description" content="Curating confidence in every detail. Personal styling services including closet edits, wardrobe consultations, and personal shopping." />
+    <meta property="og:image" content="https://styleforage.com/og-image.jpg" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Style Forage" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://styleforage.com/" />
+    <meta property="twitter:title" content="Style Forage | Personal Styling & Wardrobe Consultation" />
+    <meta property="twitter:description" content="Curating confidence in every detail. Personal styling services including closet edits, wardrobe consultations, and personal shopping." />
+    <meta property="twitter:image" content="https://styleforage.com/og-image.jpg" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    
+    <!-- Preconnect for fonts (performance optimization) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Style Forage",
+      "description": "Personal styling and wardrobe consultation services",
+      "url": "https://styleforage.com",
+      "logo": "https://styleforage.com/logo.png",
+      "image": "https://styleforage.com/og-image.jpg",
+      "priceRange": "$$",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Toronto",
+        "addressRegion": "ON",
+        "addressCountry": "CA"
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "Roslyn Costanzo",
+        "jobTitle": "Personal Stylist"
+      },
+      "sameAs": [
+        "https://instagram.com/styleforage"
+      ],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Styling Services",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "The Closet Edit",
+              "description": "A thoughtful review of your clothes, focused on fit, comfort, and relevance."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "The Full Style Reset Package",
+              "description": "For clients ready for a meaningful refresh and a wardrobe that feels aligned."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Personal Shop",
+              "description": "Intentional shopping, guided by fit, comfort, and what's current."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Style Refresh",
+              "description": "A focused update for a season, event, trip, or life change."
             }
           }
-        }
+        ]
       }
+    }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react/": "https://esm.sh/react@18.2.0/",
-    "react-dom": "https://esm.sh/react-dom@18.2.0",
-    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?external=react,react-dom",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "lucide-react": "https://esm.sh/lucide-react@0.344.0",
-    "date-fns": "https://esm.sh/date-fns@3.3.1"
-  }
-}
-</script>
-</head>
+  </head>
   <body class="bg-stone-50 text-stone-900 antialiased selection:bg-sage-500 selection:text-white">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

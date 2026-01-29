@@ -1,8 +1,14 @@
+---
+description: Architecture and best practices for Style Forage development
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
 # Style Forage: Architecture & Best Practices
 
 This document outlines the technical architecture and development standards for the Style Forage web application.
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - **Framework**: React 18.2.0 (ES6 Modules)
 - **Styling**: Tailwind CSS (Utility-first CSS)
@@ -11,7 +17,7 @@ This document outlines the technical architecture and development standards for 
 - **AI Integration**: Google Gemini API (@google/genai)
 - **Routing**: React Router DOM 6 (HashRouter)
 
-## 📁 Project Structure
+## Project Structure
 
 - `components/`: Modular UI units.
   - `layout/`: Global structures like Header and Footer.
@@ -21,7 +27,7 @@ This document outlines the technical architecture and development standards for 
 - `services/`: External API logic (Gemini API).
 - `types.ts`: Shared TypeScript interfaces and enums.
 
-## 🛠 Architectural Patterns
+## Architectural Patterns
 
 ### 1. Component Composition
 We favor composition over inheritance. Large sections are broken down into reusable UI components to maintain a clean `pages/` directory.
@@ -39,7 +45,7 @@ The `AiStylist` component interacts with the `gemini-3-flash-preview` model.
 - **System Instructions**: Define a specific persona (Sophisticated, Accessible, Concise).
 - **Error Handling**: Graceful fallbacks for missing API keys or connection issues.
 
-## 💎 Best Practices
+## Best Practices
 
 - **Performance**: Use passive listeners for scroll events. Avoid heavy re-renders in the Testimonials slider by using `useCallback`.
 - **Accessibility**: Use semantic HTML (`<header>`, `<main>`, `<section>`). Ensure interactive elements have `aria-label` where text is not present.

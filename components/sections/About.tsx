@@ -48,6 +48,9 @@ export const About: React.FC = () => {
                     onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=800&q=80" }}
                     alt="Roslyn Costanzo" 
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    width="800"
+                    height="1000"
                   />
                 </div>
                 {/* Decorative Frame */}

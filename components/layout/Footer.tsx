@@ -24,8 +24,12 @@ export const Footer: React.FC = () => (
         <div>
           <h4 className="text-stone-100 font-medium mb-4">Connect</h4>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-white transition-colors"><Instagram size={20} /></a>
-            <a href="#" className="hover:text-white transition-colors"><Mail size={20} /></a>
+            <a href="https://instagram.com/styleforage" aria-label="Follow us on Instagram" className="hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
+              <Instagram size={20} aria-hidden="true" />
+            </a>
+            <a href="mailto:hello@styleforage.com" aria-label="Send us an email" className="hover:text-white transition-colors">
+              <Mail size={20} aria-hidden="true" />
+            </a>
           </div>
         </div>
       </div>

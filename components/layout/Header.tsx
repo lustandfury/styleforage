@@ -41,12 +41,20 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header 
-      className={`fixed top-0 z-40 w-full backdrop-blur-md bg-white/95 border-b border-stone-100 shadow-sm transition-transform duration-500 ease-in-out ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
-      }`}
-    >
-      <div className="container mx-auto px-4 h-20 grid grid-cols-2 md:grid-cols-3 items-center">
+    <>
+      {/* Skip Navigation Link */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-stone-900 focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-500"
+      >
+        Skip to main content
+      </a>
+      <header 
+        className={`fixed top-0 z-40 w-full backdrop-blur-md bg-white/95 border-b border-stone-100 shadow-sm transition-transform duration-500 ease-in-out ${
+          isVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div className="container mx-auto px-4 h-20 grid grid-cols-2 md:grid-cols-3 items-center">
         {/* Logo */}
         <div className="justify-self-start">
           <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors">
@@ -82,7 +90,8 @@ export const Header: React.FC = () => {
             Book Now
           </Button>
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 };

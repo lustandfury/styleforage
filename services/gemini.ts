@@ -1,33 +1,35 @@
-import { GoogleGenAI } from "@google/genai";
-
-const apiKey = process.env.API_KEY || '';
-
-// Initialize specific model as requested
-const MODEL_NAME = 'gemini-3-flash-preview';
+// API endpoint for style advice - calls serverless function to keep API key secure
+const API_ENDPOINT = '/api/style-advice';
 
 export const getStyleAdvice = async (userQuery: string): Promise<string> => {
-  if (!apiKey) {
-    console.warn("API_KEY is missing.");
-    return "I'm currently offline (API Key missing), but I'd love to help you with your style in person! Please book a consultation.";
+  // Basic input validation
+  if (!userQuery.trim()) {
+    return "Please ask me a style question!";
+  }
+
+  if (userQuery.length > 500) {
+    return "Your question is a bit long. Could you keep it under 500 characters?";
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: userQuery,
-      config: {
-        systemInstruction: `You are a high-end personal fashion stylist for 'Style Forage'. 
-        Your tone is encouraging, chic, sophisticated, yet accessible. 
-        Keep answers concise (under 100 words) and actionable. 
-        Focus on timeless style, color theory, and body positivity.`,
-      }
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: userQuery }),
     });
 
-    return response.text || "I couldn't come up with a tip right now, but let's chat during a session!";
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('API Error:', response.status, errorData);
+      return errorData.message || "I'm having a brief wardrobe malfunction. Please try again later.";
+    }
+
+    const data = await response.json();
+    return data.message || "I couldn't come up with a tip right now, but let's chat during a session!";
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("Style Advice API Error:", error);
     return "I'm having a brief wardrobe malfunction (connection error). Please try again later.";
   }
 };

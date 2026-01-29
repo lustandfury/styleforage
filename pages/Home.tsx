@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { Hero } from '../components/sections/Hero';
 import { About } from '../components/sections/About';
@@ -58,6 +59,10 @@ export const Home: React.FC = () => {
 
   return (
     <div className="animate-fade-in">
+      <Helmet>
+        <title>Style Forage | Personal Styling & Wardrobe Consultation</title>
+        <meta name="description" content="Curating confidence in every detail. Personal styling services including closet edits, wardrobe consultations, and personal shopping." />
+      </Helmet>
       <Hero />
       
       {/* Thoughtful Approach Section */}
@@ -97,16 +102,19 @@ export const Home: React.FC = () => {
           
           <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {SERVICES.map((service) => (
-              <div 
+              <button 
                 key={service.id}
-                className="group bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col"
+                type="button"
+                className="group bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col text-left focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
                 onClick={() => handleBookService(service.id)}
+                aria-label={`Book ${service.title} service`}
               >
                 <div className="aspect-[4/3] overflow-hidden bg-stone-100 relative">
                     <img 
                       src={service.image} 
                       alt={service.title} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition-colors" />
                 </div>
@@ -115,15 +123,15 @@ export const Home: React.FC = () => {
                     <p className="text-stone-500 mb-8 leading-relaxed flex-grow">{service.description}</p>
                     <div className="pt-6 border-t border-stone-50 flex items-center justify-between">
                         <div className="flex items-center text-stone-400 font-medium">
-                            <Clock size={16} className="mr-2" />
-                            {service.durationMin / 60}h
+                            <Clock size={16} className="mr-2" aria-hidden="true" />
+                            <span>{service.durationMin / 60}h</span>
                         </div>
                         <span className="font-serif font-bold text-2xl text-stone-900">
                           {service.id === 'corporate-workshops' ? 'Custom' : `$${service.price}`}
                         </span>
                     </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>

@@ -1,8 +1,25 @@
+---
+description: Design system and style guide for Style Forage UI development
+globs: **/*.{tsx,css}
+alwaysApply: false
+---
+
 # Style Forage: Design System & Style Guide
 
 A guide to the visual language and user experience principles of Style Forage.
 
-## 🎨 Color Palette
+## Tailwind v4 Configuration
+
+Custom theme values are defined in `index.css` using `@theme` blocks. When adding new design tokens:
+
+```css
+@theme {
+  --color-custom-name: #hexvalue;
+  --font-custom: 'Font Name', fallback;
+}
+```
+
+## Color Palette
 
 The palette is inspired by natural textures (Sage, Sand, Stone) to evoke a sense of calm, high-end sophistication.
 
@@ -25,7 +42,7 @@ We use a "Serif for Soul, Sans for Clarity" approach.
   - *Usage*: Body text, buttons, form labels, metadata.
   - *Feel*: Modern, highly legible, professional.
 
-## 📐 Layout & Components
+## Layout & Components
 
 ### 1. Spacing
 - Sections use consistent vertical padding (`py-24` or `py-32`).
@@ -40,13 +57,13 @@ We use a "Serif for Soul, Sans for Clarity" approach.
 - **Primary**: Dark stone with white text. High contrast for CTA.
 - **Secondary/Outline**: Sage accents or transparent backgrounds for secondary actions.
 
-## ✨ Visual Signatures
+## Visual Signatures
 
 - **Glassmorphism**: The header uses `backdrop-blur-md` with `bg-white/95` to feel integrated with the content below it.
 - **Micro-animations**: Subtle `hover:-translate-y-2` on cards and `animate-fade-in` on page loads to provide a premium, reactive feel.
 - **Imagery**: High-quality, editorial fashion photography with generous whitespace.
 
-## ✍️ Tone of Voice
+## Tone of Voice
 
 - **Encouraging**: We don't judge closets; we curate confidence.
 - **Actionable**: Every tip or service description should lead to a clear "next step."

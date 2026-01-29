@@ -132,20 +132,22 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
   const renderServices = () => (
     <div className="grid lg:grid-cols-3 gap-8">
       {SERVICES.map((service) => (
-        <div 
+        <button 
           key={service.id}
-          className="group bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border border-stone-100 shadow-sm hover:shadow-xl"
+          type="button"
+          className="group bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border border-stone-100 shadow-sm hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
           onClick={() => setState(s => ({ ...s, selectedService: service, step: 'date' }))}
+          aria-label={`Select ${service.title} service`}
         >
           <div className="aspect-[4/3] overflow-hidden">
-              <img src={service.image} alt={service.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+              <img src={service.image} alt={service.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" loading="lazy" />
           </div>
           <div className="p-8">
               <h4 className="font-serif font-bold text-xl text-stone-900 mb-4">{service.title}</h4>
               <p className="text-stone-500 text-sm mb-6">{service.description}</p>
-              <Button fullWidth>Select Service</Button>
+              <span className="block w-full py-3 px-6 bg-stone-900 text-white text-center rounded-full font-medium group-hover:bg-stone-800 transition-colors">Select Service</span>
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -184,8 +186,20 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                     <div className="flex items-center justify-between mb-8">
                         <h4 className="font-serif text-2xl text-stone-900">{format(firstDayCurrentMonth, 'MMMM yyyy')}</h4>
                         <div className="flex gap-2">
-                            <button onClick={() => setCurrentMonth(addDays(firstDayCurrentMonth, -1))} className="p-2 hover:bg-stone-50 rounded-full transition-colors"><ChevronLeft size={24}/></button>
-                            <button onClick={() => setCurrentMonth(addDays(firstDayCurrentMonth, 32))} className="p-2 hover:bg-stone-50 rounded-full transition-colors"><ChevronRight size={24}/></button>
+                            <button 
+                              onClick={() => setCurrentMonth(addDays(firstDayCurrentMonth, -1))} 
+                              className="p-2 hover:bg-stone-50 rounded-full transition-colors"
+                              aria-label="Previous month"
+                            >
+                              <ChevronLeft size={24} aria-hidden="true" />
+                            </button>
+                            <button 
+                              onClick={() => setCurrentMonth(addDays(firstDayCurrentMonth, 32))} 
+                              className="p-2 hover:bg-stone-50 rounded-full transition-colors"
+                              aria-label="Next month"
+                            >
+                              <ChevronRight size={24} aria-hidden="true" />
+                            </button>
                         </div>
                     </div>
                     <div className="grid grid-cols-7 gap-2 text-center text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">
@@ -201,6 +215,8 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                                     key={day.toString()}
                                     disabled={isPast}
                                     onClick={() => setState(s => ({ ...s, selectedDate: day, selectedTime: null }))}
+                                    aria-label={format(day, 'EEEE, MMMM do, yyyy')}
+                                    aria-pressed={isSelected}
                                     className={`
                                         aspect-square rounded-2xl flex items-center justify-center text-sm font-medium transition-all
                                         ${isSelected ? 'bg-stone-900 text-white shadow-lg scale-105' : 'hover:bg-sage-50 text-stone-700'}
@@ -217,11 +233,13 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                   {state.selectedDate && (
                     <div className="bg-stone-50 rounded-3xl p-8 animate-in slide-in-from-top-4 duration-500">
                       <h4 className="font-serif text-2xl text-stone-900 mb-8">Available Times for {format(state.selectedDate, 'MMMM do')}</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="group" aria-label="Available time slots">
                           {TIME_SLOTS.map((slot) => (
                               <button
                                   key={slot.time}
                                   onClick={() => setState(s => ({ ...s, selectedTime: slot.time }))}
+                                  aria-label={`Select ${slot.time}`}
+                                  aria-pressed={state.selectedTime === slot.time}
                                   className={`
                                       py-4 rounded-2xl text-sm font-bold border transition-all
                                       ${state.selectedTime === slot.time 
@@ -262,9 +280,12 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
          
          <div className="bg-white p-10 md:p-14 rounded-3xl border border-stone-100 shadow-xl space-y-8">
             <div className="space-y-2">
-                <label className="text-sm font-bold text-stone-800 uppercase tracking-widest">Full Name</label>
+                <label htmlFor="customer-name" className="text-sm font-bold text-stone-800 uppercase tracking-widest">Full Name</label>
                 <input 
+                    id="customer-name"
                     type="text" 
+                    required
+                    aria-required="true"
                     className="w-full px-6 py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 text-lg"
                     placeholder="Jane Doe"
                     value={state.customerDetails.name}
@@ -273,9 +294,12 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
             </div>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-2">
-                  <label className="text-sm font-bold text-stone-800 uppercase tracking-widest">Email</label>
+                  <label htmlFor="customer-email" className="text-sm font-bold text-stone-800 uppercase tracking-widest">Email</label>
                   <input 
+                      id="customer-email"
                       type="email" 
+                      required
+                      aria-required="true"
                       className="w-full px-6 py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300"
                       placeholder="jane@example.com"
                       value={state.customerDetails.email}
@@ -283,8 +307,9 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                   />
               </div>
               <div className="space-y-2">
-                  <label className="text-sm font-bold text-stone-800 uppercase tracking-widest">Phone</label>
+                  <label htmlFor="customer-phone" className="text-sm font-bold text-stone-800 uppercase tracking-widest">Phone</label>
                   <input 
+                      id="customer-phone"
                       type="tel" 
                       className="w-full px-6 py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300"
                       placeholder="(555) 000-0000"
@@ -294,8 +319,9 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
               </div>
             </div>
             <div className="space-y-2">
-                <label className="text-sm font-bold text-stone-800 uppercase tracking-widest">Notes & Style Goals</label>
+                <label htmlFor="customer-notes" className="text-sm font-bold text-stone-800 uppercase tracking-widest">Notes & Style Goals</label>
                 <textarea 
+                    id="customer-notes"
                     rows={4}
                     className="w-full px-6 py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 resize-none"
                     placeholder="E.g. I need help dressing for a new career path..."
