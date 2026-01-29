@@ -20,14 +20,14 @@ Personal styling and wardrobe consultation services website.
    npm install -g netlify-cli
    ```
 
-3. Set the environment variables in `.env.local`:
+3. Set the environment variables in a `.env` file in the project root (so both the app and Netlify Functions see them when you run `netlify dev`):
    ```
    GEMINI_API_KEY=your_gemini_api_key
    STRIPE_SECRET_KEY=sk_test_...
    VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
    RESEND_API_KEY=re_...
    ```
-   Optional: `RESEND_FROM_EMAIL` (e.g. `Style Forage <hello@yourdomain.com>`) — defaults to Resend's test sender if not set.
+   Optional: `RESEND_FROM_EMAIL` (e.g. `Style Forage <hello@yourdomain.com>`) — use quotes if the value contains spaces. Defaults to Resend's test sender if not set.
 
 4. Run the app with Netlify Dev (handles both frontend and serverless functions):
    ```bash
