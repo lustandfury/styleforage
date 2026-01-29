@@ -1,5 +1,12 @@
+import { createRequire } from 'module';
 import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import { Resend } from 'resend';
+
+// Load .env from project root when running locally (netlify dev does not inject .env into functions)
+const require = createRequire(import.meta.url);
+if (!process.env.RESEND_API_KEY) {
+  require('dotenv').config({ path: require('path').resolve(process.cwd(), '.env') });
+}
 
 const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
   if (event.httpMethod !== 'POST') {
