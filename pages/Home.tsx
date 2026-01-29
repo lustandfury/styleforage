@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Hero } from '../components/sections/Hero';
 import { About } from '../components/sections/About';
 import { Testimonials } from '../components/sections/Testimonials';
-import { Button } from '../components/ui/Button';
 import { Clock, ChevronRight } from 'lucide-react';
 
 const SERVICES = [
@@ -105,9 +104,14 @@ export const Home: React.FC = () => {
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-12 gap-6 md:gap-8 max-w-6xl mx-auto">
             {SERVICES.map((service) => (
-              <article 
+              <article
                 key={service.id}
-                className={`group bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col text-left ${service.id === 'closet-edit' ? 'sm:col-span-2 lg:col-span-8' : 'lg:col-span-4'}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleBookService(service.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBookService(service.id); } }}
+                className={`group bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col text-left cursor-pointer ${service.id === 'closet-edit' ? 'sm:col-span-2 lg:col-span-8' : 'lg:col-span-4'}`}
+                aria-label={`View details for ${service.title}`}
               >
                 <div className="aspect-[4/3] overflow-hidden bg-stone-100 relative">
                     <img 
@@ -130,13 +134,10 @@ export const Home: React.FC = () => {
                           {service.id === 'corporate-workshops' ? 'Custom' : `$${service.price}`}
                         </span>
                     </div>
-                    <Button
-                      size="md"
-                      className="w-full rounded-full"
-                      onClick={() => handleBookService(service.id)}
-                    >
-                      View Service Details
-                    </Button>
+                    <div className="flex items-center gap-1.5 font-medium text-stone-500 group-hover:text-stone-900 transition-colors duration-300">
+                      <span>View Service Details</span>
+                      <ChevronRight size={20} className="flex-shrink-0 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden />
+                    </div>
                 </div>
               </article>
             ))}

@@ -9,8 +9,9 @@ import {
 import { Button } from './ui/Button';
 import { Lock, AlertCircle } from 'lucide-react';
 
-// Load Stripe outside of component to avoid recreating on every render
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+// Only load Stripe when publishable key is set (avoid IntegrationError for empty string)
+const stripePublishableKey = (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '').trim();
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface PaymentFormProps {
   amount: number;
@@ -108,7 +109,13 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
   const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Create PaymentIntent on component mount
+    if (!stripePublishableKey) {
+      setInitError('Stripe is not configured. Add VITE_STRIPE_PUBLISHABLE_KEY to .env.local and restart the dev server.');
+      onError('Stripe not configured');
+      setIsLoading(false);
+      return;
+    }
+
     const createPaymentIntent = async () => {
       try {
         const response = await fetch('/api/create-payment-intent', {
@@ -124,6 +131,9 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
         });
 
         if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('NETLIFY_DEV_REQUIRED');
+          }
           throw new Error('Failed to initialize payment');
         }
 
@@ -131,7 +141,11 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
         setClientSecret(data.clientSecret);
       } catch (error) {
         console.error('Payment initialization error:', error);
-        setInitError('Unable to initialize payment. Please try again.');
+        const message =
+          error instanceof Error && error.message === 'NETLIFY_DEV_REQUIRED'
+            ? "Payment API not available. For local development, run 'netlify dev' instead of 'npm run dev' so the serverless functions are available."
+            : 'Unable to initialize payment. Please try again.';
+        setInitError(message);
         onError('Payment initialization failed');
       } finally {
         setIsLoading(false);
@@ -164,7 +178,7 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
     );
   }
 
-  if (!clientSecret) {
+  if (!clientSecret || !stripePromise) {
     return null;
   }
 
