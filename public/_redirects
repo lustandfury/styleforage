@@ -1,2 +1,5 @@
+# API: proxy to Netlify Functions first (must be before SPA catch-all)
+/api/*  /.netlify/functions/:splat  200
+
 # SPA fallback - redirect all routes to index.html for client-side routing
 /*    /index.html   200

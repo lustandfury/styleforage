@@ -131,7 +131,7 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
         });
 
         if (!response.ok) {
-          if (response.status === 404) {
+          if (response.status === 404 && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
             throw new Error('NETLIFY_DEV_REQUIRED');
           }
           throw new Error('Failed to initialize payment');
@@ -141,10 +141,11 @@ export const StripePaymentForm: React.FC<PaymentFormProps> = ({
         setClientSecret(data.clientSecret);
       } catch (error) {
         console.error('Payment initialization error:', error);
+        const isLocalDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         const message =
-          error instanceof Error && error.message === 'NETLIFY_DEV_REQUIRED'
+          error instanceof Error && error.message === 'NETLIFY_DEV_REQUIRED' && isLocalDev
             ? "Payment API not available. For local development, run 'netlify dev' instead of 'npm run dev' so the serverless functions are available."
-            : 'Unable to initialize payment. Please try again.';
+            : 'Unable to initialize payment. Please try again later.';
         setInitError(message);
         onError('Payment initialization failed');
       } finally {
