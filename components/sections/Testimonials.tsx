@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Quote, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FadeInOnScroll } from '../FadeInOnScroll';
 
 const originalTestimonials = [
   {
@@ -119,23 +120,24 @@ export const Testimonials: React.FC = () => {
   return (
     <section 
       id="testimonials" 
-      className="py-16 md:py-24 bg-white relative overflow-hidden"
+      className="bg-stone-900 text-stone-100 py-20 md:py-32 relative overflow-hidden"
       onMouseEnter={() => setIsUserInteracting(true)}
       onMouseLeave={() => setIsUserInteracting(false)}
       onTouchStart={() => setIsUserInteracting(true)}
     >
+      <FadeInOnScroll>
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="font-serif text-3xl md:text-4xl text-stone-900 mb-3 md:mb-4">Client Love Notes</h2>
-          <div className="h-1 w-20 bg-sage-500 mx-auto rounded-full"></div>
-          <p className="mt-3 md:mt-4 text-stone-500 text-sm md:text-base">Real stories from real wardrobes.</p>
+        <div className="text-center mb-12 md:mb-20">
+          <h2 className="font-serif text-3xl md:text-5xl mb-4 md:mb-6">Client Love Notes</h2>
+          <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full"></div>
+          <p className="mt-3 md:mt-4 text-stone-400 text-sm md:text-base">Real stories from real wardrobes.</p>
         </div>
         
         <div className="relative max-w-4xl mx-auto">
           {/* Navigation Arrows */}
           <button 
             onClick={scrollPrev}
-            className="absolute -left-4 md:-left-16 top-1/2 -translate-y-1/2 z-20 p-2 text-stone-300 hover:text-sage-600 transition-colors hidden sm:block cursor-pointer"
+            className="absolute -left-4 md:-left-16 top-1/2 -translate-y-1/2 z-20 p-2 text-stone-400 hover:text-sage-400 transition-colors hidden sm:block cursor-pointer"
             aria-label="Previous testimonial"
           >
             <ChevronLeft size={40} strokeWidth={1.5} />
@@ -143,7 +145,7 @@ export const Testimonials: React.FC = () => {
           
           <button 
             onClick={scrollNext}
-            className="absolute -right-4 md:-right-16 top-1/2 -translate-y-1/2 z-20 p-2 text-stone-300 hover:text-sage-600 transition-colors hidden sm:block cursor-pointer"
+            className="absolute -right-4 md:-right-16 top-1/2 -translate-y-1/2 z-20 p-2 text-stone-400 hover:text-sage-400 transition-colors hidden sm:block cursor-pointer"
             aria-label="Next testimonial"
           >
             <ChevronRight size={40} strokeWidth={1.5} />
@@ -190,17 +192,27 @@ export const Testimonials: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => scrollTo(idx)}
-                className={`h-1.5 transition-all duration-500 rounded-full cursor-pointer ${realIndex === idx ? 'w-10 bg-sage-500' : 'w-2 bg-stone-200 hover:bg-stone-300'}`}
+                className={`h-1.5 transition-all duration-500 rounded-full cursor-pointer ${realIndex === idx ? 'w-10 bg-sage-500' : 'w-2 bg-stone-600 hover:bg-stone-500'}`}
                 aria-label={`Go to testimonial ${idx + 1}`}
               />
             ))}
           </div>
         </div>
       </div>
+      </FadeInOnScroll>
+      
+      {/* Quilted leather pattern background */}
+      <div 
+        className="absolute inset-0 opacity-[0.15] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%23525252' stroke-width='0.5'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z'/%3E%3Ccircle cx='30' cy='30' r='1' fill='%23525252'/%3E%3Ccircle cx='0' cy='30' r='1' fill='%23525252'/%3E%3Ccircle cx='60' cy='30' r='1' fill='%23525252'/%3E%3Ccircle cx='30' cy='0' r='1' fill='%23525252'/%3E%3Ccircle cx='30' cy='60' r='1' fill='%23525252'/%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '60px 60px'
+        }}
+      />
       
       {/* Aesthetic background elements */}
-      <div className="absolute -left-20 top-1/2 w-64 h-64 bg-sage-50 rounded-full blur-3xl opacity-30 -z-10"></div>
-      <div className="absolute -right-20 bottom-0 w-80 h-80 bg-stone-100 rounded-full blur-3xl opacity-50 -z-10"></div>
+      <div className="absolute -left-20 top-1/2 w-64 h-64 bg-sage-500/10 rounded-full blur-3xl opacity-30 -z-10"></div>
+      <div className="absolute -right-20 bottom-0 w-80 h-80 bg-stone-800 rounded-full blur-3xl opacity-50 -z-10"></div>
     </section>
   );
 };

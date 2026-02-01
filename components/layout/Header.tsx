@@ -2,32 +2,58 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+const NAV_ITEMS = [
+  { id: 'about', label: 'About' },
+  { id: 'services', label: 'Services' },
+  { id: 'testimonials', label: 'Testimonials' },
+] as const;
+
+const SCROLL_THRESHOLD = 100;
+const MOUSE_TOP_ZONE = 120;
+
 export const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+  const [isMouseNearTop, setIsMouseNearTop] = useState(false);
+  const [activeNav, setActiveNav] = useState<string | null>(null);
+
+  const showLogoAndCta = !isScrolledDown || isMouseNearTop;
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
-      // Show header if at the very top, or scrolling up
-      // Hide header if scrolling down and past a small threshold
-      if (currentScrollY < 10) {
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
-        setIsVisible(false);
-      } else if (currentScrollY < lastScrollY) {
-        setIsVisible(true);
-      }
-      
-      setLastScrollY(currentScrollY);
+
+      if (currentScrollY > 0) setHasScrolledOnce(true);
+      setIsScrolledDown(currentScrollY > SCROLL_THRESHOLD);
+
+      const viewportMid = currentScrollY + window.innerHeight * 0.35;
+      const getTop = (id: string) => {
+        const el = document.getElementById(id);
+        return el ? el.getBoundingClientRect().top + window.scrollY : Infinity;
+      };
+      const aboutTop = getTop('about');
+      const servicesTop = getTop('services');
+      const testimonialsTop = getTop('testimonials');
+      if (viewportMid < aboutTop) setActiveNav(null);
+      else if (viewportMid < servicesTop) setActiveNav('about');
+      else if (viewportMid < testimonialsTop) setActiveNav('services');
+      else setActiveNav('testimonials');
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setIsMouseNearTop(e.clientY < MOUSE_TOP_ZONE);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    handleScroll();
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
   const scrollToAnchor = (id: string) => {
     if (location.pathname !== '/') {
@@ -42,56 +68,98 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      {/* Skip Navigation Link */}
-      <a 
-        href="#main-content" 
+      <a
+        href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-stone-900 focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-500"
       >
         Skip to main content
       </a>
-      <header 
-        className={`fixed top-0 z-40 w-full backdrop-blur-md bg-white/95 border-b border-stone-100 shadow-sm transition-transform duration-500 ease-in-out ${
-          isVisible ? 'translate-y-0' : '-translate-y-full'
-        }`}
-      >
-        <div className="container mx-auto px-4 h-20 grid grid-cols-2 md:grid-cols-3 items-center">
-        {/* Logo */}
-        <div className="justify-self-start">
-          <Link to="/" className="font-serif text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors cursor-pointer">
-            Style Forage
-          </Link>
-        </div>
+      <header className="fixed top-0 z-40 w-full bg-transparent border-b border-transparent transition-all duration-300">
+        <div className="w-full px-4 md:px-12 lg:px-20 h-20 grid grid-cols-2 md:grid-cols-3 items-center">
+          <div
+            className={`justify-self-start transition-opacity duration-300 ${
+              showLogoAndCta ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+          >
+            <Link
+              to="/"
+              className="font-serif text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors cursor-pointer"
+            >
+              Style Forage
+            </Link>
+          </div>
 
-        {/* Centered Navigation */}
-        <nav className="hidden md:flex gap-10 text-sm font-semibold text-stone-500 justify-self-center uppercase tracking-widest">
-          <button 
-            onClick={() => scrollToAnchor('about')} 
-            className="hover:text-sage-600 transition-colors py-2 cursor-pointer"
-          >
-            About
-          </button>
-          <button 
-            onClick={() => scrollToAnchor('services')} 
-            className="hover:text-sage-600 transition-colors py-2 cursor-pointer"
-          >
-            Services
-          </button>
-          <button 
-            onClick={() => scrollToAnchor('testimonials')} 
-            className="hover:text-sage-600 transition-colors py-2 cursor-pointer"
-          >
-            Testimonials
-          </button>
-        </nav>
+          {/* Pill-style nav: flat by default, liquid glass after first scroll */}
+          <nav className="hidden md:flex justify-self-center">
+            <div
+              className={`nav-pill inline-flex items-center gap-0.5 p-1 rounded-full ${
+                hasScrolledOnce ? 'nav-pill-glass' : 'nav-pill-flat'
+              }`}
+            >
+              {NAV_ITEMS.map(({ id, label }) => {
+                const isActive = activeNav === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => scrollToAnchor(id)}
+                    className={`relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? 'bg-white text-stone-900 shadow-sm'
+                        : 'text-stone-600 hover:text-stone-800'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
 
-        {/* Action Button */}
-        <div className="justify-self-end">
-          <Button size="md" onClick={() => scrollToAnchor('services')} className="px-6 rounded-full">
-            Book Now
-          </Button>
-        </div>
+          <div
+            className={`justify-self-end transition-opacity duration-300 ${
+              showLogoAndCta ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+          >
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => scrollToAnchor('services')}
+              className="px-6 rounded-full"
+            >
+              Book Now
+            </Button>
+          </div>
         </div>
       </header>
+
+      {/* Mobile: bottom nav bar (native-app style) */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden justify-center px-4 pb-[env(safe-area-inset-bottom)] pt-3"
+        aria-label="Main navigation"
+      >
+        <div
+          className={`nav-pill inline-flex items-center gap-0.5 p-1 rounded-full ${
+            hasScrolledOnce ? 'nav-pill-glass' : 'nav-pill-flat'
+          }`}
+        >
+          {NAV_ITEMS.map(({ id, label }) => {
+            const isActive = activeNav === id;
+            return (
+              <button
+                key={id}
+                onClick={() => scrollToAnchor(id)}
+                className={`relative px-4 py-2.5 text-sm font-medium rounded-full transition-all duration-200 cursor-pointer touch-manipulation ${
+                  isActive
+                    ? 'bg-white text-stone-900 shadow-sm'
+                    : 'text-stone-600 active:text-stone-800'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </>
   );
 };

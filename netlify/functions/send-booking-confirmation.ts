@@ -1,14 +1,18 @@
-import { createRequire } from 'module';
 import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import { Resend } from 'resend';
 
-// Load .env from project root when running locally (netlify dev does not inject .env into functions)
-const require = createRequire(import.meta.url);
-if (!process.env.RESEND_API_KEY) {
-  require('dotenv').config({ path: require('path').resolve(process.cwd(), '.env') });
-}
-
 const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+  // Load .env from project root when running locally (netlify dev does not inject .env into functions)
+  if (!process.env.RESEND_API_KEY) {
+    try {
+      const path = await import('node:path');
+      const dotenv = await import('dotenv');
+      dotenv.config({ path: path.default.resolve(process.cwd(), '.env') });
+    } catch {
+      // Bundled/runtime may not resolve .env; production should set RESEND_API_KEY in Netlify UI
+    }
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -30,9 +34,11 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     };
   }
 
+  const ROSLYN_EMAIL = 'roslyn@styleforage.com';
+
   try {
     const body = JSON.parse(event.body || '{}');
-    const { customerName, customerEmail, service, date, times } = body;
+    const { customerName, customerEmail, customerPhone, notes, service, date, times } = body;
 
     if (!customerEmail || typeof customerEmail !== 'string') {
       return {
@@ -45,6 +51,8 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 
     const timesDisplay = Array.isArray(times) ? times.join(', ') : (times || '');
     const dateFormatted = date || '';
+    const phoneDisplay = customerPhone || '—';
+    const notesDisplay = notes || '—';
 
     const html = `
 <!DOCTYPE html>
@@ -121,6 +129,65 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
         }),
       };
     }
+
+    // Send onboarding details to Roslyn
+    const roslynHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Booking</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #fafaf9; color: #1c1917;">
+  <div style="max-width: 560px; margin: 0 auto; padding: 40px 24px;">
+    <div style="background: white; border-radius: 24px; padding: 40px; border: 1px solid #f5f5f4; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+      <h1 style="margin: 0 0 24px; font-size: 22px; font-weight: 600; color: #1c1917; font-family: Georgia, serif;">New booking request</h1>
+      <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #44403c;">Here are the details from the onboarding flow:</p>
+      <div style="background: #fafaf9; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #f5f5f4;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Name</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${customerName || '—'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Email</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${customerEmail}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Phone</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${phoneDisplay}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Service</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${service || '—'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Date</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${dateFormatted}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Times</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${timesDisplay || '—'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em; vertical-align: top;">Notes</td>
+            <td style="padding: 8px 0; font-size: 15px; color: #1c1917; text-align: right;">${notesDisplay}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+    `.trim();
+
+    await resend.emails.send({
+      from: fromEmail,
+      to: ROSLYN_EMAIL,
+      subject: `New booking: ${service || 'Styling Session'} – ${customerName || 'Guest'}`,
+      html: roslynHtml,
+    });
 
     return {
       statusCode: 200,

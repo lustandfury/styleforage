@@ -1,7 +1,6 @@
 
 import { Service, BookingState, TimeSlot } from '../types';
 import { Button } from './ui/Button';
-import { StripePaymentForm } from './StripePaymentForm';
 import React, { useState, useEffect } from 'react';
 import { format, addDays, isSameDay, getDay } from 'date-fns';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock } from 'lucide-react';
@@ -483,6 +482,8 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                   <input 
                       id="customer-phone"
                       type="tel" 
+                      required
+                      aria-required="true"
                       className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 min-h-[48px]"
                       placeholder="(555) 000-0000"
                       value={state.customerDetails.phone}
@@ -510,81 +511,31 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
              <Button 
                 size="lg"
                 className="w-full sm:w-auto px-8 sm:px-12 rounded-full min-h-[48px] touch-manipulation"
-                disabled={!state.customerDetails.name || !state.customerDetails.email}
-                onClick={() => setState(s => ({ ...s, step: 'payment' }))}
+                disabled={!state.customerDetails.name.trim() || !state.customerDetails.email.trim() || !state.customerDetails.phone.trim()}
+                onClick={async () => {
+                  try {
+                    await fetch('/api/send-booking-confirmation', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        customerName: state.customerDetails.name,
+                        customerEmail: state.customerDetails.email,
+                        customerPhone: state.customerDetails.phone,
+                        notes: state.customerDetails.notes,
+                        service: state.selectedService?.title,
+                        date: state.selectedDate ? format(state.selectedDate, 'MMMM d, yyyy') : '',
+                        times: state.selectedTimes,
+                      }),
+                    });
+                  } catch (e) {
+                    console.error('Booking submission failed:', e);
+                  }
+                  setState(s => ({ ...s, step: 'confirmation' }));
+                }}
              >
-                Continue to Payment
+                Complete Booking
              </Button>
          </div>
-    </div>
-  );
-
-  const renderPayment = () => (
-    <div className="animate-fade-in max-w-xl mx-auto py-8 sm:py-12 md:py-20 px-1">
-        <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-serif text-stone-900 mb-3 md:mb-4">Secure Checkout</h3>
-            <p className="text-stone-500 text-sm sm:text-base">Confirm your session and complete payment.</p>
-        </div>
-        
-        <div className="bg-stone-50 p-4 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl mb-8 sm:mb-10 md:mb-12 border border-stone-100">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-stone-200">
-                <div className="min-w-0">
-                  <h4 className="font-serif text-lg sm:text-xl text-stone-900 mb-1">{state.selectedService?.title}</h4>
-                  <div className="text-stone-500 text-sm">
-                    {state.selectedDate && format(state.selectedDate, 'EEEE, MMMM do')}
-                  </div>
-                  <div className="text-stone-500 text-sm mt-1">
-                    {state.selectedTimes.length === 1 
-                      ? `@ ${state.selectedTimes[0]}`
-                      : <>Available: {state.selectedTimes.join(', ')}</>
-                    }
-                  </div>
-                </div>
-                <div className="font-serif text-xl sm:text-2xl font-bold text-stone-900 flex-shrink-0">
-                  ${state.selectedService?.price}
-                </div>
-            </div>
-            <div className="flex justify-between font-bold text-base sm:text-lg text-stone-900 uppercase tracking-widest">
-                <span>Total Due</span>
-                <span>${state.selectedService?.price}</span>
-            </div>
-        </div>
-
-        <StripePaymentForm
-          amount={state.selectedService?.price || 0}
-          onSuccess={async () => {
-            try {
-              await fetch('/api/send-booking-confirmation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  customerName: state.customerDetails.name,
-                  customerEmail: state.customerDetails.email,
-                  service: state.selectedService?.title,
-                  date: state.selectedDate ? format(state.selectedDate, 'MMMM d, yyyy') : '',
-                  times: state.selectedTimes,
-                }),
-              });
-            } catch (e) {
-              console.error('Confirmation email failed:', e);
-            }
-            setState(s => ({ ...s, step: 'confirmation' }));
-          }}
-          onError={(error) => console.error('Payment error:', error)}
-          metadata={{
-            service: state.selectedService?.title,
-            date: state.selectedDate ? format(state.selectedDate, 'yyyy-MM-dd') : '',
-            times: state.selectedTimes.join(', '),
-            customerName: state.customerDetails.name,
-            customerEmail: state.customerDetails.email,
-          }}
-        />
-
-        <div className="mt-4 sm:mt-6">
-           <Button variant="ghost" className="w-full min-h-[48px] touch-manipulation" onClick={() => setState(s => ({ ...s, step: 'details' }))}>
-              Go Back
-           </Button>
-        </div>
     </div>
   );
 
@@ -623,10 +574,10 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
   return (
     <div className="max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden">
         {state.step !== 'confirmation' && state.step !== 'service' && (
-            <div className="flex justify-center mt-6 sm:mt-8 md:mt-12 px-2" role="progressbar" aria-valuenow={['date', 'details', 'payment'].indexOf(state.step) + 1} aria-valuemin={1} aria-valuemax={3} aria-label="Booking progress">
+            <div className="flex justify-center mt-6 sm:mt-8 md:mt-12 px-2" role="progressbar" aria-valuenow={['date', 'details'].indexOf(state.step) + 1} aria-valuemin={1} aria-valuemax={2} aria-label="Booking progress">
                 <div className="flex items-center gap-3 sm:gap-4">
-                    {['Date', 'Details', 'Payment'].map((stepName, idx) => {
-                        const steps = ['date', 'details', 'payment'];
+                    {['Date', 'Details'].map((stepName, idx) => {
+                        const steps = ['date', 'details'];
                         const currentIdx = steps.indexOf(state.step);
                         const isActive = idx === currentIdx;
                         const isCompleted = idx < currentIdx;
@@ -637,7 +588,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                                     w-3.5 h-3.5 sm:w-3 sm:h-3 rounded-full transition-all duration-500 flex-shrink-0
                                     ${isActive ? 'bg-sage-500 ring-4 ring-sage-500/20 scale-125' : isCompleted ? 'bg-stone-900' : 'bg-stone-200'}
                                 `} aria-hidden="true" />
-                                {idx < 2 && <div className={`w-6 sm:w-8 md:w-16 h-0.5 mx-1 sm:mx-2 flex-shrink-0 ${isCompleted ? 'bg-stone-900' : 'bg-stone-100'}`} aria-hidden="true" />}
+                                {idx < 1 && <div className={`w-6 sm:w-8 md:w-16 h-0.5 mx-1 sm:mx-2 flex-shrink-0 ${isCompleted ? 'bg-stone-900' : 'bg-stone-100'}`} aria-hidden="true" />}
                             </div>
                         );
                     })}
@@ -649,7 +600,6 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
             {state.step === 'service' && renderServices()}
             {state.step === 'date' && renderCalendar()}
             {state.step === 'details' && renderDetails()}
-            {state.step === 'payment' && renderPayment()}
             {state.step === 'confirmation' && renderConfirmation()}
         </div>
     </div>

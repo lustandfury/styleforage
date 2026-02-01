@@ -1,0 +1,118 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, ChevronRight } from 'lucide-react';
+import { FadeInOnScroll } from '../FadeInOnScroll';
+
+const SERVICES = [
+  {
+    id: 'closet-edit',
+    title: 'The Closet Edit',
+    description: 'A thoughtful review of your clothes, focused on fit, comfort, and relevance.',
+    price: 250,
+    durationMin: 150,
+    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'full-style-reset',
+    title: 'The Full Style Reset Package',
+    description: 'For clients ready for a meaningful refresh and a wardrobe that feels aligned.',
+    price: 600,
+    durationMin: 300,
+    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'personal-shop',
+    title: 'Personal Shop',
+    description: "Intentional shopping, guided by fit, comfort, and what's current.",
+    price: 350,
+    durationMin: 180,
+    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'style-refresh',
+    title: 'Style Refresh',
+    description: 'A focused update for a season, event, trip, or life change.',
+    price: 300,
+    durationMin: 120,
+    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'corporate-workshops',
+    title: 'Corporate Style Workshops',
+    description: 'Practical style talks for teams to show up with confidence and consistency.',
+    price: 500,
+    durationMin: 60,
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80'
+  }
+];
+
+export const Services: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleBookService = (serviceId: string) => {
+    navigate(`/book/${serviceId}`);
+  };
+
+  return (
+    <section id="services" className="py-20 md:py-32 bg-stone-50 scroll-mt-20">
+      <FadeInOnScroll>
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12 md:mb-20">
+          <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-4 md:mb-6">Curated Styling Services</h2>
+          <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full mb-4 md:mb-6"></div>
+          <p className="text-stone-600 text-base md:text-lg max-w-xl mx-auto">
+            Choose a service below to book your session. Click <strong>View Service Details</strong> to select and continue to the booking flow.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-12 gap-6 md:gap-8 max-w-6xl mx-auto">
+          {SERVICES.map((service) => {
+            const isFullWidth = service.id === 'closet-edit' || service.id === 'corporate-workshops';
+            const colClass = isFullWidth ? 'sm:col-span-2 lg:col-span-12' : 'sm:col-span-2 lg:col-span-4';
+            const imageAspectClass = isFullWidth ? 'aspect-[4/3] lg:aspect-[3/1]' : 'aspect-[4/3]';
+            return (
+              <article
+                id={`service-${service.id}`}
+                key={service.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleBookService(service.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBookService(service.id); } }}
+                className={`group bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col text-left cursor-pointer ${colClass}`}
+                aria-label={`View details for ${service.title}`}
+              >
+                <div className={`${imageAspectClass} overflow-hidden bg-stone-100 relative`}>
+                  <img 
+                    src={service.image} 
+                    alt={service.title} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition-colors" />
+                </div>
+                <div className="p-6 md:p-8 flex flex-col flex-grow">
+                  <h3 className="font-serif font-bold text-xl md:text-2xl text-stone-900 mb-3 md:mb-4 group-hover:text-sage-700 transition-colors">{service.title}</h3>
+                  <p className="text-stone-500 text-sm md:text-base mb-6 md:mb-8 leading-relaxed flex-grow">{service.description}</p>
+                  <div className="pt-6 border-t border-stone-100 flex items-center justify-between mb-6">
+                    <div className="flex items-center text-stone-400 font-medium text-sm">
+                      <Clock size={16} className="mr-2" aria-hidden="true" />
+                      <span>{service.durationMin / 60}h</span>
+                    </div>
+                    <span className="font-serif font-bold text-xl md:text-2xl text-stone-900">
+                      {service.id === 'corporate-workshops' ? 'Custom' : `$${service.price}`}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-medium text-stone-500 group-hover:text-stone-900 transition-colors duration-300">
+                    <span>View Service Details</span>
+                    <ChevronRight size={20} className="flex-shrink-0 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden />
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+      </FadeInOnScroll>
+    </section>
+  );
+};

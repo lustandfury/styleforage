@@ -1,23 +1,58 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Instagram } from 'iconoir-react';
 import { Button } from '../ui/Button';
 import { Link } from 'react-router-dom';
+import { FadeInOnScroll } from '../FadeInOnScroll';
 
 export const About: React.FC = () => {
+  const [isHoveringInstagram, setIsHoveringInstagram] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Preload video after page loads
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.load();
+    }
+  }, []);
+
+  // Play/pause video based on hover state
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && isVideoReady) {
+      if (isHoveringInstagram) {
+        video.currentTime = 0;
+        video.play();
+      } else {
+        video.pause();
+      }
+    }
+  }, [isHoveringInstagram, isVideoReady]);
+
   return (
     <section id="about" className="py-16 md:py-24 bg-white relative overflow-hidden">
        {/* Background Decoration */}
-       <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-sage-50 rounded-full blur-3xl opacity-50 -z-10"></div>
+       <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-sage-50 rounded-full blur-3xl -z-10"></div>
        
+       <FadeInOnScroll>
        <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
              <div className="order-2 md:order-1">
                 <div className="mb-4 md:mb-6 text-sage-600 font-medium uppercase tracking-wider text-sm">About the Stylist</div>
                 <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-stone-900 leading-tight mb-6 md:mb-8">
-                  Effortless style for <br/> every body & every budget.
+                Roslyn Costanzo
                 </h2>
-                <div className="pl-4 md:pl-6 border-l-2 border-sage-200">
-                   <h3 className="font-serif text-xl font-bold text-stone-900 mb-3 md:mb-4">Roslyn Costanzo</h3>
+                <div className="pl-4 md:pl-6 relative">
+                   {/* Left border with gradient animation on hover */}
+                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-stone-900" />
+                   <div 
+                     className={`absolute left-0 bottom-0 w-0.5 transition-all duration-500 ease-out ${
+                       isHoveringInstagram ? 'h-full' : 'h-0'
+                     }`}
+                     style={{ background: 'linear-gradient(to top, #FFDC80, #F77737, #E1306C, #C13584, #833AB4)' }}
+                   />
                    <div className="space-y-4 md:space-y-5 text-stone-600 text-sm md:text-base leading-relaxed font-light">
                       <p>
                         Hi, I'm Roz and I've been obsessed with fashion and shopping since I got my first pay cheque in 1992—which I immediately spent at Smart Set. I have also worked as a style editor at two national lifestyle magazines, and most recently, as a wardrobe consultant, helping people like you, find and refine their personal style.
@@ -27,37 +62,140 @@ export const About: React.FC = () => {
                       </p>
                    </div>
                    <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4">
-                      <Link to="/services">
-                        <Button className="w-full sm:w-auto">Book a Session</Button>
-                      </Link>
                       <a 
                         href="https://www.instagram.com/styleforage/" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center px-4 py-2 text-stone-700 hover:text-stone-900 font-medium transition-colors"
+                        className="group inline-flex items-center justify-center py-2 font-medium transition-colors"
+                        onMouseEnter={() => setIsHoveringInstagram(true)}
+                        onMouseLeave={() => setIsHoveringInstagram(false)}
                       >
-                        Follow on Instagram <ArrowRight size={16} className="ml-2"/>
+                        <span className="relative mr-2 w-5 h-5 flex-shrink-0">
+                          {/* Outlined black icon (default) */}
+                          <Instagram 
+                            className="absolute inset-0 w-5 h-5 text-stone-700 transition-opacity duration-300 group-hover:opacity-0" 
+                            strokeWidth={1.5}
+                          />
+                          {/* Gradient colored icon (on hover) */}
+                          <svg 
+                            className="absolute inset-0 w-5 h-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                            viewBox="0 0 24 24" 
+                            fill="none"
+                          >
+                            <defs>
+                              <linearGradient id="instagram-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#FFDC80" />
+                                <stop offset="25%" stopColor="#F77737" />
+                                <stop offset="50%" stopColor="#E1306C" />
+                                <stop offset="75%" stopColor="#C13584" />
+                                <stop offset="100%" stopColor="#833AB4" />
+                              </linearGradient>
+                              <linearGradient id="instagram-gradient-text" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#FFDC80" />
+                                <stop offset="25%" stopColor="#F77737" />
+                                <stop offset="50%" stopColor="#E1306C" />
+                                <stop offset="75%" stopColor="#C13584" />
+                                <stop offset="100%" stopColor="#833AB4" />
+                              </linearGradient>
+                            </defs>
+                            <path 
+                              d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" 
+                              stroke="url(#instagram-gradient)" 
+                              strokeWidth="1.5" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            />
+                            <path 
+                              d="M3 16V8C3 5.23858 5.23858 3 8 3H16C18.7614 3 21 5.23858 21 8V16C21 18.7614 18.7614 21 16 21H8C5.23858 21 3 18.7614 3 16Z" 
+                              stroke="url(#instagram-gradient)" 
+                              strokeWidth="1.5"
+                            />
+                            <path 
+                              d="M17.5 6.51L17.51 6.49889" 
+                              stroke="url(#instagram-gradient)" 
+                              strokeWidth="1.5" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        {/* Text with gradient on hover */}
+                        <span className="relative">
+                          <span className="text-stone-700 transition-opacity duration-300 group-hover:opacity-0">
+                            Follow on Instagram
+                          </span>
+                          <span 
+                            className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-clip-text text-transparent"
+                            style={{ backgroundImage: 'linear-gradient(to right, #FFDC80, #F77737, #E1306C, #C13584, #833AB4)' }}
+                          >
+                            Follow on Instagram
+                          </span>
+                        </span>
+                        {/* Arrow with gradient on hover */}
+                        <span className="relative ml-2 w-4 h-4 flex-shrink-0">
+                          <ArrowRight size={16} className="absolute inset-0 text-stone-700 transition-all duration-300 group-hover:opacity-0 group-hover:translate-x-1"/>
+                          <svg 
+                            className="absolute inset-0 w-4 h-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1"
+                            viewBox="0 0 24 24" 
+                            fill="none"
+                            stroke="url(#instagram-gradient-text)"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                          </svg>
+                        </span>
                       </a>
                    </div>
                 </div>
              </div>
-             <div className="order-1 md:order-2 relative">
-                <div className="aspect-[4/5] rounded-none md:rounded-lg overflow-hidden relative z-10 shadow-2xl">
-                  <img 
-                    src="roz.png" 
-                    onError={(e) => { e.currentTarget.src = "/images/Roz-closet.avif" }}
-                    alt="Roslyn Costanzo" 
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    width="800"
-                    height="1000"
+             <div className="order-1 md:order-2 flex justify-center">
+                {/* Wrapper for image and border - relative positioning context */}
+                <div className="relative h-[90vh] aspect-[9/16]">
+                  {/* Decorative Frame - absolutely positioned relative to wrapper */}
+                  <div 
+                    className={`absolute top-4 left-4 w-full h-full rounded-2xl md:rounded-3xl hidden md:block transition-all duration-500 ${
+                      isHoveringInstagram ? '' : 'border-2 border-stone-900'
+                    }`}
+                    style={isHoveringInstagram ? { 
+                      background: 'linear-gradient(to bottom, #833AB4, #C13584, #E1306C, #F77737, #FFDC80)'
+                    } : {}}
                   />
+                  
+                  {/* Image container */}
+                  <div className="relative z-10 w-full h-full rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl bg-stone-100">
+                    {/* Video - preloaded and always in DOM, visibility toggled */}
+                    <video 
+                      ref={videoRef}
+                      src="/images/gallary/roz-in-capris.mp4"
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                      onCanPlayThrough={() => setIsVideoReady(true)}
+                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                        isHoveringInstagram && isVideoReady ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    {/* Image - always visible underneath */}
+                    <img 
+                      src="roz.png" 
+                      onError={(e) => { e.currentTarget.src = "/images/Roz-closet.avif" }}
+                      alt="Roslyn Costanzo" 
+                      className={`w-full h-full object-cover transition-opacity duration-300 ${
+                        isHoveringInstagram && isVideoReady ? 'opacity-0' : 'opacity-100'
+                      }`}
+                      loading="lazy"
+                      width="800"
+                      height="1000"
+                    />
+                  </div>
                 </div>
-                {/* Decorative Frame */}
-                <div className="absolute -bottom-6 -right-6 w-full h-full border-2 border-sage-200 rounded-lg -z-0 hidden md:block"></div>
              </div>
           </div>
        </div>
+       </FadeInOnScroll>
     </section>
   );
 };

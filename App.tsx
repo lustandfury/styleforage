@@ -9,16 +9,6 @@ const Home = lazy(() => import('./pages/Home').then(module => ({ default: module
 const BookingPage = lazy(() => import('./pages/BookingPage').then(module => ({ default: module.BookingPage })));
 const AiStylist = lazy(() => import('./components/AiStylist').then(module => ({ default: module.AiStylist })));
 
-// Loading fallback component
-const PageLoader = () => (
-  <div className="min-h-[60vh] flex items-center justify-center">
-    <div className="text-center">
-      <div className="w-12 h-12 border-4 border-sage-200 border-t-sage-500 rounded-full animate-spin mx-auto mb-4"></div>
-      <p className="text-stone-500 text-sm">Loading...</p>
-    </div>
-  </div>
-);
-
 const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
   
@@ -45,13 +35,19 @@ const AppLayout = () => {
   
   // Check if we're on a booking page - hide nav for focused checkout experience
   const isBookingFlow = location.pathname.startsWith('/book/');
+  // Home page has hero that extends behind the header, so no padding needed
+  const isHomePage = location.pathname === '/';
   
   return (
     <div className="min-h-screen flex flex-col font-sans text-stone-900">
       {!isBookingFlow && <Header />}
-      {/* pt-20 added to offset the fixed header height, removed on booking pages */}
-      <main id="main-content" className={`flex-1 ${!isBookingFlow ? 'pt-20' : ''}`} tabIndex={-1}>
-        <Suspense fallback={<PageLoader />}>
+      {/* pt-20 added to offset the fixed header height, except on home page where hero overlays header */}
+      <main
+        id="main-content"
+        className={`flex-1 ${!isBookingFlow && !isHomePage ? 'pt-20' : ''} ${!isBookingFlow ? 'pb-24 md:pb-0' : ''}`}
+        tabIndex={-1}
+      >
+        <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/book/:serviceId" element={<BookingPage />} />
