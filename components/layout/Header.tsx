@@ -148,9 +148,9 @@ export const Header: React.FC = () => {
         </div>
       </header>
 
-      {/* Mobile: bottom nav bar (native-app style) */}
+      {/* Mobile: bottom nav bar (native-app style), 20px from bottom */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden justify-center px-4 pb-[env(safe-area-inset-bottom)] pt-3"
+        className="fixed bottom-2 left-0 right-0 z-40 flex md:hidden justify-center px-4 pt-3 pb-[max(20px,env(safe-area-inset-bottom))]"
         aria-label="Main navigation"
       >
         <div

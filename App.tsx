@@ -10,6 +10,9 @@ const Contact = lazy(() => import('./pages/Contact').then(module => ({ default: 
 const BookingPage = lazy(() => import('./pages/BookingPage').then(module => ({ default: module.BookingPage })));
 const AiStylist = lazy(() => import('./components/AiStylist').then(module => ({ default: module.AiStylist })));
 
+/** Set to true to show the AI Stylist chat on non-booking pages */
+const SHOW_AI_CHAT = false;
+
 const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
   
@@ -57,7 +60,7 @@ const AppLayout = () => {
         </Suspense>
       </main>
       {!isBookingFlow && <Footer />}
-      {!isBookingFlow && (
+      {SHOW_AI_CHAT && !isBookingFlow && (
         <Suspense fallback={null}>
           <AiStylist />
         </Suspense>
