@@ -2,8 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 
 interface FadeInOnScrollProps {
   children: React.ReactNode;
-  /** Optional delay in ms before animation starts (e.g. for stagger) */
-  delay?: number;
   /** Root margin for Intersection Observer (e.g. "0px 0px -40px 0px" to trigger slightly before in view) */
   rootMargin?: string;
   /** Threshold 0–1 for how much of the element must be visible */
@@ -17,7 +15,6 @@ interface FadeInOnScrollProps {
  */
 export const FadeInOnScroll: React.FC<FadeInOnScrollProps> = ({
   children,
-  delay = 0,
   rootMargin = '0px 0px -24px 0px',
   threshold = 0.1,
   className = '',
@@ -29,18 +26,12 @@ export const FadeInOnScroll: React.FC<FadeInOnScrollProps> = ({
     const el = ref.current;
     if (!el) return;
 
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
         if (!entry?.isIntersecting) return;
         observer.disconnect();
-        if (delay > 0) {
-          timeoutId = setTimeout(() => setIsVisible(true), delay);
-        } else {
-          setIsVisible(true);
-        }
+        setIsVisible(true);
       },
       { rootMargin, threshold }
     );
@@ -48,9 +39,8 @@ export const FadeInOnScroll: React.FC<FadeInOnScrollProps> = ({
     observer.observe(el);
     return () => {
       observer.disconnect();
-      if (timeoutId != null) clearTimeout(timeoutId);
     };
-  }, [rootMargin, threshold, delay]);
+  }, [rootMargin, threshold]);
 
   const visibleClass = isVisible ? 'is-visible' : '';
   const combinedClass = `scroll-fade-in ${visibleClass} ${className}`.trim();
