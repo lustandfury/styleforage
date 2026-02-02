@@ -1,12 +1,19 @@
 
 import { useNavigate } from 'react-router-dom';
-import { Service, BookingState, TimeSlot } from '../types';
+import { Service, ServiceVariant, BookingState, TimeSlot } from '../types';
 import { Button } from './ui/Button';
 import { FirstBookingSale, SALE_OFFER_LABEL } from './FirstBookingSale';
 import React, { useState, useEffect, useCallback } from 'react';
 import { format, addDays, isSameDay, getDay } from 'date-fns';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Wand2 } from 'lucide-react';
 import { SERVICES } from '../data/services';
+
+/** Resolve display/charge price from service and optional variant (Online vs In-person). */
+function getEffectivePrice(service: Service | null, variant?: ServiceVariant): number | null {
+  if (!service) return null;
+  if (service.priceVariants && variant) return service.priceVariants[variant];
+  return service.price;
+}
 
 const TIME_SLOTS: TimeSlot[] = [
   { time: '8:00AM', available: true },
@@ -28,9 +35,11 @@ interface BookingWizardProps {
 
 export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }) => {
   const navigate = useNavigate();
+  const initialService = initialServiceId ? SERVICES.find(s => s.id === initialServiceId) || null : null;
   const [state, setState] = useState<BookingState>({
     step: initialServiceId ? 'date' : 'service',
-    selectedService: initialServiceId ? SERVICES.find(s => s.id === initialServiceId) || null : null,
+    selectedService: initialService,
+    selectedVariant: initialService?.priceVariants ? 'online' : undefined,
     selectedDate: null,
     selectedTimes: [],
     customerDetails: { name: '', email: '', phone: '', notes: '' }
@@ -60,7 +69,12 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
     if (initialServiceId) {
       const service = SERVICES.find(s => s.id === initialServiceId);
       if (service) {
-        setState(s => ({ ...s, step: 'date', selectedService: service }));
+        setState(s => ({
+          ...s,
+          step: 'date',
+          selectedService: service,
+          selectedVariant: service.priceVariants ? 'online' : undefined,
+        }));
       }
     }
   }, [initialServiceId]);
@@ -79,7 +93,12 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
             key={service.id}
             type="button"
             className="w-full bg-white rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border border-stone-100 shadow-sm hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 touch-manipulation active:scale-[0.99]"
-            onClick={() => setState(s => ({ ...s, selectedService: service, step: 'date' }))}
+            onClick={() => setState(s => ({
+              ...s,
+              selectedService: service,
+              selectedVariant: service.priceVariants ? 'online' : undefined,
+              step: 'date'
+            }))}
             onMouseEnter={() => setHoveredServiceId(service.id)}
             onMouseLeave={() => setHoveredServiceId(null)}
             onFocus={() => setHoveredServiceId(service.id)}
@@ -150,14 +169,36 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                             <span className="font-serif font-bold text-stone-900 text-base sm:text-lg shrink-0">
                               {discountedPrice != null ? (
                                 <>
-                                  <span className="text-stone-400 line-through font-normal mr-1.5">${state.selectedService?.price}</span>
+                                  <span className="text-stone-400 line-through font-normal mr-1.5">${effectivePrice}</span>
                                   <span className="text-red-500 font-semibold">${discountedPrice}</span>
                                 </>
                               ) : (
-                                state.selectedService?.id === 'corporate-workshops' ? 'Custom' : `$${state.selectedService?.price}`
+                                isCorporate ? 'Custom' : (effectivePrice != null ? `$${effectivePrice}` : '')
                               )}
                             </span>
                           </div>
+                          {state.selectedService?.priceVariants && (
+                            <div className="mt-2 flex gap-2" role="group" aria-label="Format">
+                              {(['online', 'inPerson'] as const).map((v) => {
+                                const price = state.selectedService!.priceVariants![v];
+                                const label = v === 'online' ? 'Online' : 'In-person';
+                                const isSelected = state.selectedVariant === v;
+                                return (
+                                  <button
+                                    key={v}
+                                    type="button"
+                                    onClick={() => setState(s => ({ ...s, selectedVariant: v }))}
+                                    aria-pressed={isSelected}
+                                    className={`min-h-[36px] px-3 rounded-full text-xs font-medium border-2 transition-colors touch-manipulation cursor-pointer ${
+                                      isSelected ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
+                                    }`}
+                                  >
+                                    {label} ${price}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                           {saleActive && (
                             <p className="mt-1.5" aria-live="polite">
                               <span className="inline-flex flex-col gap-1.5 rounded-md bg-sage-100 px-3 py-2 font-medium text-sage-900 ring-1 ring-sage-500/40 text-[10px] sm:text-xs">
@@ -170,9 +211,16 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                             </p>
                           )}
                           {!serviceCardExpanded && (
-                            <p className="text-stone-600 text-xs leading-relaxed mt-1.5 line-clamp-2 break-words min-w-0">
-                              {state.selectedService?.longDescription}
-                            </p>
+                            <>
+                              <p className="text-stone-600 text-xs leading-relaxed mt-1.5 line-clamp-2 break-words min-w-0">
+                                {state.selectedService?.longDescription}
+                              </p>
+                              {state.selectedService?.variantDescriptions && state.selectedVariant && (
+                                <p className="text-sage-700 text-xs leading-relaxed mt-1.5 break-words min-w-0 font-medium">
+                                  {state.selectedService.variantDescriptions[state.selectedVariant]}
+                                </p>
+                              )}
+                            </>
                           )}
                           <button
                             type="button"
@@ -191,6 +239,11 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                               <p className="text-stone-600 text-xs leading-relaxed break-words min-w-0">
                                 {state.selectedService?.longDescription}
                               </p>
+                              {state.selectedService?.variantDescriptions && state.selectedVariant && (
+                                <p className="text-sage-700 text-xs leading-relaxed break-words min-w-0 font-medium">
+                                  {state.selectedService.variantDescriptions[state.selectedVariant]}
+                                </p>
+                              )}
                               {state.selectedService?.features && state.selectedService.features.length > 0 && (
                                 <div>
                                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -232,14 +285,36 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                             <span className="text-lg sm:text-xl font-serif font-bold text-stone-900 shrink-0">
                               {discountedPrice != null ? (
                                 <>
-                                  <span className="text-stone-400 line-through font-normal mr-2">${state.selectedService?.price}</span>
+                                  <span className="text-stone-400 line-through font-normal mr-2">${effectivePrice}</span>
                                   <span className="text-red-500 font-semibold">${discountedPrice}</span>
                                 </>
                               ) : (
-                                state.selectedService?.id === 'corporate-workshops' ? 'Custom' : `$${state.selectedService?.price}`
+                                isCorporate ? 'Custom' : (effectivePrice != null ? `$${effectivePrice}` : '')
                               )}
                             </span>
                           </div>
+                          {state.selectedService?.priceVariants && (
+                            <div className="mt-3 flex gap-2" role="group" aria-label="Format">
+                              {(['online', 'inPerson'] as const).map((v) => {
+                                const price = state.selectedService!.priceVariants![v];
+                                const label = v === 'online' ? 'Online' : 'In-person';
+                                const isSelected = state.selectedVariant === v;
+                                return (
+                                  <button
+                                    key={v}
+                                    type="button"
+                                    onClick={() => setState(s => ({ ...s, selectedVariant: v }))}
+                                    aria-pressed={isSelected}
+                                    className={`min-h-[40px] px-4 rounded-full text-sm font-medium border-2 transition-colors touch-manipulation cursor-pointer ${
+                                      isSelected ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
+                                    }`}
+                                  >
+                                    {label} ${price}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                           {saleActive && (
                             <p className="mt-2 md:mt-2.5" aria-live="polite">
                               <span className="inline-flex flex-col gap-2 rounded-md bg-sage-100 px-4 py-2.5 font-medium text-sage-900 ring-1 ring-sage-500/40 text-xs">
@@ -252,9 +327,14 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                             </p>
                           )}
                         </div>
-                        <p className="text-stone-600 text-sm leading-relaxed mb-3 md:mb-4 break-words min-w-0 overflow-hidden">
+                        <p className={`text-stone-600 text-sm leading-relaxed break-words min-w-0 overflow-hidden ${state.selectedService?.variantDescriptions && state.selectedVariant ? 'mb-2' : 'mb-3 md:mb-4'}`}>
                           {state.selectedService?.longDescription}
                         </p>
+                        {state.selectedService?.variantDescriptions && state.selectedVariant && (
+                          <p className="text-sage-700 text-sm leading-relaxed mb-3 md:mb-4 break-words min-w-0 font-medium">
+                            {state.selectedService.variantDescriptions[state.selectedVariant]}
+                          </p>
+                        )}
                         {state.selectedService?.features && state.selectedService.features.length > 0 && (
                           <div className="mb-3 md:mb-4">
                             <div className="flex flex-wrap items-center gap-2 mb-1.5 md:mb-2">
@@ -284,8 +364,16 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                 {/* Booking Card — below service on mobile, right column on desktop */}
                 <div className="order-2 lg:col-span-7 min-w-0 w-full">
                   <div className="bg-white rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-stone-100 shadow-sm min-w-0 w-full overflow-hidden">
-                    <h3 className="font-serif text-xl sm:text-2xl text-stone-900 mb-4 md:mb-6">Book Appointment</h3>
-                    
+                    <h3 className="font-serif text-xl sm:text-2xl text-stone-900 mb-2">Book Appointment</h3>
+                    <p className="mb-4 md:mb-6">
+                      <button
+                        type="button"
+                        onClick={() => setState(s => ({ ...s, step: 'details' }))}
+                        className="text-sage-600 hover:text-sage-700 text-sm font-medium cursor-pointer touch-manipulation"
+                      >
+                        Not sure yet? Pick a date and time later →
+                      </button>
+                    </p>
                     {/* Select Date */}
                     <div className="mb-6 md:mb-8">
                       <label className="text-xs font-bold text-stone-400 uppercase tracking-widest block mb-3 md:mb-4">Select Date</label>
@@ -521,23 +609,37 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
         </div>
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-stone-900 mb-4 sm:mb-6 tracking-tight">Booking Confirmed!</h2>
         <p className="text-stone-500 text-base sm:text-lg md:text-xl leading-relaxed mb-8 sm:mb-12 font-light px-1">
-          Thank you, {state.customerDetails.name}. A confirmation email with preparation steps has been sent to <span className="text-stone-900 font-medium break-all">{state.customerDetails.email}</span>.
+          Thank you, {state.customerDetails.name}. A confirmation email has been sent to <span className="text-stone-900 font-medium break-all">{state.customerDetails.email}</span>.
+          {(!state.selectedDate || state.selectedTimes.length === 0) && (
+            <> We&apos;ll be in touch to find a date and time that works for your session.</>
+          )}
         </p>
         <div className="bg-stone-50 p-5 sm:p-8 md:p-10 rounded-2xl md:rounded-3xl border border-stone-100 text-left mb-8 sm:mb-12 space-y-4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 border-b border-stone-200 pb-4">
                 <span className="text-stone-400 font-bold uppercase tracking-widest text-xs">Service</span>
-                <span className="text-stone-900 font-bold text-sm sm:text-base">{state.selectedService?.title}</span>
+                <span className="text-stone-900 font-bold text-sm sm:text-base">
+                  {state.selectedService?.title}
+                  {state.selectedVariant && state.selectedService?.priceVariants && (
+                    <span className="font-normal text-stone-600"> ({state.selectedVariant === 'online' ? 'Online' : 'In-person'})</span>
+                  )}
+                </span>
             </div>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
                 <span className="text-stone-400 font-bold uppercase tracking-widest text-xs">
                   {state.selectedTimes.length > 1 ? 'Date & Availability' : 'Date & Time'}
                 </span>
                 <div className="text-right sm:text-right">
-                  <span className="text-stone-900 font-bold block text-sm sm:text-base">{state.selectedDate && format(state.selectedDate, 'MMMM do')}</span>
-                  {state.selectedTimes.length === 1 ? (
-                    <span className="text-stone-600 text-sm block">@ {state.selectedTimes[0]}</span>
+                  {state.selectedDate && state.selectedTimes.length > 0 ? (
+                    <>
+                      <span className="text-stone-900 font-bold block text-sm sm:text-base">{format(state.selectedDate, 'MMMM do')}</span>
+                      {state.selectedTimes.length === 1 ? (
+                        <span className="text-stone-600 text-sm block">@ {state.selectedTimes[0]}</span>
+                      ) : (
+                        <span className="text-stone-600 text-sm block">{state.selectedTimes.join(', ')}</span>
+                      )}
+                    </>
                   ) : (
-                    <span className="text-stone-600 text-sm block">{state.selectedTimes.join(', ')}</span>
+                    <span className="text-stone-600 text-sm block italic">To be scheduled — we&apos;ll contact you to find a time that works.</span>
                   )}
                 </div>
             </div>
@@ -547,9 +649,10 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
   );
 
   const isCorporate = state.selectedService?.id === 'corporate-workshops';
+  const effectivePrice = getEffectivePrice(state.selectedService, state.selectedVariant);
   const discountedPrice =
-    state.selectedService && !isCorporate && saleActive
-      ? Math.round(state.selectedService.price * 0.8)
+    effectivePrice != null && !isCorporate && saleActive
+      ? Math.round(effectivePrice * 0.8)
       : null;
 
   return (

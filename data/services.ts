@@ -32,11 +32,17 @@ export const SERVICES: Service[] = [
     features: [
       'Full Closet Edit session',
       'Personal Shopping session (In-person or Online)',
-      'Style integration',
       'Complete wardrobe alignment',
       'Confidence building',
     ],
-    price: 750,
+    price: 500,
+    priceVariants: { online: 500, inPerson: 600 },
+    variantDescriptions: {
+      online:
+        'Your closet edit happens at your home; your personal shopping is done remotely with a curated list, links, and try-on support so you can shop on your timeline.',
+      inPerson:
+        'Your closet edit happens at your home; then we shop together in person so you can try on pieces and get immediate fit and style feedback.',
+    },
     durationMin: 300,
     image: '/images/services/style-reset.webp',
   },
@@ -54,7 +60,14 @@ export const SERVICES: Service[] = [
       'Event specific styling',
       'Targeted focus',
     ],
-    price: 375,
+    price: 150,
+    priceVariants: { online: 150, inPerson: 250 },
+    variantDescriptions: {
+      online:
+        'We work together remotely with a curated list and links; you shop on your timeline and we refine with photos and video as needed.',
+      inPerson:
+        'We hit the stores together so you can try on pieces, get real-time feedback, and leave with items that work.',
+    },
     durationMin: 120,
     image: '/images/services/style-refresh.webp',
   },
@@ -69,7 +82,14 @@ export const SERVICES: Service[] = [
       'Targeted shopping list',
       'Budget management',
     ],
-    price: 350,
+    price: 150,
+    priceVariants: { online: 150, inPerson: 250 },
+    variantDescriptions: {
+      online:
+        'I send you a tailored list and links; you shop when it suits you and we refine with photos and video as needed.',
+      inPerson:
+        'We shop together in person so you can try everything on and get immediate fit and style feedback.',
+    },
     durationMin: 180,
     image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80',
   },

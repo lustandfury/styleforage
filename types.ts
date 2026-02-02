@@ -1,3 +1,9 @@
+/** When set, service has Online ($) and In-person ($) options. */
+export interface PriceVariants {
+  online: number;
+  inPerson: number;
+}
+
 export interface Service {
   id: string;
   title: string;
@@ -7,6 +13,10 @@ export interface Service {
   price: number;
   durationMin: number;
   image: string;
+  /** Online vs in-person pricing; when set, price is the minimum (e.g. online). */
+  priceVariants?: PriceVariants;
+  /** Short explanation of what Online vs In-person means for this service; shown in booking when a variant is selected. */
+  variantDescriptions?: { online: string; inPerson: string };
 }
 
 export interface TimeSlot {
@@ -14,9 +24,13 @@ export interface TimeSlot {
   available: boolean;
 }
 
+export type ServiceVariant = 'online' | 'inPerson';
+
 export interface BookingState {
   step: 'service' | 'date' | 'details' | 'payment' | 'confirmation';
   selectedService: Service | null;
+  /** Set when selectedService has priceVariants (Online vs In-person). */
+  selectedVariant?: ServiceVariant;
   selectedDate: Date | null;
   selectedTimes: string[];
   customerDetails: {

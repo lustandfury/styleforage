@@ -81,7 +81,7 @@ export const Services: React.FC = () => {
                       <span>{service.durationMin / 60}h</span>
                     </div>
                     <span className="font-serif font-bold text-xl md:text-2xl text-stone-900">
-                      {service.id === 'corporate-workshops' ? 'Custom' : `$${service.price}`}
+                      {service.id === 'corporate-workshops' ? 'Custom' : service.priceVariants ? `From $${service.price}` : `$${service.price}`}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 font-medium text-stone-500 group-hover:text-stone-900 transition-colors duration-300">

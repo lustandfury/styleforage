@@ -51,6 +51,9 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 
     const timesDisplay = Array.isArray(times) ? times.join(', ') : (times || '');
     const dateFormatted = date || '';
+    const hasDateAndTime = Boolean(dateFormatted && (timesDisplay || (Array.isArray(times) && times.length > 0)));
+    const dateTimeDisplay = hasDateAndTime ? dateFormatted : 'To be scheduled';
+    const availabilityDisplay = hasDateAndTime ? (timesDisplay || '—') : "We'll contact you to find a time that works.";
     const phoneDisplay = customerPhone || '—';
     const notesDisplay = notes || '—';
 
@@ -85,16 +88,16 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
           </tr>
           <tr>
             <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Date</td>
-            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${dateFormatted}</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${dateTimeDisplay}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Your availability</td>
-            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${timesDisplay || '—'}</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${availabilityDisplay}</td>
           </tr>
         </table>
       </div>
       <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #44403c;">
-        <strong>What happens next?</strong> I’ll confirm your exact time and send any prep notes before your session.
+        <strong>What happens next?</strong> ${hasDateAndTime ? "I\u2019ll confirm your exact time and send any prep notes before your session." : "I'll be in touch to find a date and time that works, then send any prep notes before your session."}
       </p>
       <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #44403c;">
         If you have questions, reply to this email or reach out anytime.
@@ -164,11 +167,11 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
           </tr>
           <tr>
             <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Date</td>
-            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${dateFormatted}</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${dateTimeDisplay}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em;">Times</td>
-            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${timesDisplay || '—'}</td>
+            <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: #1c1917; text-align: right;">${availabilityDisplay}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #78716c; text-transform: uppercase; letter-spacing: 0.05em; vertical-align: top;">Notes</td>

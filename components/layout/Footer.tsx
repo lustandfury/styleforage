@@ -114,7 +114,7 @@ export const Footer: React.FC = () => {
                 <button
                   type="submit"
                   disabled={status === 'submitting'}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border-2 border-sage-500 text-sage-400 bg-transparent hover:bg-sage-500/10 hover:text-sage-300 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-stone-900 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border-2 border-sage-500 text-sage-400 bg-transparent hover:bg-sage-500/10 hover:text-sage-300 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-stone-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   {status === 'submitting' ? 'Sending…' : <><Send size={14} aria-hidden />Send</>}
                 </button>

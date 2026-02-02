@@ -56,6 +56,7 @@ We use a "Serif for Soul, Sans for Clarity" approach.
 ### 3. Buttons
 - **Primary**: Dark stone with white text. High contrast for CTA.
 - **Secondary/Outline**: Sage accents or transparent backgrounds for secondary actions.
+- **Cursor**: All interactive buttons and clickable elements must use `cursor-pointer` so the pointer changes on hover. Disabled buttons must use `cursor-not-allowed` (and typically `disabled:pointer-events-none`). Apply this to native `<button>`, elements with `role="button"`, and any element that triggers an action on click.
 
 ### 4. Selection Chips
 Pill-shaped interactive elements for selecting dates, times, or options. Uses an **outline style** for selected state to maintain visual clarity without heavy fills.
@@ -93,8 +94,21 @@ Pill-shaped interactive elements for selecting dates, times, or options. Uses an
 - Use for date pickers, time slots, multi-select options, and filter chips
 - Outline style keeps UI clean and allows multiple selections to be visible without overwhelming
 - Always include `transition-all` for smooth state changes
+- Always include `cursor-pointer` for selectable/clickable chips (and `cursor-not-allowed` for disabled).
 - Include proper `aria-pressed` and `aria-label` for accessibility
 - Show selection count when multi-select is enabled
+
+## Cursor & interactivity
+
+All button-like and clickable elements must show the pointer cursor on hover so users know they are interactive.
+
+| Element | Cursor | Notes |
+| :--- | :--- | :--- |
+| Buttons (primary, secondary, outline, chips) | `cursor-pointer` | Required on `<button>`, `role="button"`, and any clickable element. |
+| Disabled buttons / unavailable options | `cursor-not-allowed` | Pair with `disabled:pointer-events-none` when appropriate. |
+| Links | `cursor-pointer` | Default for `<a>`; ensure custom link-styled elements include it. |
+
+**Rule:** When adding or updating any interactive control (buttons, selection chips, nav items, icon buttons, submit inputs), include `cursor-pointer` in the className. For disabled state, include `cursor-not-allowed`.
 
 ## Visual Signatures
 
