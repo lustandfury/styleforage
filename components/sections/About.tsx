@@ -122,13 +122,13 @@ export const About: React.FC = () => {
                         {/* Text with gradient on hover */}
                         <span className="relative">
                           <span className="text-stone-700 transition-opacity duration-300 group-hover:opacity-0">
-                            Follow on Instagram
+                            Follow @styleforage on Instagram
                           </span>
                           <span 
                             className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-clip-text text-transparent"
                             style={{ backgroundImage: 'linear-gradient(to right, #FFDC80, #F77737, #E1306C, #C13584, #833AB4)' }}
                           >
-                            Follow on Instagram
+                            Follow @styleforage on Instagram
                           </span>
                         </span>
                         {/* Arrow with gradient on hover */}

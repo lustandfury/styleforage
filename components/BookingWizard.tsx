@@ -1,92 +1,12 @@
 
+import { useNavigate } from 'react-router-dom';
 import { Service, BookingState, TimeSlot } from '../types';
 import { Button } from './ui/Button';
-import React, { useState, useEffect } from 'react';
+import { FirstBookingSale, SALE_OFFER_LABEL } from './FirstBookingSale';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, addDays, isSameDay, getDay } from 'date-fns';
-import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock } from 'lucide-react';
-
-const SERVICES: Service[] = [
-  {
-    id: 'closet-edit',
-    title: 'The Closet Edit',
-    description: 'A thoughtful review of your clothes, focused on fit, comfort, and relevance.',
-    longDescription: "You don’t need to overhaul your entire wardrobe—you need a fresh perspective on the one you already have. A Closet Edit is a thoughtful review of your clothes, focused on fit, comfort, and relevance. We edit out pieces that no longer work, create new outfits from what you already own, and pinpoint the missing pieces that will help your wardrobe feel complete and modern.",
-    features: [
-      "Review of fit, comfort, and current style",
-      "Editing items that no longer work",
-      "Creating new outfits from existing pieces",
-      "Pinpointing wardrobe gaps",
-      "Fresh perspective on your style"
-    ],
-    price: 250,
-    durationMin: 150,
-    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'full-style-reset',
-    title: 'The Full Style Reset Package',
-    description: 'For clients ready for a meaningful refresh and a wardrobe that feels aligned.',
-    longDescription: "Combines The Closet Edit and Personal Shop. This is for clients ready for a meaningful refresh and a wardrobe that feels aligned, confident, and wearable. We start by clearing the noise and finish by intentionally filling the gaps.",
-    features: [
-      "Full Closet Edit session",
-      "Personal Shopping session (In-person or Online)",
-      "Style integration",
-      "Complete wardrobe alignment",
-      "Confidence building"
-    ],
-    price: 600,
-    durationMin: 300,
-    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'personal-shop',
-    title: 'Personal Shop',
-    description: 'Intentional shopping, guided by fit, comfort, and what’s current.',
-    longDescription: "Intentional shopping, guided by fit, comfort, and what’s current. Available as an In-person shop or Online shop. Best paired with a Closet Edit.",
-    features: [
-      "Guided by fit and comfort",
-      "Focus on current styles",
-      "In-person or Online options",
-      "Targeted shopping list",
-      "Budget management"
-    ],
-    price: 350,
-    durationMin: 180,
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'style-refresh',
-    title: 'Style Refresh',
-    description: 'A focused update for a season, event, trip, or life change.',
-    longDescription: "A focused update for a season, event, trip, or life change. Ideal if you want a vacation wardrobe, a seasonal update, or a workwear refresh.",
-    features: [
-      "Vacation wardrobe curation",
-      "Seasonal updates",
-      "Workwear refresh",
-      "Event specific styling",
-      "Targeted focus"
-    ],
-    price: 300,
-    durationMin: 120,
-    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'corporate-workshops',
-    title: 'Corporate Style Workshops',
-    description: 'Practical style talks for teams to show up with confidence and consistency.',
-    longDescription: "I offer style talks for teams who want to show up with confidence and consistency—individually and as a brand. Talks are practical, inclusive, and tailored to your organization.",
-    features: [
-      "Tailored to your organization",
-      "Inclusive & practical advice",
-      "Focus on professional image",
-      "Amplifying brand presence",
-      "Interactive Q&A"
-    ],
-    price: 500,
-    durationMin: 60,
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80'
-  }
-];
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Wand2 } from 'lucide-react';
+import { SERVICES } from '../data/services';
 
 const TIME_SLOTS: TimeSlot[] = [
   { time: '8:00AM', available: true },
@@ -107,6 +27,7 @@ interface BookingWizardProps {
 }
 
 export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }) => {
+  const navigate = useNavigate();
   const [state, setState] = useState<BookingState>({
     step: initialServiceId ? 'date' : 'service',
     selectedService: initialServiceId ? SERVICES.find(s => s.id === initialServiceId) || null : null,
@@ -126,6 +47,13 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
   const [visibleStartDate, setVisibleStartDate] = useState(today);
   const [serviceCardExpanded, setServiceCardExpanded] = useState(false);
   const [hoveredServiceId, setHoveredServiceId] = useState<string | null>(null);
+  const [saleActive, setSaleActive] = useState(false);
+  const [saleCountdown, setSaleCountdown] = useState('--:--:--');
+
+  const handleSaleStateChange = useCallback((state: { active: boolean; countdown?: string }) => {
+    setSaleActive(state.active);
+    if (state.countdown !== undefined) setSaleCountdown(state.countdown);
+  }, []);
 
   // Handle step sync if prop changes
   useEffect(() => {
@@ -202,7 +130,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
     };
 
     return (
-        <div className="animate-fade-in max-w-5xl mx-auto w-full min-w-0 py-4 sm:py-6 md:py-12 px-0">
+        <div className="animate-fade-in max-w-5xl mx-auto w-full min-w-0 px-0">
              <div className="grid lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8 min-w-0">
                 {/* Service Summary — on top on mobile (horizontal strip), left column on desktop */}
                 <div className="order-1 lg:col-span-5 space-y-4 md:space-y-6 min-w-0 w-full">
@@ -217,16 +145,30 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                         )}
                         <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
                           <span className="text-sage-600 font-bold uppercase tracking-widest text-[10px] sm:text-xs">Your Selection</span>
-                          <h3 className="font-serif text-sm sm:text-base font-semibold text-stone-900 leading-tight line-clamp-2 break-words">{state.selectedService?.title}</h3>
-                          <div className="flex items-center justify-between gap-2 mt-1">
-                            <span className="text-stone-500 text-xs flex items-center">
-                              <Clock size={12} className="mr-1" />
-                              {state.selectedService ? state.selectedService.durationMin / 60 : 0}h
-                            </span>
-                            <span className="font-serif font-bold text-stone-900 text-base sm:text-lg">
-                              {state.selectedService?.id === 'corporate-workshops' ? 'Custom' : `$${state.selectedService?.price}`}
+                          <div className="flex items-baseline justify-between gap-2 mt-0.5 min-w-0">
+                            <h3 className="font-serif text-sm sm:text-base font-semibold text-stone-900 leading-tight line-clamp-2 break-words min-w-0">{state.selectedService?.title}</h3>
+                            <span className="font-serif font-bold text-stone-900 text-base sm:text-lg shrink-0">
+                              {discountedPrice != null ? (
+                                <>
+                                  <span className="text-stone-400 line-through font-normal mr-1.5">${state.selectedService?.price}</span>
+                                  <span className="text-red-500 font-semibold">${discountedPrice}</span>
+                                </>
+                              ) : (
+                                state.selectedService?.id === 'corporate-workshops' ? 'Custom' : `$${state.selectedService?.price}`
+                              )}
                             </span>
                           </div>
+                          {saleActive && (
+                            <p className="mt-1.5" aria-live="polite">
+                              <span className="inline-flex flex-col gap-1.5 rounded-md bg-sage-100 px-3 py-2 font-medium text-sage-900 ring-1 ring-sage-500/40 text-[10px] sm:text-xs">
+                                <span>{SALE_OFFER_LABEL}</span>
+                                <span className="flex items-center gap-1.5 shrink-0">
+                                  <Clock size={12} className="text-sage-600" aria-hidden />
+                                  <span className="font-mono tabular-nums">{saleCountdown} left</span>
+                                </span>
+                              </span>
+                            </p>
+                          )}
                           {!serviceCardExpanded && (
                             <p className="text-stone-600 text-xs leading-relaxed mt-1.5 line-clamp-2 break-words min-w-0">
                               {state.selectedService?.longDescription}
@@ -251,7 +193,14 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                               </p>
                               {state.selectedService?.features && state.selectedService.features.length > 0 && (
                                 <div>
-                                  <span className="text-stone-800 font-bold uppercase tracking-widest text-[10px] block mb-1.5">What's Included</span>
+                                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                    <span className="text-stone-800 font-bold uppercase tracking-widest text-[10px]">What's Included</span>
+                                    {state.selectedService && (
+                                      <span className="text-stone-500 text-[10px] sm:text-xs font-medium">
+                                        {state.selectedService.durationMin / 60}h
+                                      </span>
+                                    )}
+                                  </div>
                                   <ul className="space-y-1">
                                     {state.selectedService.features.map((feature, idx) => (
                                       <li key={idx} className="flex items-start text-xs text-stone-600 break-words min-w-0">
@@ -264,7 +213,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                               )}
                             </div>
                           )}
-                          <Button variant="outline" size="sm" className="mt-3 w-full sm:w-auto min-h-[40px] touch-manipulation text-xs" onClick={() => window.history.back()}>Change Service</Button>
+                          <Button variant="outline" size="sm" className="mt-3 w-full sm:w-auto min-h-[40px] touch-manipulation text-xs" onClick={() => navigate('/#services')}>Change Service</Button>
                         </div>
                       </div>
                     </div>
@@ -277,22 +226,45 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                       )}
                       <div className="p-4 sm:p-5 md:p-6 min-w-0">
                         <span className="text-sage-600 font-bold uppercase tracking-widest text-xs block mb-2 md:mb-3">Your Selection</span>
-                        <h3 className="font-serif text-lg sm:text-xl text-stone-900 mb-2 md:mb-3 break-words min-w-0">{state.selectedService?.title}</h3>
-                        <div className="flex items-center justify-between mb-3 md:mb-4 pb-3 md:pb-4 border-b border-stone-200">
-                          <div className="flex items-center text-stone-500 text-sm">
-                            <Clock size={14} className="mr-1.5" />
-                            {state.selectedService ? state.selectedService.durationMin / 60 : 0}h
+                        <div className="mb-3 md:mb-4 pb-3 md:pb-4 border-b border-stone-200 min-w-0">
+                          <div className="flex items-baseline justify-between gap-4 min-w-0">
+                            <h3 className="font-serif text-lg sm:text-xl text-stone-900 break-words min-w-0">{state.selectedService?.title}</h3>
+                            <span className="text-lg sm:text-xl font-serif font-bold text-stone-900 shrink-0">
+                              {discountedPrice != null ? (
+                                <>
+                                  <span className="text-stone-400 line-through font-normal mr-2">${state.selectedService?.price}</span>
+                                  <span className="text-red-500 font-semibold">${discountedPrice}</span>
+                                </>
+                              ) : (
+                                state.selectedService?.id === 'corporate-workshops' ? 'Custom' : `$${state.selectedService?.price}`
+                              )}
+                            </span>
                           </div>
-                          <div className="text-lg sm:text-xl font-serif font-bold text-stone-900">
-                            {state.selectedService?.id === 'corporate-workshops' ? 'Custom' : `$${state.selectedService?.price}`}
-                          </div>
+                          {saleActive && (
+                            <p className="mt-2 md:mt-2.5" aria-live="polite">
+                              <span className="inline-flex flex-col gap-2 rounded-md bg-sage-100 px-4 py-2.5 font-medium text-sage-900 ring-1 ring-sage-500/40 text-xs">
+                                <span>{SALE_OFFER_LABEL}</span>
+                                <span className="flex items-center gap-1.5 shrink-0">
+                                  <Clock size={12} className="text-sage-600" aria-hidden />
+                                  <span className="font-mono tabular-nums">{saleCountdown} left</span>
+                                </span>
+                              </span>
+                            </p>
+                          )}
                         </div>
                         <p className="text-stone-600 text-sm leading-relaxed mb-3 md:mb-4 break-words min-w-0 overflow-hidden">
                           {state.selectedService?.longDescription}
                         </p>
                         {state.selectedService?.features && state.selectedService.features.length > 0 && (
                           <div className="mb-3 md:mb-4">
-                            <span className="text-stone-800 font-bold uppercase tracking-widest text-xs block mb-1.5 md:mb-2">What's Included</span>
+                            <div className="flex flex-wrap items-center gap-2 mb-1.5 md:mb-2">
+                              <span className="text-stone-800 font-bold uppercase tracking-widest text-xs">What's Included</span>
+                              {state.selectedService && (
+                                <span className="text-stone-500 text-xs font-medium">
+                                  {state.selectedService.durationMin / 60}h
+                                </span>
+                              )}
+                            </div>
                             <ul className="space-y-1 md:space-y-1.5">
                               {state.selectedService.features.slice(0, 4).map((feature, idx) => (
                                 <li key={idx} className="flex items-start text-xs sm:text-sm text-stone-600 break-words min-w-0">
@@ -303,7 +275,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                             </ul>
                           </div>
                         )}
-                        <Button variant="outline" size="sm" className="min-h-[44px] touch-manipulation w-full sm:w-auto" onClick={() => window.history.back()}>Change Service</Button>
+                        <Button variant="outline" size="sm" className="min-h-[44px] touch-manipulation w-full sm:w-auto" onClick={() => navigate('/#services')}>Change Service</Button>
                       </div>
                     </div>
                   </div>
@@ -375,7 +347,10 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                     {/* Select Time */}
                     <div className="mb-6 md:mb-8 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3 md:mb-4 min-w-0">
-                        <label className="text-xs font-bold text-stone-400 uppercase tracking-widest break-words min-w-0">Select Available Time(s)</label>
+                        <label className="flex items-center gap-2 text-xs font-bold text-stone-400 uppercase tracking-widest break-words min-w-0">
+                          <Wand2 size={14} className="text-sage-500 shrink-0" aria-hidden />
+                          Select Available Time(s)
+                        </label>
                         <span className="text-xs text-stone-400 shrink-0">Select all times that work for you</span>
                       </div>
                       
@@ -571,29 +546,16 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
     </div>
   );
 
+  const isCorporate = state.selectedService?.id === 'corporate-workshops';
+  const discountedPrice =
+    state.selectedService && !isCorporate && saleActive
+      ? Math.round(state.selectedService.price * 0.8)
+      : null;
+
   return (
     <div className="max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden">
-        {state.step !== 'confirmation' && state.step !== 'service' && (
-            <div className="flex justify-center mt-6 sm:mt-8 md:mt-12 px-2" role="progressbar" aria-valuenow={['date', 'details'].indexOf(state.step) + 1} aria-valuemin={1} aria-valuemax={2} aria-label="Booking progress">
-                <div className="flex items-center gap-3 sm:gap-4">
-                    {['Date', 'Details'].map((stepName, idx) => {
-                        const steps = ['date', 'details'];
-                        const currentIdx = steps.indexOf(state.step);
-                        const isActive = idx === currentIdx;
-                        const isCompleted = idx < currentIdx;
-
-                        return (
-                            <div key={stepName} className="flex items-center">
-                                <div className={`
-                                    w-3.5 h-3.5 sm:w-3 sm:h-3 rounded-full transition-all duration-500 flex-shrink-0
-                                    ${isActive ? 'bg-sage-500 ring-4 ring-sage-500/20 scale-125' : isCompleted ? 'bg-stone-900' : 'bg-stone-200'}
-                                `} aria-hidden="true" />
-                                {idx < 1 && <div className={`w-6 sm:w-8 md:w-16 h-0.5 mx-1 sm:mx-2 flex-shrink-0 ${isCompleted ? 'bg-stone-900' : 'bg-stone-100'}`} aria-hidden="true" />}
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
+        {state.step !== 'confirmation' && (
+          <FirstBookingSale variant="inline" onStateChange={handleSaleStateChange} />
         )}
 
         <div className="min-h-[480px] sm:min-h-[560px] md:min-h-[600px]">

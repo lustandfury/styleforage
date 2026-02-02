@@ -2,35 +2,32 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '../ui/Button';
 
 const HEADING_LINE1 = 'Effortless style for every';
-const HEADING_LINE2 = ' body & budget';
-const FULL_HEADING = HEADING_LINE1 + HEADING_LINE2;
+const HEADING_LINE2 = 'body & budget';
+const LINE1_WORDS = HEADING_LINE1.split(' ');
+const WORD_REVEAL_DURATION = 0.6;
+const WORD_STAGGER = 0.08;
+const REVEAL_START_DELAY = 0.35;
 
 export const Hero: React.FC = () => {
   const bgRef = useRef<HTMLDivElement>(null);
   const textBlurTopRef = useRef<HTMLDivElement>(null);
   const textBlurBottomRef = useRef<HTMLDivElement>(null);
-  const [visibleLength, setVisibleLength] = useState(0);
-  const [typewriterDone, setTypewriterDone] = useState(false);
+  const [headingVisible, setHeadingVisible] = useState(false);
+  const [revealDone, setRevealDone] = useState(false);
 
-  // Typewriter: type out heading, then mark done so rest of text can transition
+  // Run scroll-fade-in style on heading container, then start word reveal
   useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-    const startDelay = setTimeout(() => {
-      intervalId = setInterval(() => {
-        setVisibleLength((n) => {
-          if (n >= FULL_HEADING.length) {
-            if (intervalId) clearInterval(intervalId);
-            setTypewriterDone(true);
-            return n;
-          }
-          return n + 1;
-        });
-      }, 38);
-    }, 350);
-    return () => {
-      clearTimeout(startDelay);
-      if (intervalId) clearInterval(intervalId);
-    };
+    const id = requestAnimationFrame(() => setHeadingVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  // Mark reveal done after last word finishes (so rest of hero content can fade in)
+  useEffect(() => {
+    const totalWords = LINE1_WORDS.length + 1;
+    const lastWordDelay = REVEAL_START_DELAY + (totalWords - 1) * WORD_STAGGER;
+    const doneAt = (lastWordDelay + WORD_REVEAL_DURATION) * 1000;
+    const t = setTimeout(() => setRevealDone(true), doneAt);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -38,7 +35,7 @@ export const Hero: React.FC = () => {
     
     const updateScaleAndBlur = () => {
       const scrollY = window.scrollY;
-      const progress = Math.min(scrollY / 500, 1);
+      const progress = Math.min(scrollY / 200, 1);
 
       // Background: scale 1.1 → 1.0, blur, and opacity 1 → 0 on scroll (same 0–500px range)
       if (bgRef.current) {
@@ -102,32 +99,39 @@ export const Hero: React.FC = () => {
       {/* Hero text content: heading types out, then rest transition in. Badge above heading in layout. */}
       <div className="relative z-10 flex flex-col items-center md:items-start justify-center px-4 md:px-12 lg:px-20 w-full">
         <div className="text-center md:text-left max-w-5xl">
-          <div ref={textBlurTopRef} className={`hero-rest-in transition-none ${typewriterDone ? 'hero-rest-visible' : ''}`}>
+          <div ref={textBlurTopRef} className={`hero-rest-in transition-none ${revealDone ? 'hero-rest-visible' : ''}`}>
             <div className="inline-block px-4 py-1.5 mb-4 md:mb-6 rounded-full backdrop-blur-sm border border-stone-900/10 text-stone-900 text-xs font-bold uppercase tracking-[0.2em]">
               Personal Styling & Wardrobe Curation
             </div>
           </div>
-          <h2 className="hero-heading-in relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-medium text-stone-900 mb-6 md:mb-8 tracking-tight leading-[1.1]">
-            {/* Hidden full text reserves height so layout doesn't jump */}
-            <span aria-hidden="true" className="invisible block">
-              {HEADING_LINE1}
-              <br />
-              <span className="italic text-stone-700">{HEADING_LINE2}</span>
+          <h2 className={`scroll-fade-in relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-medium text-stone-900 mb-6 md:mb-8 tracking-tight leading-[1.1] ${headingVisible ? 'is-visible' : ''}`}>
+            {/* Line 1: staggered word reveal */}
+            <span className="hero-reveal-line block">
+              {LINE1_WORDS.map((word, i) => (
+                <span
+                  key={i}
+                  className="hero-reveal-word"
+                  style={{
+                    animationDelay: `${REVEAL_START_DELAY + i * WORD_STAGGER}s`,
+                  }}
+                >
+                  {word}{i < LINE1_WORDS.length - 1 ? '\u00A0' : ''}
+                </span>
+              ))}
             </span>
-            {/* Typing text overlaid so it matches reserved space */}
-            <span className="absolute inset-0">
-              {FULL_HEADING.slice(0, Math.min(visibleLength, HEADING_LINE1.length))}
-              {visibleLength > HEADING_LINE1.length && (
-                <>
-                  <br />
-                  <span className="italic text-stone-700">
-                    {FULL_HEADING.slice(HEADING_LINE1.length, visibleLength)}
-                  </span>
-                </>
-              )}
+            {/* Line 2: single phrase with delay */}
+            <span className="hero-reveal-line block">
+              <span
+                className="hero-reveal-word italic text-stone-700"
+                style={{
+                  animationDelay: `${REVEAL_START_DELAY + LINE1_WORDS.length * WORD_STAGGER}s`,
+                }}
+              >
+                {HEADING_LINE2}
+              </span>
             </span>
           </h2>
-          <div ref={textBlurBottomRef} className={`hero-rest-in transition-none ${typewriterDone ? 'hero-rest-visible' : ''}`}>
+          <div ref={textBlurBottomRef} className={`hero-rest-in transition-none ${revealDone ? 'hero-rest-visible' : ''}`}>
             <p className="text-stone-700 text-base sm:text-lg md:text-2xl max-w-2xl mx-auto md:mx-0 mb-10 md:mb-12 leading-relaxed font-light">
               Personal styling for women and men who want to feel confident, current, and completely themselves.
             </p>

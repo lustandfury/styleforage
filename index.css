@@ -43,16 +43,26 @@ html, body {
   transform: translateY(0);
 }
 
-/* Hero: heading fades up and in first, then rest of text */
-@keyframes hero-fade-up-in {
+/* Hero: staggered word reveal (CodePen-style) — words slide up from behind mask */
+@keyframes hero-word-reveal {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(100%);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+.hero-reveal-line {
+  display: block;
+  overflow: hidden;
+  line-height: 1.35;
+}
+.hero-reveal-word {
+  display: inline-block;
+  animation: hero-word-reveal 0.6s cubic-bezier(0.2, 0, 0.2, 1) forwards;
+  opacity: 0;
 }
 .hero-heading-in {
   opacity: 0;
@@ -94,6 +104,22 @@ html, body {
 .nav-pill.nav-pill-glass {
   transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease,
     -webkit-backdrop-filter 0.4s ease, backdrop-filter 0.4s ease;
+}
+
+/* Nav link: smooth transition + iOS-style liquid glass hover (inactive only) */
+.nav-link-item {
+  transition: color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease,
+    -webkit-backdrop-filter 0.25s ease, backdrop-filter 0.25s ease;
+}
+.nav-link-item:not(.nav-link-item--active):hover {
+  background: rgba(255, 255, 255, 0.35);
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
+  backdrop-filter: blur(8px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.nav-link-item--active {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* Hero background scroll-based zoom - no transition for instant response */

@@ -1,50 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, ChevronRight } from 'lucide-react';
+import { Clock, ChevronRight, Check } from 'lucide-react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
-
-const SERVICES = [
-  {
-    id: 'closet-edit',
-    title: 'The Closet Edit',
-    description: 'A thoughtful review of your clothes, focused on fit, comfort, and relevance.',
-    price: 250,
-    durationMin: 150,
-    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'full-style-reset',
-    title: 'The Full Style Reset Package',
-    description: 'For clients ready for a meaningful refresh and a wardrobe that feels aligned.',
-    price: 600,
-    durationMin: 300,
-    image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'personal-shop',
-    title: 'Personal Shop',
-    description: "Intentional shopping, guided by fit, comfort, and what's current.",
-    price: 350,
-    durationMin: 180,
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'style-refresh',
-    title: 'Style Refresh',
-    description: 'A focused update for a season, event, trip, or life change.',
-    price: 300,
-    durationMin: 120,
-    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'corporate-workshops',
-    title: 'Corporate Style Workshops',
-    description: 'Practical style talks for teams to show up with confidence and consistency.',
-    price: 500,
-    durationMin: 60,
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80'
-  }
-];
+import { SERVICES } from '../../data/services';
 
 export const Services: React.FC = () => {
   const navigate = useNavigate();
@@ -61,7 +19,7 @@ export const Services: React.FC = () => {
           <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-4 md:mb-6">Curated Styling Services</h2>
           <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full mb-4 md:mb-6"></div>
           <p className="text-stone-600 text-base md:text-lg max-w-xl mx-auto">
-            Choose a service below to book your session. Click <strong>View Service Details</strong> to select and continue to the booking flow.
+            Click <strong>View Service Details</strong> to view more details and book. Don't see what you're looking for? <a href="/contact" className="text-sage-500 hover:text-sage-600 transition-colors">Contact us</a> to discuss your needs.
           </p>
         </div>
 
@@ -69,7 +27,8 @@ export const Services: React.FC = () => {
           {SERVICES.map((service) => {
             const isFullWidth = service.id === 'closet-edit' || service.id === 'corporate-workshops';
             const colClass = isFullWidth ? 'sm:col-span-2 lg:col-span-12' : 'sm:col-span-2 lg:col-span-4';
-            const imageAspectClass = isFullWidth ? 'aspect-[4/3] lg:aspect-[3/1]' : 'aspect-[4/3]';
+            const isHorizontal = isFullWidth;
+
             return (
               <article
                 id={`service-${service.id}`}
@@ -78,22 +37,44 @@ export const Services: React.FC = () => {
                 tabIndex={0}
                 onClick={() => handleBookService(service.id)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBookService(service.id); } }}
-                className={`group bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 flex flex-col text-left cursor-pointer ${colClass}`}
+                className={`group bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 text-left cursor-pointer ${colClass} ${
+                  isHorizontal ? 'flex flex-col lg:flex-row' : 'flex flex-col'
+                }`}
                 aria-label={`View details for ${service.title}`}
               >
-                <div className={`${imageAspectClass} overflow-hidden bg-stone-100 relative`}>
-                  <img 
-                    src={service.image} 
-                    alt={service.title} 
+                {/* Image: 1/3 width on left for large cards, full width on top for small */}
+                <div
+                  className={`overflow-hidden bg-stone-100 relative flex-shrink-0 ${
+                    isHorizontal
+                      ? 'aspect-[4/3] lg:w-1/3 lg:aspect-auto lg:min-h-0 lg:self-stretch'
+                      : 'aspect-[4/3]'
+                  }`}
+                >
+                  <img
+                    src={service.image}
+                    alt={service.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition-colors" />
                 </div>
-                <div className="p-6 md:p-8 flex flex-col flex-grow">
+                <div className="p-6 md:p-8 flex flex-col flex-grow min-w-0">
                   <h3 className="font-serif font-bold text-xl md:text-2xl text-stone-900 mb-3 md:mb-4 group-hover:text-sage-700 transition-colors">{service.title}</h3>
-                  <p className="text-stone-500 text-sm md:text-base mb-6 md:mb-8 leading-relaxed flex-grow">{service.description}</p>
-                  <div className="pt-6 border-t border-stone-100 flex items-center justify-between mb-6">
+                  <p className="text-stone-500 text-sm md:text-base mb-4 leading-relaxed">{service.description}</p>
+                  {service.features && service.features.length > 0 && (
+                    <div className="mb-4 md:mb-6">
+                      <span className="text-xs font-bold text-stone-400 uppercase tracking-widest block mb-2">What's included</span>
+                      <ul className="space-y-1.5">
+                        {service.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start text-sm text-stone-600">
+                            <Check size={14} className="mr-2 text-sage-500 flex-shrink-0 mt-0.5" aria-hidden />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="pt-6 border-t border-stone-100 flex items-center justify-between mb-6 mt-auto">
                     <div className="flex items-center text-stone-400 font-medium text-sm">
                       <Clock size={16} className="mr-2" aria-hidden="true" />
                       <span>{service.durationMin / 60}h</span>

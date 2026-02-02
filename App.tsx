@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
+const Contact = lazy(() => import('./pages/Contact').then(module => ({ default: module.Contact })));
 const BookingPage = lazy(() => import('./pages/BookingPage').then(module => ({ default: module.BookingPage })));
 const AiStylist = lazy(() => import('./components/AiStylist').then(module => ({ default: module.AiStylist })));
 
@@ -44,12 +45,13 @@ const AppLayout = () => {
       {/* pt-20 added to offset the fixed header height, except on home page where hero overlays header */}
       <main
         id="main-content"
-        className={`flex-1 ${!isBookingFlow && !isHomePage ? 'pt-20' : ''} ${!isBookingFlow ? 'pb-24 md:pb-0' : ''}`}
+        className={`flex-1 min-h-[70vh] ${!isBookingFlow && !isHomePage ? 'pt-20' : ''} ${!isBookingFlow ? 'pb-24 md:pb-0' : ''}`}
         tabIndex={-1}
       >
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-[50vh]" aria-hidden="true" />}>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/book/:serviceId" element={<BookingPage />} />
           </Routes>
         </Suspense>

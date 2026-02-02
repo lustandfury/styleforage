@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { id: 'about', label: 'About' },
   { id: 'services', label: 'Services' },
   { id: 'testimonials', label: 'Testimonials' },
+  { id: 'contact', label: 'Contact', path: '/contact' },
 ] as const;
 
 const SCROLL_THRESHOLD = 100;
@@ -96,19 +97,34 @@ export const Header: React.FC = () => {
                 hasScrolledOnce ? 'nav-pill-glass' : 'nav-pill-flat'
               }`}
             >
-              {NAV_ITEMS.map(({ id, label }) => {
-                const isActive = activeNav === id;
+              {NAV_ITEMS.map((item) => {
+                const isActive = 'path' in item ? location.pathname === item.path : activeNav === item.id;
+                if ('path' in item) {
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.path}
+                      className={`nav-link-item relative px-4 py-2 text-sm font-medium rounded-full cursor-pointer ${
+                        isActive
+                          ? 'nav-link-item--active text-stone-900'
+                          : 'text-stone-600 hover:text-stone-800'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
                 return (
                   <button
-                    key={id}
-                    onClick={() => scrollToAnchor(id)}
-                    className={`relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 cursor-pointer ${
+                    key={item.id}
+                    onClick={() => scrollToAnchor(item.id)}
+                    className={`nav-link-item relative px-4 py-2 text-sm font-medium rounded-full cursor-pointer ${
                       isActive
-                        ? 'bg-white text-stone-900 shadow-sm'
+                        ? 'nav-link-item--active text-stone-900'
                         : 'text-stone-600 hover:text-stone-800'
                     }`}
                   >
-                    {label}
+                    {item.label}
                   </button>
                 );
               })}
@@ -142,19 +158,34 @@ export const Header: React.FC = () => {
             hasScrolledOnce ? 'nav-pill-glass' : 'nav-pill-flat'
           }`}
         >
-          {NAV_ITEMS.map(({ id, label }) => {
-            const isActive = activeNav === id;
+          {NAV_ITEMS.map((item) => {
+            const isActive = 'path' in item ? location.pathname === item.path : activeNav === item.id;
+            if ('path' in item) {
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={`nav-link-item relative px-4 py-2.5 text-sm font-medium rounded-full cursor-pointer touch-manipulation ${
+                    isActive
+                      ? 'nav-link-item--active text-stone-900'
+                      : 'text-stone-600 active:text-stone-800'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            }
             return (
               <button
-                key={id}
-                onClick={() => scrollToAnchor(id)}
-                className={`relative px-4 py-2.5 text-sm font-medium rounded-full transition-all duration-200 cursor-pointer touch-manipulation ${
+                key={item.id}
+                onClick={() => scrollToAnchor(item.id)}
+                className={`nav-link-item relative px-4 py-2.5 text-sm font-medium rounded-full cursor-pointer touch-manipulation ${
                   isActive
-                    ? 'bg-white text-stone-900 shadow-sm'
+                    ? 'nav-link-item--active text-stone-900'
                     : 'text-stone-600 active:text-stone-800'
                 }`}
               >
-                {label}
+                {item.label}
               </button>
             );
           })}
