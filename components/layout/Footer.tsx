@@ -4,8 +4,8 @@ import { Instagram, Mail } from 'lucide-react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
 
 export const Footer: React.FC = () => (
-  <FadeInOnScroll>
-    <footer className="bg-stone-900 text-stone-100 py-10 md:py-12 border-t border-sage-500/30" role="contentinfo">
+  <FadeInOnScroll className="relative z-30">
+    <footer className="bg-stone-900 text-stone-100 py-10 md:py-12 pt-12 md:pt-12 border-t border-sage-500/30" role="contentinfo">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 md:gap-8 mb-6 md:mb-8">
           <div className="col-span-1 md:col-span-2">
