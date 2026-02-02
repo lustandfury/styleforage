@@ -62,7 +62,7 @@ export const Footer: React.FC = () => {
             </nav>
             <div>
               <h4 className="text-stone-100 font-medium mb-3 md:mb-4 text-sm md:text-base">Get in touch</h4>
-              <a href="https://instagram.com/styleforage" aria-label="Follow @styleforage on Instagram" className="hover:text-sage-400 transition-colors inline-flex flex-row items-center gap-2 text-sm text-stone-400 mb-4 block" target="_blank" rel="noopener noreferrer">
+              <a href="https://instagram.com/styleforage" aria-label="Follow @styleforage on Instagram" className="hover:text-sage-400 transition-colors inline-flex flex-row items-center justify-start gap-2 text-sm text-stone-400 mb-4 block text-left" target="_blank" rel="noopener noreferrer">
                 <Instagram size={18} aria-hidden className="shrink-0 order-first" />
                 <span>Instagram @styleforage</span>
               </a>

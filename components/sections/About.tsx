@@ -65,7 +65,7 @@ export const About: React.FC = () => {
                         href="https://www.instagram.com/styleforage/" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="group inline-flex items-center justify-center py-2 font-medium transition-colors"
+                        className="group inline-flex items-center justify-start md:justify-center py-2 font-medium transition-colors"
                         onMouseEnter={() => setIsHoveringInstagram(true)}
                         onMouseLeave={() => setIsHoveringInstagram(false)}
                       >

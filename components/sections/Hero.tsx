@@ -99,24 +99,32 @@ export const Hero: React.FC = () => {
       className="relative h-full min-h-screen flex flex-col items-center justify-center overflow-hidden"
       aria-label="Hero"
     >
-      {/* Background: slightly scaled by default (0.92), fades to 1.0 on scroll */}
-      <div 
+      {/* Background: mobile crop on small screens, full width from md up; scale/blur on scroll */}
+      <div
         ref={bgRef}
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat hero-zoom-bg rounded-[4px]"
-        style={{
-          backgroundImage: "url('/images/clothing rack full width.webp')",
-          transform: 'scale3d(1.05, 1.05, 1)',
-        }}
+        className="absolute inset-0 rounded-[4px] overflow-hidden"
+        style={{ transform: 'scale3d(1.05, 1.05, 1)' }}
         aria-hidden="true"
-      />
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat hero-zoom-bg scale-x-[-1] md:hidden"
+          style={{ backgroundImage: "url('/images/clothing rack full width crop mobile.webp')" }}
+        />
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat hero-zoom-bg hidden md:block"
+          style={{ backgroundImage: "url('/images/clothing rack full width.webp')" }}
+        />
+      </div>
       <h1 className="sr-only">Effortless style for every body and budget</h1>
 
       {/* Hero text content: heading types out, then rest transition in. Badge above heading in layout. */}
-      <div className="relative z-10 flex flex-col items-center md:items-start justify-center px-4 md:px-12 lg:px-20 w-full">
-        <div className="text-center md:text-left max-w-5xl">
+      <div className="relative z-10 flex flex-col items-start justify-center px-4 md:px-12 lg:px-20 w-full">
+        <div className="text-left max-w-[90%]">
           <div ref={textBlurTopRef} className={`hero-rest-in transition-none ${revealDone ? 'hero-rest-visible' : ''}`}>
             <div className="inline-block px-4 py-1.5 mb-4 md:mb-6 rounded-full backdrop-blur-sm border border-stone-900/10 text-stone-900 text-xs font-bold uppercase tracking-[0.2em]">
-              Personal Styling & Wardrobe Curation
+              Personal Styling
+              <br className="md:hidden" />
+              & Wardrobe Curation
             </div>
           </div>
           <div ref={headingWrapperRef} className="transition-opacity duration-300">
@@ -147,10 +155,10 @@ export const Hero: React.FC = () => {
               </h2>
           </div>
           <div ref={textBlurBottomRef} className={`hero-rest-in transition-none ${revealDone ? 'hero-rest-visible' : ''}`}>
-            <p className="text-stone-700 text-base sm:text-lg md:text-2xl max-w-2xl mx-auto md:mx-0 mb-10 md:mb-12 leading-relaxed font-light">
+            <p className="text-stone-700 text-base sm:text-lg md:text-2xl max-w-2xl mx-0 mb-10 md:mb-12 leading-relaxed font-light">
               Personal styling for women and men who want to feel confident, current, and completely themselves.
             </p>
-            <div className="flex justify-center md:justify-start">
+            <div className="flex justify-start">
               <Button
                 variant="primary"
                 size="lg"
