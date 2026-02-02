@@ -45,7 +45,7 @@
     <meta property="og:url" content="https://styleforage.com/" />
     <meta property="og:title" content="Style Forage | Personal Styling & Wardrobe Consultation" />
     <meta property="og:description" content="Curating confidence in every detail. Personal styling services including closet edits, wardrobe consultations, and personal shopping." />
-    <meta property="og:image" content="https://styleforage.com/images/roz.png" />
+    <meta property="og:image" content="https://styleforage.com/images/meta-image.webp" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Style Forage" />
     
@@ -54,11 +54,18 @@
     <meta property="twitter:url" content="https://styleforage.com/" />
     <meta property="twitter:title" content="Style Forage | Personal Styling & Wardrobe Consultation" />
     <meta property="twitter:description" content="Curating confidence in every detail. Personal styling services including closet edits, wardrobe consultations, and personal shopping." />
-    <meta property="twitter:image" content="https://styleforage.com/images/roz.png" />
+    <meta property="twitter:image" content="https://styleforage.com/images/meta-image.webp" />
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- App icons (favicon + Apple touch icon) -->
+    <link rel="icon" type="image/png" href="/images/app-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/app-icon.png" />
+
+    <!-- Sitemap (SEO) -->
+    <link rel="sitemap" type="application/xml" href="https://styleforage.com/sitemap.xml" />
+
+    <!-- Theme color (browser chrome / PWA) -->
+    <meta name="theme-color" content="#1c1917" />
+    <meta name="msapplication-TileColor" content="#1c1917" />
     
     <!-- Preconnect for fonts (performance optimization) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -73,7 +80,7 @@
       "name": "Style Forage",
       "description": "Personal styling and wardrobe consultation services",
       "url": "https://styleforage.com",
-      "logo": "https://styleforage.com/logo.png",
+      "logo": "https://styleforage.com/images/roz.png",
       "image": "https://styleforage.com/images/roz.png",
       "priceRange": "$$",
       "address": {
@@ -122,11 +129,25 @@
             "@type": "Offer",
             "itemOffered": {
               "@type": "Service",
-              "name": "Style Refresh",
+              "name": "The Style Refresh",
               "description": "A focused update for a season, event, trip, or life change."
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Corporate Workshops",
+              "description": "Team styling and wardrobe workshops for organizations."
             }
           }
         ]
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "url": "https://styleforage.com/contact",
+        "contactType": "customer service",
+        "availableLanguage": "English"
       }
     }
     </script>
