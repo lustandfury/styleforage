@@ -8,6 +8,9 @@ const LINE1_WORDS = HEADING_LINE1.split(' ');
 const WORD_REVEAL_DURATION = 0.6;
 const WORD_STAGGER = 0.08;
 const REVEAL_START_DELAY = 0.35;
+/** Ignore scroll below this (px) so restore/rounding on load doesn’t cause visible blur */
+const SCROLL_DEAD_ZONE = 5;
+const SCROLL_BLUR_RANGE = 200;
 
 export const Hero: React.FC = () => {
   const bgRef = useRef<HTMLDivElement>(null);
@@ -37,7 +40,8 @@ export const Hero: React.FC = () => {
 
     const updateScaleAndBlur = () => {
       const y = window.scrollY;
-      const progress = Math.min(y / 200, 1);
+      const effectiveY = y <= SCROLL_DEAD_ZONE ? 0 : y - SCROLL_DEAD_ZONE;
+      const progress = Math.min(effectiveY / (SCROLL_BLUR_RANGE - SCROLL_DEAD_ZONE), 1);
 
       // Background: scale 1.1 → 1.0, blur, and opacity 1 → 0 on scroll (same 0–500px range)
       if (bgRef.current) {
