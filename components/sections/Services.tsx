@@ -9,6 +9,7 @@ export const Services: React.FC = () => {
   const navigate = useNavigate();
 
   const handleBookService = (serviceId: string) => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     navigate(`/book/${serviceId}`);
   };
 
