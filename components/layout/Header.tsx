@@ -76,24 +76,24 @@ export const Header: React.FC = () => {
         Skip to main content
       </a>
       <header className="fixed top-0 z-40 w-full bg-transparent border-b border-transparent transition-all duration-300">
-        <div className="w-full px-4 md:px-12 lg:px-20 h-20 grid grid-cols-2 md:grid-cols-3 items-center">
+        <div className="w-full px-3 md:px-12 lg:px-20 h-20 grid grid-cols-3 items-center gap-2">
           <div
-            className={`justify-self-start transition-opacity duration-300 ${
+            className={`justify-self-start transition-opacity duration-300 min-w-0 ${
               showLogoAndCta ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
           >
             <Link
               to="/"
-              className="font-serif text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors cursor-pointer"
+              className="font-serif text-xl md:text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors cursor-pointer truncate"
             >
               Style Forage
             </Link>
           </div>
 
-          {/* Pill-style nav: flat by default, liquid glass after first scroll */}
-          <nav className="hidden md:flex justify-self-center">
+          {/* Pill-style nav: flat by default, liquid glass after first scroll (top on all screen sizes) */}
+          <nav className="flex justify-self-center min-w-0">
             <div
-              className={`nav-pill inline-flex items-center gap-0.5 p-1 rounded-full ${
+              className={`nav-pill inline-flex items-center gap-0.5 p-1 rounded-full flex-nowrap ${
                 hasScrolledOnce ? 'nav-pill-glass' : 'nav-pill-flat'
               }`}
             >
@@ -104,10 +104,10 @@ export const Header: React.FC = () => {
                     <Link
                       key={item.id}
                       to={item.path}
-                      className={`nav-link-item relative px-4 py-2 text-sm font-medium rounded-full cursor-pointer ${
+                      className={`nav-link-item relative px-2 py-1.5 text-xs font-medium rounded-full cursor-pointer touch-manipulation md:px-4 md:py-2 md:text-sm ${
                         isActive
                           ? 'nav-link-item--active text-stone-900'
-                          : 'text-stone-600 hover:text-stone-800'
+                          : 'text-stone-600 hover:text-stone-800 active:text-stone-800'
                       }`}
                     >
                       {item.label}
@@ -118,10 +118,10 @@ export const Header: React.FC = () => {
                   <button
                     key={item.id}
                     onClick={() => scrollToAnchor(item.id)}
-                    className={`nav-link-item relative px-4 py-2 text-sm font-medium rounded-full cursor-pointer ${
+                    className={`nav-link-item relative px-2 py-1.5 text-xs font-medium rounded-full cursor-pointer touch-manipulation md:px-4 md:py-2 md:text-sm ${
                       isActive
                         ? 'nav-link-item--active text-stone-900'
-                        : 'text-stone-600 hover:text-stone-800'
+                        : 'text-stone-600 hover:text-stone-800 active:text-stone-800'
                     }`}
                   >
                     {item.label}
@@ -132,7 +132,7 @@ export const Header: React.FC = () => {
           </nav>
 
           <div
-            className={`justify-self-end transition-opacity duration-300 ${
+            className={`justify-self-end transition-opacity duration-300 shrink-0 ${
               showLogoAndCta ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
           >
@@ -140,57 +140,13 @@ export const Header: React.FC = () => {
               variant="primary"
               size="md"
               onClick={() => scrollToAnchor('services')}
-              className="px-6 rounded-full"
+              className="px-4 md:px-6 rounded-full text-sm md:text-base"
             >
               Book Now
             </Button>
           </div>
         </div>
       </header>
-
-      {/* Mobile: bottom nav bar (native-app style), 20px from bottom */}
-      <nav
-        className="fixed bottom-2 left-0 right-0 z-40 flex md:hidden justify-center px-4 pt-3 pb-[max(20px,env(safe-area-inset-bottom))]"
-        aria-label="Main navigation"
-      >
-        <div
-          className={`nav-pill inline-flex items-center gap-0.5 p-1 rounded-full ${
-            hasScrolledOnce ? 'nav-pill-glass' : 'nav-pill-flat'
-          }`}
-        >
-          {NAV_ITEMS.map((item) => {
-            const isActive = 'path' in item ? location.pathname === item.path : activeNav === item.id;
-            if ('path' in item) {
-              return (
-                <Link
-                  key={item.id}
-                  to={item.path}
-                  className={`nav-link-item relative px-4 py-2.5 text-sm font-medium rounded-full cursor-pointer touch-manipulation ${
-                    isActive
-                      ? 'nav-link-item--active text-stone-900'
-                      : 'text-stone-600 active:text-stone-800'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            }
-            return (
-              <button
-                key={item.id}
-                onClick={() => scrollToAnchor(item.id)}
-                className={`nav-link-item relative px-4 py-2.5 text-sm font-medium rounded-full cursor-pointer touch-manipulation ${
-                  isActive
-                    ? 'nav-link-item--active text-stone-900'
-                    : 'text-stone-600 active:text-stone-800'
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </>
   );
 };

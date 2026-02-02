@@ -31,14 +31,14 @@ export const About: React.FC = () => {
   }, [isHoveringInstagram, isVideoReady]);
 
   return (
-    <section id="about" className="py-16 md:py-24 bg-white relative overflow-hidden">
+    <section id="about" className="py-16 md:py-24 bg-white relative overflow-x-hidden">
        {/* Background Decoration */}
        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-sage-50 rounded-full blur-3xl -z-10"></div>
        
        <FadeInOnScroll>
        <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-             <div className="order-2 md:order-1">
+             <div className="order-2 md:order-1 min-w-0">
                 <div className="mb-4 md:mb-6 text-sage-600 font-medium uppercase tracking-wider text-sm">About the Stylist</div>
                 <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-stone-900 leading-tight mb-6 md:mb-8">
                 Roslyn Costanzo
@@ -52,7 +52,7 @@ export const About: React.FC = () => {
                      }`}
                      style={{ background: 'linear-gradient(to top, #FFDC80, #F77737, #E1306C, #C13584, #833AB4)' }}
                    />
-                   <div className="space-y-4 md:space-y-5 text-stone-600 text-sm md:text-base leading-relaxed font-light">
+                   <div className="space-y-4 md:space-y-5 text-stone-600 text-sm md:text-base leading-relaxed font-light break-words">
                       <p>
                         Hi, I'm Roz and I've been obsessed with fashion and shopping since I got my first pay cheque in 1992—which I immediately spent at Smart Set. I have also worked as a style editor at two national lifestyle magazines, and most recently, as a wardrobe consultant, helping people like you, find and refine their personal style.
                       </p>
@@ -111,7 +111,7 @@ export const About: React.FC = () => {
              </div>
              <div className="order-1 md:order-2 flex justify-center">
                 {/* Wrapper for image and border - relative positioning context */}
-                <div className="relative h-[90vh] aspect-[9/16]">
+                <div className="relative h-[56vh] min-h-[280px] aspect-[9/16] md:h-[90vh] md:min-h-0">
                   {/* Decorative Frame - absolutely positioned relative to wrapper */}
                   <div 
                     className={`absolute top-4 left-4 w-full h-full rounded-2xl md:rounded-3xl hidden md:block transition-all duration-500 ${
