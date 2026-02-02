@@ -124,11 +124,7 @@ export const Header: React.FC = () => {
       >
         Skip to main content
       </a>
-      <header
-        className={`fixed top-0 z-40 w-full border-b border-transparent transition-all duration-300 ${
-          hasScrolledOnce ? 'md:bg-white/95 md:border-stone-200 md:shadow-sm' : ''
-        }`}
-      >
+      <header className="fixed top-0 z-40 w-full border-b border-transparent transition-all duration-300">
         <div className="w-full px-3 md:px-12 lg:px-20 h-20 grid grid-cols-3 items-center gap-2">
           <div
             className={`justify-self-start transition-opacity duration-300 min-w-0 ${
