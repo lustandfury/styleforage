@@ -554,9 +554,11 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
 
   return (
     <div className="max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden">
+        {/* First booking sale hidden for now
         {state.step !== 'confirmation' && (
           <FirstBookingSale variant="inline" onStateChange={handleSaleStateChange} />
         )}
+        */}
 
         <div className="min-h-[480px] sm:min-h-[560px] md:min-h-[600px]">
             {state.step === 'service' && renderServices()}

@@ -93,6 +93,15 @@ export const About: React.FC = () => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           >
+                            <defs>
+                              <linearGradient id="instagram-gradient-text" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#FFDC80" />
+                                <stop offset="25%" stopColor="#F77737" />
+                                <stop offset="50%" stopColor="#E1306C" />
+                                <stop offset="75%" stopColor="#C13584" />
+                                <stop offset="100%" stopColor="#833AB4" />
+                              </linearGradient>
+                            </defs>
                             <path d="M5 12h14M12 5l7 7-7 7"/>
                           </svg>
                         </span>

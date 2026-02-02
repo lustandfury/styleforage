@@ -19,7 +19,7 @@ export const SERVICES: Service[] = [
       'Pinpointing wardrobe gaps',
       'Fresh perspective on your style',
     ],
-    price: 315,
+    price: 350,
     durationMin: 150,
     image: '/images/services/closet-edit.webp',
   },
