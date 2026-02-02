@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Hero } from '../components/sections/Hero';
 import { About } from '../components/sections/About';
@@ -8,6 +8,11 @@ import { Testimonials } from '../components/sections/Testimonials';
 import { FooterRevealSection } from '../components/sections/FooterRevealSection';
 
 export const Home: React.FC = () => {
+  // On load/refresh, always start at top so hero animation plays from the beginning
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="animate-fade-in">
       <Helmet>
