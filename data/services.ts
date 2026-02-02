@@ -24,6 +24,23 @@ export const SERVICES: Service[] = [
     image: '/images/services/closet-edit.webp',
   },
   {
+    id: 'full-style-reset',
+    title: 'The Full Style Reset Package',
+    description: 'For clients ready for a meaningful refresh and a wardrobe that feels aligned.',
+    longDescription:
+      'Combines The Closet Edit and Personal Shop. This is for clients ready for a meaningful refresh and a wardrobe that feels aligned, confident, and wearable. We start by clearing the noise and finish by intentionally filling the gaps.',
+    features: [
+      'Full Closet Edit session',
+      'Personal Shopping session (In-person or Online)',
+      'Style integration',
+      'Complete wardrobe alignment',
+      'Confidence building',
+    ],
+    price: 750,
+    durationMin: 300,
+    image: '/images/services/style-reset.webp',
+  },
+  {
     id: 'style-refresh',
     title: 'The Style Refresh',
     description: 'A focused update for a season, event, trip, or life change.',
@@ -40,23 +57,6 @@ export const SERVICES: Service[] = [
     price: 375,
     durationMin: 120,
     image: '/images/services/style-refresh.webp',
-  },
-  {
-    id: 'full-style-reset',
-    title: 'The Full Style Reset Package',
-    description: 'For clients ready for a meaningful refresh and a wardrobe that feels aligned.',
-    longDescription:
-      'Combines The Closet Edit and Personal Shop. This is for clients ready for a meaningful refresh and a wardrobe that feels aligned, confident, and wearable. We start by clearing the noise and finish by intentionally filling the gaps.',
-    features: [
-      'Full Closet Edit session',
-      'Personal Shopping session (In-person or Online)',
-      'Style integration',
-      'Complete wardrobe alignment',
-      'Confidence building',
-    ],
-    price: 750,
-    durationMin: 300,
-    image: '/images/services/style-reset.webp',
   },
   {
     id: 'personal-shop',

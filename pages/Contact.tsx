@@ -173,7 +173,7 @@ export const Contact: React.FC = () => {
                 className="flex items-center gap-4 p-4 md:p-6 rounded-2xl bg-white border border-stone-100 shadow-sm hover:shadow-md hover:border-sage-200 transition-all group"
                 aria-label="Follow @styleforage on Instagram"
               >
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sage-100 text-sage-700 group-hover:bg-sage-200 transition-colors">
+                <span className="order-first flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sage-100 text-sage-700 group-hover:bg-sage-200 transition-colors">
                   <Instagram size={24} aria-hidden />
                 </span>
                 <div>

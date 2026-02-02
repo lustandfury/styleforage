@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { Instagram } from 'iconoir-react';
 import { Button } from '../ui/Button';
 import { Link } from 'react-router-dom';
 import { FadeInOnScroll } from '../FadeInOnScroll';
@@ -70,65 +69,16 @@ export const About: React.FC = () => {
                         onMouseEnter={() => setIsHoveringInstagram(true)}
                         onMouseLeave={() => setIsHoveringInstagram(false)}
                       >
-                        <span className="relative mr-2 w-5 h-5 flex-shrink-0">
-                          {/* Outlined black icon (default) */}
-                          <Instagram 
-                            className="absolute inset-0 w-5 h-5 text-stone-700 transition-opacity duration-300 group-hover:opacity-0" 
-                            strokeWidth={1.5}
-                          />
-                          {/* Gradient colored icon (on hover) */}
-                          <svg 
-                            className="absolute inset-0 w-5 h-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                            viewBox="0 0 24 24" 
-                            fill="none"
-                          >
-                            <defs>
-                              <linearGradient id="instagram-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#FFDC80" />
-                                <stop offset="25%" stopColor="#F77737" />
-                                <stop offset="50%" stopColor="#E1306C" />
-                                <stop offset="75%" stopColor="#C13584" />
-                                <stop offset="100%" stopColor="#833AB4" />
-                              </linearGradient>
-                              <linearGradient id="instagram-gradient-text" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#FFDC80" />
-                                <stop offset="25%" stopColor="#F77737" />
-                                <stop offset="50%" stopColor="#E1306C" />
-                                <stop offset="75%" stopColor="#C13584" />
-                                <stop offset="100%" stopColor="#833AB4" />
-                              </linearGradient>
-                            </defs>
-                            <path 
-                              d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" 
-                              stroke="url(#instagram-gradient)" 
-                              strokeWidth="1.5" 
-                              strokeLinecap="round" 
-                              strokeLinejoin="round"
-                            />
-                            <path 
-                              d="M3 16V8C3 5.23858 5.23858 3 8 3H16C18.7614 3 21 5.23858 21 8V16C21 18.7614 18.7614 21 16 21H8C5.23858 21 3 18.7614 3 16Z" 
-                              stroke="url(#instagram-gradient)" 
-                              strokeWidth="1.5"
-                            />
-                            <path 
-                              d="M17.5 6.51L17.51 6.49889" 
-                              stroke="url(#instagram-gradient)" 
-                              strokeWidth="1.5" 
-                              strokeLinecap="round" 
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
                         {/* Text with gradient on hover */}
                         <span className="relative">
                           <span className="text-stone-700 transition-opacity duration-300 group-hover:opacity-0">
-                            Follow @styleforage on Instagram
+                            @styleforage on Instagram
                           </span>
                           <span 
                             className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-clip-text text-transparent"
                             style={{ backgroundImage: 'linear-gradient(to right, #FFDC80, #F77737, #E1306C, #C13584, #833AB4)' }}
                           >
-                            Follow @styleforage on Instagram
+                            @styleforage on Instagram
                           </span>
                         </span>
                         {/* Arrow with gradient on hover */}

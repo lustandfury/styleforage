@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, ChevronRight, Check } from 'lucide-react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
+import { Testimonials } from './Testimonials';
 import { SERVICES } from '../../data/services';
 
 export const Services: React.FC = () => {
@@ -12,14 +13,14 @@ export const Services: React.FC = () => {
   };
 
   return (
-    <section id="services" className="py-20 md:py-32 bg-stone-50 scroll-mt-20">
+    <section id="services" className="services-quilted-bg py-20 md:py-32 scroll-mt-20">
       <FadeInOnScroll>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 md:mb-20">
           <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-4 md:mb-6">Curated Styling Services</h2>
           <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full mb-4 md:mb-6"></div>
           <p className="text-stone-600 text-base md:text-lg max-w-xl mx-auto">
-            Click <strong>View Service Details</strong> to view more details and book. Don't see what you're looking for? <a href="/contact" className="text-sage-500 hover:text-sage-600 transition-colors">Contact us</a> to discuss your needs.
+            Click <strong>View Service Details</strong> to view more details and book. <br />Don't see what you're looking for? <a href="/contact" className="text-sage-500 hover:text-sage-600 transition-colors">Contact me</a> to discuss your needs.
           </p>
         </div>
 
@@ -92,6 +93,8 @@ export const Services: React.FC = () => {
             );
           })}
         </div>
+
+        <Testimonials />
       </div>
       </FadeInOnScroll>
     </section>

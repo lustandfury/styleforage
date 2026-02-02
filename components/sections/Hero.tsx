@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '../ui/Button';
 
+// Hero (top of page) – word animation
 const HEADING_LINE1 = 'Effortless style for every';
 const HEADING_LINE2 = 'body & budget';
 const LINE1_WORDS = HEADING_LINE1.split(' ');
@@ -12,6 +13,7 @@ export const Hero: React.FC = () => {
   const bgRef = useRef<HTMLDivElement>(null);
   const textBlurTopRef = useRef<HTMLDivElement>(null);
   const textBlurBottomRef = useRef<HTMLDivElement>(null);
+  const headingWrapperRef = useRef<HTMLDivElement>(null);
   const [headingVisible, setHeadingVisible] = useState(false);
   const [revealDone, setRevealDone] = useState(false);
 
@@ -32,10 +34,10 @@ export const Hero: React.FC = () => {
 
   useEffect(() => {
     let rafId: number | null = null;
-    
+
     const updateScaleAndBlur = () => {
-      const scrollY = window.scrollY;
-      const progress = Math.min(scrollY / 200, 1);
+      const y = window.scrollY;
+      const progress = Math.min(y / 200, 1);
 
       // Background: scale 1.1 → 1.0, blur, and opacity 1 → 0 on scroll (same 0–500px range)
       if (bgRef.current) {
@@ -56,6 +58,19 @@ export const Hero: React.FC = () => {
         if (progress > 0) textBlurBottomRef.current.style.opacity = String(1 - progress);
         else textBlurBottomRef.current.style.removeProperty('opacity');
       }
+
+      // Heading wrapper: stay full opacity until scrolling content completely covers the hero (one viewport), then fade
+      if (headingWrapperRef.current) {
+        const vh = window.innerHeight;
+        const minOpacity = 0.2;
+        const fadeRange = 150;
+        let opacity = 1;
+        if (y >= vh) {
+          const fadeProgress = Math.min(1, (y - vh) / fadeRange);
+          opacity = Math.max(minOpacity, 1 - fadeProgress * (1 - minOpacity));
+        }
+        headingWrapperRef.current.style.opacity = String(opacity);
+      }
     };
 
     const handleScroll = () => {
@@ -65,7 +80,7 @@ export const Hero: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     updateScaleAndBlur();
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       if (rafId) cancelAnimationFrame(rafId);
@@ -104,33 +119,33 @@ export const Hero: React.FC = () => {
               Personal Styling & Wardrobe Curation
             </div>
           </div>
-          <h2 className={`scroll-fade-in relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-medium text-stone-900 mb-6 md:mb-8 tracking-tight leading-[1.1] ${headingVisible ? 'is-visible' : ''}`}>
-            {/* Line 1: staggered word reveal */}
-            <span className="hero-reveal-line block">
-              {LINE1_WORDS.map((word, i) => (
-                <span
-                  key={i}
-                  className="hero-reveal-word"
-                  style={{
-                    animationDelay: `${REVEAL_START_DELAY + i * WORD_STAGGER}s`,
-                  }}
-                >
-                  {word}{i < LINE1_WORDS.length - 1 ? '\u00A0' : ''}
+          <div ref={headingWrapperRef} className="transition-opacity duration-300">
+            <h2 className={`scroll-fade-in relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-medium text-stone-900 mb-6 md:mb-8 tracking-tight leading-[1.1] ${headingVisible ? 'is-visible' : ''}`}>
+                <span className="hero-reveal-line block">
+                  {LINE1_WORDS.map((word, i) => (
+                    <span
+                      key={i}
+                      className="hero-reveal-word"
+                      style={{
+                        animationDelay: `${REVEAL_START_DELAY + i * WORD_STAGGER}s`,
+                      }}
+                    >
+                      {word}{i < LINE1_WORDS.length - 1 ? '\u00A0' : ''}
+                    </span>
+                  ))}
                 </span>
-              ))}
-            </span>
-            {/* Line 2: single phrase with delay */}
-            <span className="hero-reveal-line block">
-              <span
-                className="hero-reveal-word italic text-stone-700"
-                style={{
-                  animationDelay: `${REVEAL_START_DELAY + LINE1_WORDS.length * WORD_STAGGER}s`,
-                }}
-              >
-                {HEADING_LINE2}
-              </span>
-            </span>
-          </h2>
+                <span className="hero-reveal-line block">
+                  <span
+                    className="hero-reveal-word italic text-stone-700"
+                    style={{
+                      animationDelay: `${REVEAL_START_DELAY + LINE1_WORDS.length * WORD_STAGGER}s`,
+                    }}
+                  >
+                    {HEADING_LINE2}
+                  </span>
+                </span>
+              </h2>
+          </div>
           <div ref={textBlurBottomRef} className={`hero-rest-in transition-none ${revealDone ? 'hero-rest-visible' : ''}`}>
             <p className="text-stone-700 text-base sm:text-lg md:text-2xl max-w-2xl mx-auto md:mx-0 mb-10 md:mb-12 leading-relaxed font-light">
               Personal styling for women and men who want to feel confident, current, and completely themselves.

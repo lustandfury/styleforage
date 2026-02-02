@@ -5,6 +5,7 @@ import { About } from '../components/sections/About';
 import { ThoughtfulApproach } from '../components/sections/ThoughtfulApproach';
 import { Services } from '../components/sections/Services';
 import { Testimonials } from '../components/sections/Testimonials';
+import { FooterRevealSection } from '../components/sections/FooterRevealSection';
 
 export const Home: React.FC = () => {
   return (
@@ -27,7 +28,8 @@ export const Home: React.FC = () => {
         <About />
         <ThoughtfulApproach />
         <Services />
-        <Testimonials />
+        {/* Section anchored above footer: letter-by-letter reveal CTA */}
+        <FooterRevealSection />
       </div>
     </div>
   );

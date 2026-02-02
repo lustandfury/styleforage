@@ -6,9 +6,10 @@ html, body {
 }
 
 @theme {
-  --color-sage-50: #f4f7f4;
-  --color-sage-100: #e3ebe3;
-  --color-sage-500: #8cae8c;
+  /* Sage (brand mint) – darkened for better contrast and accessibility */
+  --color-sage-50: #e8efe8;
+  --color-sage-100: #d1ddd1;
+  --color-sage-500: #5c7c5c;
   --color-sage-900: #2d3b2d;
 
   --color-sand-50: #fdfbf7;
@@ -58,6 +59,10 @@ html, body {
   display: block;
   overflow: hidden;
   line-height: 1.35;
+}
+/* Bottom scroll reveal: allow descenders and italic overflow (e.g. "f" in "self") */
+.hero-reveal-line.bottom-reveal-line {
+  overflow: visible;
 }
 .hero-reveal-word {
   display: inline-block;
@@ -179,4 +184,19 @@ html, body {
 /* Subtle floating animation after pop completes */
 .is-visible .card-icon-float {
   animation: iconPop 0.5s ease-out forwards, iconFloat 3s ease-in-out 1s infinite;
+}
+
+/* Stacked testimonials (CodePen-style): cards scale from top */
+.stackedcards-origin-top {
+  transform-origin: top;
+}
+.stackedcards--animatable {
+  transition: all 400ms ease;
+}
+
+/* Quilted leather vector pattern – diamond grid with dotted stitch lines */
+.services-quilted-bg {
+  background-color: #edf4f8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cdefs%3E%3Cpattern id='ql' width='40' height='40' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 20 L20 0 L40 20 L20 40 Z' fill='none' stroke='rgba(92,124,92,0.22)' stroke-width='0.5' stroke-dasharray='1.5 2'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23ql)'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
 }
