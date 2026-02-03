@@ -113,18 +113,48 @@ html, body {
 
 /* Nav link: smooth transition + iOS-style liquid glass hover (inactive only) */
 .nav-link-item {
-  transition: color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease,
-    -webkit-backdrop-filter 0.25s ease, backdrop-filter 0.25s ease;
+  border: 1px solid transparent;
+  transition: color 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .nav-link-item:not(.nav-link-item--active):hover {
   background: rgba(255, 255, 255, 0.35);
-  -webkit-backdrop-filter: blur(8px) saturate(150%);
-  backdrop-filter: blur(8px) saturate(150%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .nav-link-item--active {
   background: rgba(255, 255, 255, 0.95);
+  border-color: black;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+/* When sliding pill is used (desktop pill nav), active item has no own background so pill shows through */
+.has-sliding-pill .nav-link-item--active {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Animated nav item border: clockwise track (requires --progress 0–1) */
+@property --nav-border-progress {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+.nav-item-border {
+  --nav-border-progress: 0;
+  transition: --nav-border-progress 0.25s ease-out;
+  -webkit-mask: conic-gradient(
+    from -90deg at 50% 50%,
+    black 0deg,
+    black calc(var(--nav-border-progress) * 360deg),
+    transparent calc(var(--nav-border-progress) * 360deg)
+  );
+  mask: conic-gradient(
+    from -90deg at 50% 50%,
+    black 0deg,
+    black calc(var(--nav-border-progress) * 360deg),
+    transparent calc(var(--nav-border-progress) * 360deg)
+  );
+  -webkit-mask-composite: source-over;
+  mask-composite: intersect;
 }
 
 /* Hero background scroll-based zoom - no transition for instant response */

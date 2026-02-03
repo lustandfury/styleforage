@@ -4,10 +4,38 @@ import { Button } from '../ui/Button';
 import { Link } from 'react-router-dom';
 import { FadeInOnScroll } from '../FadeInOnScroll';
 
+/** Scroll distance (viewport fraction) over which the photo separates from the frame */
+const PHOTO_SCROLL_RANGE = 0.5;
+/** Lift distance (px) and shadow strength at full separation */
+const PHOTO_LIFT_PX = 24;
+const PHOTO_SHADOW_OPACITY_MAX = 0.28;
+
 export const About: React.FC = () => {
   const [isHoveringInstagram, setIsHoveringInstagram] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [photoProgress, setPhotoProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const photoContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll-driven: photo separates from frame (lift + shadow opacity)
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const update = () => {
+      const rect = section.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const range = vh * PHOTO_SCROLL_RANGE;
+      const distFromBottom = rect.top - (vh - range);
+      const progress = Math.max(0, Math.min(1, 1 - distFromBottom / range));
+      setPhotoProgress(progress);
+    };
+
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+    return () => window.removeEventListener('scroll', update);
+  }, []);
 
   // Preload video after page loads
   useEffect(() => {
@@ -31,7 +59,7 @@ export const About: React.FC = () => {
   }, [isHoveringInstagram, isVideoReady]);
 
   return (
-    <section id="about" className="py-16 md:py-24 bg-white relative overflow-x-hidden">
+    <section ref={sectionRef} id="about" className="py-16 md:py-24 bg-white relative overflow-x-hidden">
        {/* Background Decoration */}
        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-sage-50 rounded-full blur-3xl -z-10"></div>
        
@@ -110,9 +138,12 @@ export const About: React.FC = () => {
                 </div>
              </div>
              <div className="order-1 md:order-2 flex justify-center">
-                {/* Wrapper for image and border - relative positioning context */}
-                <div className="relative h-[56vh] min-h-[280px] aspect-[9/16] md:h-[90vh] md:min-h-0">
-                  {/* Decorative Frame - absolutely positioned relative to wrapper */}
+                {/* Wrapper for image and frame */}
+                <div
+                  ref={photoContainerRef}
+                  className="relative h-[56vh] min-h-[280px] aspect-[9/16] md:h-[90vh] md:min-h-0"
+                >
+                  {/* Decorative Frame - stays fixed; photo separates from this on scroll */}
                   <div 
                     className={`absolute top-4 left-4 w-full h-full rounded-2xl md:rounded-3xl hidden md:block transition-all duration-500 ${
                       isHoveringInstagram ? '' : 'border-2 border-stone-900'
@@ -122,12 +153,18 @@ export const About: React.FC = () => {
                     } : {}}
                   />
                   
-                  {/* Image container */}
-                  <div className="relative z-10 w-full h-full rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl bg-stone-100">
+                  {/* Image container - lifts off frame and shadow increases on scroll */}
+                  <div
+                    className="relative z-10 w-full h-full rounded-2xl md:rounded-3xl overflow-hidden bg-stone-100 will-change-transform"
+                    style={{
+                      transform: `translateY(${-PHOTO_LIFT_PX * photoProgress}px)`,
+                      boxShadow: `0 ${10 + 20 * photoProgress}px ${25 + 25 * photoProgress}px -12px rgba(0,0,0,${0.04 + PHOTO_SHADOW_OPACITY_MAX * photoProgress})`,
+                    }}
+                  >
                     {/* Video - preloaded and always in DOM, visibility toggled */}
                     <video 
                       ref={videoRef}
-                      src="/images/gallary/roz-in-capris.mp4"
+                      src="/video/roz-in-capris.mp4"
                       muted
                       loop
                       playsInline

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, User, Shirt, MessageCircle, Mail } from 'lucide-react';
@@ -22,22 +22,33 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const SCROLL_THRESHOLD = 100;
-const MOUSE_TOP_ZONE = 120;
 /** Scroll distance (px) over which mobile pill backgrounds fade from transparent to full opacity */
 const PILL_FADE_SCROLL = 120;
+/** Scroll distance (px) over which original wordmark/Book Now fade up and pill versions fade down */
+const HEADER_FADE_SCROLL = 120;
 
 export const Header: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const [isScrolledDown, setIsScrolledDown] = useState(false);
-  const [isMouseNearTop, setIsMouseNearTop] = useState(false);
   const [activeNav, setActiveNav] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pillBgOpacity, setPillBgOpacity] = useState(0);
+  const [headerFadeProgress, setHeaderFadeProgress] = useState(0);
+  const [hoveredNavId, setHoveredNavId] = useState<string | null>(null);
+  const [aboutSection90InView, setAboutSection90InView] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [pillPosition, setPillPosition] = useState<{ left: number; width: number; top: number; height: number } | null>(null);
+  const navItemsContainerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Record<string, HTMLSpanElement | null>>({});
 
-  const showLogoAndCta = !isScrolledDown || isMouseNearTop;
+  const showLogoAndCta = !isScrolledDown;
+  // About indicator only when About section is 90% in view; other items use activeNav as usual
+  const effectiveActiveNav =
+    activeNav === 'about' ? (aboutSection90InView ? 'about' : null) : activeNav;
+  const selectedNavId =
+    hoveredNavId ?? effectiveActiveNav ?? (aboutSection90InView ? 'about' : null);
   const showPillBg = isMobile && hasScrolledOnce;
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -58,6 +69,7 @@ export const Header: React.FC = () => {
       if (currentScrollY > 0) setHasScrolledOnce(true);
       setIsScrolledDown(currentScrollY > SCROLL_THRESHOLD);
       setPillBgOpacity(Math.min(1, currentScrollY / PILL_FADE_SCROLL));
+      setHeaderFadeProgress(Math.min(1, currentScrollY / HEADER_FADE_SCROLL));
 
       const viewportMid = currentScrollY + window.innerHeight * 0.35;
       const getTop = (id: string) => {
@@ -71,10 +83,13 @@ export const Header: React.FC = () => {
       else if (viewportMid < servicesTop) setActiveNav('about');
       else if (viewportMid < testimonialsTop) setActiveNav('services');
       else setActiveNav('testimonials');
-    };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      setIsMouseNearTop(e.clientY < MOUSE_TOP_ZONE);
+      // About section "90% in view": section top is at or above 10% from viewport top
+      const aboutEl = document.getElementById('about');
+      const vh = window.innerHeight;
+      setAboutSection90InView(
+        !!aboutEl && aboutEl.getBoundingClientRect().top <= vh * 0.1
+      );
     };
 
     const media = window.matchMedia('(max-width: 767px)');
@@ -83,14 +98,43 @@ export const Header: React.FC = () => {
     media.addEventListener('change', setMobile);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     handleScroll();
     return () => {
       media.removeEventListener('change', setMobile);
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
+
+  const updatePillPosition = () => {
+    const container = navItemsContainerRef.current;
+    const item = selectedNavId ? itemRefs.current[selectedNavId] : null;
+    if (!container || !item) {
+      setPillPosition(null);
+      return;
+    }
+    const containerRect = container.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+    setPillPosition({
+      left: itemRect.left - containerRect.left,
+      width: itemRect.width,
+      top: itemRect.top - containerRect.top,
+      height: itemRect.height,
+    });
+  };
+
+  useLayoutEffect(() => {
+    updatePillPosition();
+  }, [selectedNavId, isScrolledDown]);
+
+  useEffect(() => {
+    const onScrollOrResize = () => updatePillPosition();
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, [selectedNavId]);
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
@@ -127,9 +171,16 @@ export const Header: React.FC = () => {
       <header className="fixed top-0 z-40 w-full border-b border-transparent transition-all duration-300">
         <div className="w-full px-3 md:px-12 lg:px-20 h-20 grid grid-cols-3 items-center gap-2">
           <div
-            className={`justify-self-start transition-opacity duration-300 min-w-0 ${
-              showLogoAndCta ? 'opacity-100' : 'opacity-100 md:opacity-0 md:pointer-events-none'
-            }`}
+            className="justify-self-start min-w-0 md:transition-none"
+            style={
+              !isMobile
+                ? {
+                    opacity: 1 - headerFadeProgress,
+                    transform: `translateY(${-headerFadeProgress * 16}px)`,
+                    pointerEvents: headerFadeProgress >= 1 ? 'none' : undefined,
+                  }
+                : undefined
+            }
           >
             <span
               className={`inline-block transition-all duration-300 ${
@@ -152,45 +203,113 @@ export const Header: React.FC = () => {
             </span>
           </div>
 
-          {/* Pill-style nav: desktop only; wrapper keeps grid column on mobile so menu stays right */}
+          {/* Pill-style nav: desktop only; when scrolled, wordmark + nav items + Book Now inside pill */}
           <div className="min-w-0 w-0 overflow-hidden md:w-auto md:overflow-visible md:flex justify-self-center">
-            <nav className="hidden md:flex justify-self-center min-w-0">
+            <nav className="hidden md:flex justify-self-center min-w-0" aria-label="Main navigation">
               <div
-                className={`nav-pill inline-flex items-center gap-0.5 p-1 rounded-full flex-nowrap ${
-                  hasScrolledOnce ? 'nav-pill-glass' : 'nav-pill-flat'
+                className={`nav-pill relative inline-flex items-baseline w-full max-w-3xl gap-0 px-3 py-2 rounded-full flex-nowrap transition-all duration-300 ease-out ${
+                  isScrolledDown ? 'nav-pill-glass' : 'nav-pill-flat'
                 }`}
               >
-              {NAV_ITEMS.map((item) => {
-                const isActive = 'path' in item ? location.pathname === item.path : activeNav === item.id;
-                if ('path' in item) {
+              {/* Wordmark: fade down on scroll (desktop); baseline aligned with nav items */}
+              <span
+                className="overflow-hidden shrink-0 flex justify-start"
+                style={{
+                  opacity: headerFadeProgress,
+                  transform: `translateY(${(1 - headerFadeProgress) * 10}px)`,
+                  transition: 'none',
+                  pointerEvents: headerFadeProgress >= 1 ? 'auto' : 'none',
+                }}
+              >
+                <Link
+                  to="/"
+                  className="nav-link-item relative px-5 py-2.5 text-xl font-semibold rounded-full cursor-pointer text-stone-900 hover:text-stone-700 font-serif tracking-tight whitespace-nowrap inline-block leading-none"
+                >
+                  Style Forage
+                </Link>
+              </span>
+              {/* Nav items: centered in the pill; sliding background moves to hovered/active item */}
+              <div
+                ref={navItemsContainerRef}
+                className={`flex-1 flex justify-center items-baseline gap-1 min-w-0 shrink relative ${selectedNavId ? 'has-sliding-pill' : ''}`}
+              >
+                {pillPosition && (
+                  <span
+                    className="nav-sliding-pill absolute rounded-full border border-black bg-white/95 pointer-events-none z-0 transition-[left,width,top,height] duration-200 ease-out"
+                    style={{
+                      left: pillPosition.left,
+                      width: pillPosition.width,
+                      top: pillPosition.top,
+                      height: pillPosition.height,
+                    }}
+                    aria-hidden
+                  />
+                )}
+                {NAV_ITEMS.map((item) => {
+                  const isActive = 'path' in item ? location.pathname === item.path : activeNav === item.id;
+                  if ('path' in item) {
+                    return (
+                      <span
+                        key={item.id}
+                        ref={(el) => { itemRefs.current[item.id] = el; }}
+                        className="relative z-10 inline-block"
+                        onMouseEnter={() => setHoveredNavId(item.id)}
+                        onMouseLeave={() => setHoveredNavId(null)}
+                      >
+                        <Link
+                          to={item.path}
+                          className={`nav-link-item relative px-4 py-2 text-sm font-medium rounded-full cursor-pointer block ${
+                            isActive
+                              ? 'nav-link-item--active text-stone-900'
+                              : 'text-stone-600 hover:text-stone-800'
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      </span>
+                    );
+                  }
                   return (
-                    <Link
+                    <span
                       key={item.id}
-                      to={item.path}
-                      className={`nav-link-item relative px-4 py-2 text-sm font-medium rounded-full cursor-pointer ${
-                        isActive
-                          ? 'nav-link-item--active text-stone-900'
-                          : 'text-stone-600 hover:text-stone-800'
-                      }`}
+                      ref={(el) => { itemRefs.current[item.id] = el; }}
+                      className="relative z-10 inline-block"
+                      onMouseEnter={() => setHoveredNavId(item.id)}
+                      onMouseLeave={() => setHoveredNavId(null)}
                     >
-                      {item.label}
-                    </Link>
+                      <button
+                        type="button"
+                        onClick={() => scrollToAnchor(item.id)}
+                        className={`nav-link-item relative px-5 py-2.5 text-sm font-medium rounded-full cursor-pointer ${
+                          isActive
+                            ? 'nav-link-item--active text-stone-900'
+                            : 'text-stone-600 hover:text-stone-800'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    </span>
                   );
-                }
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => scrollToAnchor(item.id)}
-                    className={`nav-link-item relative px-4 py-2 text-sm font-medium rounded-full cursor-pointer ${
-                      isActive
-                        ? 'nav-link-item--active text-stone-900'
-                        : 'text-stone-600 hover:text-stone-800'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
+                })}
+              </div>
+              {/* Book Now: fade down on scroll; fixed space, aligned end */}
+              <span
+                className="min-w-[6.5rem] overflow-hidden shrink-0 flex justify-end"
+                style={{
+                  opacity: headerFadeProgress,
+                  transform: `translateY(${(1 - headerFadeProgress) * 10}px)`,
+                  transition: 'none',
+                  pointerEvents: headerFadeProgress >= 1 ? 'auto' : 'none',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => scrollToAnchor('services')}
+                  className="nav-link-item relative px-5 py-2.5 text-sm font-medium rounded-full cursor-pointer bg-stone-900 text-white hover:bg-sage-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-transparent transition-colors whitespace-nowrap inline-block"
+                >
+                  Book Now
+                </button>
+              </span>
               </div>
             </nav>
           </div>
@@ -211,11 +330,18 @@ export const Header: React.FC = () => {
             >
               {isMobileMenuOpen ? <X size={24} aria-hidden /> : <Menu size={24} aria-hidden />}
             </button>
-            {/* Desktop: Book Now */}
+            {/* Desktop: Book Now – fades up on scroll */}
             <div
-              className={`hidden md:block transition-opacity duration-300 ${
-                showLogoAndCta ? 'opacity-100' : 'opacity-0 pointer-events-none'
-              }`}
+              className="hidden md:block md:transition-none"
+              style={
+                !isMobile
+                  ? {
+                      opacity: 1 - headerFadeProgress,
+                      transform: `translateY(${-headerFadeProgress * 16}px)`,
+                      pointerEvents: headerFadeProgress >= 1 ? 'none' : undefined,
+                    }
+                  : undefined
+              }
             >
               <Button
                 variant="primary"

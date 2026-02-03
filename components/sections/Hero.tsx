@@ -126,9 +126,7 @@ export const Hero: React.FC = () => {
         <div className="text-left max-w-[90%]">
           <div ref={textBlurTopRef} className={`hero-rest-in transition-none ${revealDone ? 'hero-rest-visible' : ''}`}>
             <div className="inline-block px-4 py-1.5 mb-4 md:mb-6 rounded-full backdrop-blur-sm border border-stone-900/10 text-stone-900 text-xs font-bold uppercase tracking-[0.2em]">
-              Personal Styling
-              <br className="md:hidden" />
-              & Wardrobe Curation
+              Personal Styling & Wardrobe Curation
             </div>
           </div>
           <div ref={headingWrapperRef} className="transition-opacity duration-300">
