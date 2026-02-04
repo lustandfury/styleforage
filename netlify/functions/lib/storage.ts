@@ -146,16 +146,19 @@ export function getStorage(storeName: string): Store {
     return storeCache.get(storeName)!;
   }
 
-  // Try to use Netlify Blobs in production
-  // Check for the environment variables that indicate we're in Netlify's environment
+  // Check if we're in a Netlify environment (production, deploy preview, etc.)
+  // NETLIFY is set in all Netlify environments, NETLIFY_DEV is set when running netlify dev locally
+  const isNetlifyProduction = process.env.NETLIFY === 'true' && !process.env.NETLIFY_DEV;
   const hasNetlifyBlobsContext = !!process.env.NETLIFY_BLOBS_CONTEXT;
   
-  if (hasNetlifyBlobsContext) {
+  if (isNetlifyProduction || hasNetlifyBlobsContext) {
     try {
       // Dynamic import to avoid issues when not in Netlify environment
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { getStore } = require('@netlify/blobs');
       const netlifyStore = getStore(storeName);
+      
+      console.log(`[Storage] Using Netlify Blobs for "${storeName}"`);
       
       // Wrap Netlify Blobs store with our interface
       const store: Store = {
@@ -170,11 +173,12 @@ export function getStorage(storeName: string): Store {
       storeCache.set(storeName, store);
       return store;
     } catch (error) {
-      console.warn(`[Storage] Failed to initialize Netlify Blobs, falling back to local storage:`, error);
+      console.error(`[Storage] Failed to initialize Netlify Blobs:`, error);
+      throw error; // Don't fall back to local storage in production - it won't work
     }
   }
 
-  // Use local file storage for development
+  // Use local file storage for development only
   console.log(`[Storage] Using local file storage for "${storeName}"`);
   const localStore = new LocalStore(storeName);
   storeCache.set(storeName, localStore);
