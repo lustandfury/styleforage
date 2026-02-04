@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import heic2any from 'heic2any';
 import { Lock, Upload, Trash2, Edit3, Save, X, LogOut, Image as ImageIcon, ArrowLeft, Plus, Users, Copy, Check, FolderOpen, Eye, Camera, ShoppingBag, ExternalLink, DollarSign, Link2, Square, CheckSquare } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
@@ -21,6 +22,87 @@ interface EditorialEntry {
   order: number;
   createdAt: string;
   season?: Season;
+}
+
+/** Max dimension for client-side resize before upload (server also optimizes). */
+const CLIENT_IMAGE_MAX_DIMENSION = 2400;
+const CLIENT_IMAGE_QUALITY = 0.85;
+
+function isHeicFile(file: File): boolean {
+  const type = (file.type || '').toLowerCase();
+  const name = (file.name || '').toLowerCase();
+  return type === 'image/heic' || type === 'image/heif' || /\.(heic|heif)$/.test(name);
+}
+
+/**
+ * Convert HEIC/HEIF file to JPEG in the browser. Returns original file if not HEIC or on error.
+ */
+async function convertHeicToJpeg(file: File, quality = 0.9): Promise<File> {
+  if (!isHeicFile(file)) return file;
+  try {
+    const result = await heic2any({ blob: file, toType: 'image/jpeg', quality });
+    const blob = Array.isArray(result) ? result[0] : result;
+    if (!blob) return file;
+    const name = file.name.replace(/\.[^.]+$/, '.jpg');
+    return new File([blob], name, { type: 'image/jpeg' });
+  } catch {
+    return file;
+  }
+}
+
+/**
+ * Resize image file in the browser to reduce upload size. Keeps aspect ratio.
+ * Returns original file if not an image or on error.
+ */
+function resizeImageFile(file: File, maxDimension: number, quality: number): Promise<File> {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      resolve(file);
+      return;
+    }
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width <= maxDimension && height <= maxDimension) {
+        resolve(file);
+        return;
+      }
+      if (width > height) {
+        height = Math.round((height * maxDimension) / width);
+        width = maxDimension;
+      } else {
+        width = Math.round((width * maxDimension) / height);
+        height = maxDimension;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+          } else {
+            resolve(file);
+          }
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+    img.src = url;
+  });
 }
 
 function getCurrentSeason(): Season {
@@ -675,16 +757,16 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setUploadFile(file);
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setUploadPreview(ev.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    const toPreview = isHeicFile(file) ? await convertHeicToJpeg(file) : file;
+    setUploadFile(toPreview);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setUploadPreview(ev.target?.result as string);
+    };
+    reader.readAsDataURL(toPreview);
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -695,8 +777,14 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     setError('');
 
     try {
+      const jpegFile = await convertHeicToJpeg(uploadFile);
+      const fileToUpload = await resizeImageFile(
+        jpegFile,
+        CLIENT_IMAGE_MAX_DIMENSION,
+        CLIENT_IMAGE_QUALITY
+      );
       const formData = new FormData();
-      formData.append('file', uploadFile);
+      formData.append('file', fileToUpload);
       formData.append('caption', uploadCaption);
       formData.append('slug', slug);
       if (uploadSeason) {
@@ -793,8 +881,14 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     setError('');
 
     try {
+      const jpegFile = await convertHeicToJpeg(file);
+      const fileToUpload = await resizeImageFile(
+        jpegFile,
+        CLIENT_IMAGE_MAX_DIMENSION,
+        CLIENT_IMAGE_QUALITY
+      );
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       formData.append('slug', slug);
       formData.append('entryId', entryId);
 
@@ -1869,7 +1963,7 @@ const UploadForm: React.FC<UploadFormProps> = ({
           ref={fileInputRef}
           id="upload-file"
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+          accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif,.heic,.heif"
           onChange={onFileChange}
           className="hidden"
         />
@@ -2030,7 +2124,7 @@ const EntryCard: React.FC<EntryCardProps> = ({
       <input
         ref={replaceInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+        accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif,.heic,.heif"
         onChange={handleFileChange}
         className="hidden"
       />

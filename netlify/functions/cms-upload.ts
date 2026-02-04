@@ -1,5 +1,30 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
+import sharp from 'sharp';
 import { getStorage } from './lib/storage';
+
+/** Max length of the longest side after resize (keeps aspect ratio). */
+const MAX_IMAGE_DIMENSION = 2400;
+/** WebP quality (0–100). 85 is a good balance of size and quality. */
+const WEBP_QUALITY = 85;
+
+/**
+ * Resize and compress image for web: max dimension 2400px, output WebP.
+ * On failure (e.g. corrupt or unsupported), returns original buffer and contentType.
+ */
+async function optimizeImage(
+  buffer: Buffer,
+  contentType: string
+): Promise<{ data: Buffer; contentType: string }> {
+  try {
+    const out = await sharp(buffer)
+      .resize(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: WEBP_QUALITY })
+      .toBuffer();
+    return { data: out, contentType: 'image/webp' };
+  } catch {
+    return { data: buffer, contentType };
+  }
+}
 
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
@@ -145,6 +170,12 @@ const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
+    // Optimize for web: resize (max 2400px) and compress to WebP
+    const { data: imageData, contentType: imageContentType } = await optimizeImage(
+      imageFile.data,
+      imageFile.contentType
+    );
+
     // Get the editorial store
     const store = getStorage('cms-editorial', event);
 
@@ -185,8 +216,8 @@ const handler: Handler = async (event: HandlerEvent) => {
       // Generate new image key (keep same entry ID)
       const newImageKey = `images/${entryId}-${Date.now()}`;
 
-      // Save the new image blob with metadata
-      await store.setWithMetadata(newImageKey, imageFile.data, { contentType: imageFile.contentType });
+      // Save the optimized image blob with metadata
+      await store.setWithMetadata(newImageKey, imageData, { contentType: imageContentType });
 
       // Update the entry with new image key
       entries[entryIndex].imageKey = newImageKey;
@@ -205,8 +236,8 @@ const handler: Handler = async (event: HandlerEvent) => {
     const id = generateId();
     const imageKey = `images/${id}`;
 
-    // Save the image blob with metadata
-    await store.setWithMetadata(imageKey, imageFile.data, { contentType: imageFile.contentType });
+    // Save the optimized image blob with metadata
+    await store.setWithMetadata(imageKey, imageData, { contentType: imageContentType });
 
     // Create new entry
     const newEntry: EditorialEntry = {
