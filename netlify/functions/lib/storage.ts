@@ -138,7 +138,7 @@ const storeCache = new Map<string, Store>();
 
 /**
  * Get a store that works in both local dev and production
- * Uses local file storage when Netlify Blobs is not configured
+ * Uses local file storage only when running netlify dev locally
  */
 export function getStorage(storeName: string): Store {
   // Return cached store if available
@@ -146,41 +146,39 @@ export function getStorage(storeName: string): Store {
     return storeCache.get(storeName)!;
   }
 
-  // Check if we're in a Netlify environment (production, deploy preview, etc.)
-  // NETLIFY is set in all Netlify environments, NETLIFY_DEV is set when running netlify dev locally
-  const isNetlifyProduction = process.env.NETLIFY === 'true' && !process.env.NETLIFY_DEV;
-  const hasNetlifyBlobsContext = !!process.env.NETLIFY_BLOBS_CONTEXT;
+  // Only use local file storage when explicitly in local dev mode
+  // NETLIFY_DEV is set when running `netlify dev` locally
+  const isLocalDev = !!process.env.NETLIFY_DEV;
   
-  if (isNetlifyProduction || hasNetlifyBlobsContext) {
-    try {
-      // Dynamic import to avoid issues when not in Netlify environment
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getStore } = require('@netlify/blobs');
-      const netlifyStore = getStore(storeName);
-      
-      console.log(`[Storage] Using Netlify Blobs for "${storeName}"`);
-      
-      // Wrap Netlify Blobs store with our interface
-      const store: Store = {
-        get: (key, options) => netlifyStore.get(key, options),
-        set: (key, value) => netlifyStore.set(key, value as string),
-        setJSON: (key, value) => netlifyStore.setJSON(key, value),
-        delete: (key) => netlifyStore.delete(key),
-        getWithMetadata: (key, options) => netlifyStore.getWithMetadata(key, options),
-        setWithMetadata: (key, value, metadata) => netlifyStore.set(key, value as string, { metadata }),
-      };
-      
-      storeCache.set(storeName, store);
-      return store;
-    } catch (error) {
-      console.error(`[Storage] Failed to initialize Netlify Blobs:`, error);
-      throw error; // Don't fall back to local storage in production - it won't work
-    }
+  if (isLocalDev) {
+    console.log(`[Storage] Using local file storage for "${storeName}" (NETLIFY_DEV detected)`);
+    const localStore = new LocalStore(storeName);
+    storeCache.set(storeName, localStore);
+    return localStore;
   }
 
-  // Use local file storage for development only
-  console.log(`[Storage] Using local file storage for "${storeName}"`);
-  const localStore = new LocalStore(storeName);
-  storeCache.set(storeName, localStore);
-  return localStore;
+  // In all other cases (production, deploy previews, etc.), use Netlify Blobs
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getStore } = require('@netlify/blobs');
+    const netlifyStore = getStore(storeName);
+    
+    console.log(`[Storage] Using Netlify Blobs for "${storeName}"`);
+    
+    // Wrap Netlify Blobs store with our interface
+    const store: Store = {
+      get: (key, options) => netlifyStore.get(key, options),
+      set: (key, value) => netlifyStore.set(key, value as string),
+      setJSON: (key, value) => netlifyStore.setJSON(key, value),
+      delete: (key) => netlifyStore.delete(key),
+      getWithMetadata: (key, options) => netlifyStore.getWithMetadata(key, options),
+      setWithMetadata: (key, value, metadata) => netlifyStore.set(key, value as string, { metadata }),
+    };
+    
+    storeCache.set(storeName, store);
+    return store;
+  } catch (error) {
+    console.error(`[Storage] Failed to initialize Netlify Blobs:`, error);
+    throw error;
+  }
 }
