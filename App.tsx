@@ -8,6 +8,8 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
 const Contact = lazy(() => import('./pages/Contact').then(module => ({ default: module.Contact })));
 const BookingPage = lazy(() => import('./pages/BookingPage').then(module => ({ default: module.BookingPage })));
+const Admin = lazy(() => import('./pages/Admin').then(module => ({ default: module.Admin })));
+const Lookbook = lazy(() => import('./pages/Lookbook').then(module => ({ default: module.Lookbook })));
 const AiStylist = lazy(() => import('./components/AiStylist').then(module => ({ default: module.AiStylist })));
 
 /** Set to true to show the AI Stylist chat on non-booking pages */
@@ -39,16 +41,20 @@ const AppLayout = () => {
   
   // Check if we're on a booking page - hide nav for focused checkout experience
   const isBookingFlow = location.pathname.startsWith('/book/');
+  // Admin and Lookbook pages have their own layouts without main site chrome
+  const isAdminPage = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+  const isLookbookPage = location.pathname.startsWith('/lookbook/');
+  const isStandalonePage = isBookingFlow || isAdminPage || isLookbookPage;
   // Home page has hero that extends behind the header, so no padding needed
   const isHomePage = location.pathname === '/';
   
   return (
     <div className="min-h-screen flex flex-col font-sans text-stone-900">
-      {!isBookingFlow && <Header />}
+      {!isStandalonePage && <Header />}
       {/* pt-20 added to offset the fixed header height, except on home page where hero overlays header */}
       <main
         id="main-content"
-        className={`flex-1 min-h-[70vh] ${!isBookingFlow && !isHomePage ? 'pt-20' : ''} ${!isBookingFlow ? 'pb-0' : ''}`}
+        className={`flex-1 min-h-[70vh] ${!isStandalonePage && !isHomePage ? 'pt-20' : ''} ${!isStandalonePage ? 'pb-0' : ''}`}
         tabIndex={-1}
       >
         <Suspense fallback={<div className="min-h-[50vh]" aria-hidden="true" />}>
@@ -56,11 +62,14 @@ const AppLayout = () => {
             <Route path="/" element={<Home />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/book/:serviceId" element={<BookingPage />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/:slug" element={<Admin />} />
+            <Route path="/lookbook/:slug" element={<Lookbook />} />
           </Routes>
         </Suspense>
       </main>
-      {!isBookingFlow && <Footer />}
-      {SHOW_AI_CHAT && !isBookingFlow && (
+      {!isStandalonePage && <Footer />}
+      {SHOW_AI_CHAT && !isStandalonePage && (
         <Suspense fallback={null}>
           <AiStylist />
         </Suspense>

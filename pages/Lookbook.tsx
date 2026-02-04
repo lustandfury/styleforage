@@ -1,0 +1,1609 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, ArrowLeft, Check, Square, CheckSquare, SlidersHorizontal, Link2 } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+
+type Season = 'spring' | 'summer' | 'fall' | 'winter';
+
+const SEASON_LABELS: Record<Season, string> = {
+  spring: 'Spring',
+  summer: 'Summer',
+  fall: 'Fall',
+  winter: 'Winter',
+};
+
+const SEASON_ORDER: Season[] = ['spring', 'summer', 'fall', 'winter'];
+
+interface EditorialEntry {
+  id: string;
+  imageKey: string;
+  caption: string;
+  order: number;
+  createdAt: string;
+  season?: Season;
+}
+
+interface LinkPreview {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  siteName?: string;
+  favicon?: string;
+}
+
+type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'uncategorized';
+
+const CATEGORY_LABELS: Record<ShoppingCategory, string> = {
+  tops: 'Tops',
+  bottoms: 'Bottoms',
+  accessories: 'Accessories',
+  uncategorized: 'Other',
+};
+
+const CATEGORY_ORDER: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'uncategorized'];
+
+interface RelatedLookbook {
+  slug: string;
+  clientName: string;
+  season?: Season;
+}
+
+interface ShoppingItem {
+  id: string;
+  name: string;
+  description?: string;
+  link?: string;
+  price?: string;
+  linkPreview?: LinkPreview;
+  category: ShoppingCategory;
+  checked: boolean;
+  order: number;
+  createdAt: string;
+}
+
+interface ShoppingLink {
+  id: string;
+  url: string;
+  title?: string;
+  description?: string;
+  linkPreview?: LinkPreview;
+  checked: boolean;
+  order: number;
+  createdAt: string;
+}
+
+const PASSCODE_KEY_PREFIX = 'view_passcode_';
+
+export const Lookbook: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  
+  const [passcode, setPasscode] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [clientName, setClientName] = useState<string | null>(null);
+  const [lookbookTitle, setLookbookTitle] = useState<string | null>(null);
+  const [lookbookDescription, setLookbookDescription] = useState<string | null>(null);
+  const [currentSeason, setCurrentSeason] = useState<Season | undefined>();
+  const [relatedLookbooks, setRelatedLookbooks] = useState<RelatedLookbook[]>([]);
+
+  // Content state
+  const [entries, setEntries] = useState<EditorialEntry[]>([]);
+  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
+  const [shoppingLinks, setShoppingLinks] = useState<ShoppingLink[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showShoppingList, setShowShoppingList] = useState(false);
+  const [showShoppingLinks, setShowShoppingLinks] = useState(false);
+
+  const passcodeKey = `${PASSCODE_KEY_PREFIX}${slug}`;
+
+  // Check for stored passcode on mount
+  useEffect(() => {
+    if (!slug) return;
+    const stored = sessionStorage.getItem(passcodeKey);
+    if (stored) {
+      verifyPasscode(stored, true);
+    }
+  }, [slug]);
+
+  // Fetch entries, shopping items and links when authenticated
+  useEffect(() => {
+    if (isAuthenticated && slug) {
+      fetchEntries();
+      fetchShoppingItems();
+      fetchShoppingLinks();
+    }
+  }, [isAuthenticated, slug]);
+
+  const verifyPasscode = async (code: string, silent = false) => {
+    if (!slug) return;
+    
+    if (!silent) {
+      setIsAuthenticating(true);
+      setAuthError('');
+    }
+
+    try {
+      const res = await fetch('/.netlify/functions/cms-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: code, type: 'view', slug }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        sessionStorage.setItem(passcodeKey, code);
+        setPasscode(code);
+        setIsAuthenticated(true);
+        if (data.lookbook?.clientName) {
+          setClientName(data.lookbook.clientName);
+        }
+        if (data.lookbook?.title) {
+          setLookbookTitle(data.lookbook.title);
+        }
+        if (data.lookbook?.description) {
+          setLookbookDescription(data.lookbook.description);
+        }
+        if (data.lookbook?.season) {
+          setCurrentSeason(data.lookbook.season);
+        }
+        if (data.relatedLookbooks) {
+          setRelatedLookbooks(data.relatedLookbooks);
+        }
+      } else if (!silent) {
+        const data = await res.json();
+        if (res.status === 404) {
+          setAuthError('Lookbook not found');
+        } else {
+          setAuthError(data.error || 'Invalid passcode');
+        }
+      }
+    } catch {
+      if (!silent) {
+        setAuthError('Authentication failed. Please try again.');
+      }
+    } finally {
+      if (!silent) {
+        setIsAuthenticating(false);
+      }
+    }
+  };
+
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    verifyPasscode(passcode);
+  };
+
+  const fetchEntries = async () => {
+    if (!slug) return;
+    
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(`/.netlify/functions/cms-list?slug=${slug}`, {
+        headers: { 'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '' },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setEntries(data);
+      } else {
+        setError('Failed to load lookbook');
+      }
+    } catch {
+      setError('Failed to load lookbook');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchShoppingItems = async () => {
+    if (!slug) return;
+
+    try {
+      const res = await fetch(`/.netlify/functions/cms-shopping?slug=${slug}`, {
+        headers: { 'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '' },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setShoppingItems(data);
+      }
+    } catch {
+      // Ignore - shopping list is optional
+    }
+  };
+
+  const fetchShoppingLinks = async () => {
+    if (!slug) return;
+
+    try {
+      const res = await fetch(`/.netlify/functions/cms-links?slug=${slug}`, {
+        headers: { 'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '' },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setShoppingLinks(data);
+      }
+    } catch {
+      // Ignore - shopping links are optional
+    }
+  };
+
+  // No slug provided
+  if (!slug) {
+    return (
+      <div className="min-h-screen bg-sand-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="font-serif text-2xl text-stone-900 mb-4">Lookbook Not Found</h1>
+          <p className="text-stone-500 mb-6">Please check the link you were given.</p>
+          <Link to="/" className="text-sage-600 hover:text-sage-700">
+            ← Back to Style Forage
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Passcode screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-sand-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-sage-100 text-sage-700 mb-4">
+              <Lock size={32} />
+            </div>
+            <h1 className="font-serif text-2xl md:text-3xl text-stone-900 mb-2">Style Lookbook</h1>
+            <p className="text-stone-500 text-sm">Enter the passcode to view your curated looks</p>
+          </div>
+
+          <form onSubmit={handleAuthSubmit} className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
+            <div className="mb-4">
+              <label htmlFor="passcode" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
+                Passcode
+              </label>
+              <input
+                id="passcode"
+                type="text"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value.toUpperCase())}
+                className="w-full h-11 px-4 rounded-lg border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-center tracking-widest font-mono text-lg uppercase"
+                placeholder="XXXXXX"
+                maxLength={6}
+                autoFocus
+              />
+            </div>
+
+            {authError && (
+              <p className="mb-4 text-sm text-red-600" role="alert">
+                {authError}
+              </p>
+            )}
+
+            <Button type="submit" variant="primary" size="lg" className="w-full rounded-full" disabled={isAuthenticating || !passcode}>
+              {isAuthenticating ? 'Verifying…' : 'View Lookbook'}
+            </Button>
+          </form>
+
+          <div className="text-center mt-6">
+            <Link to="/" className="text-sm text-stone-500 hover:text-sage-600 transition-colors">
+              ← Back to Style Forage
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-stone-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <p className="mt-4 text-white/70">Loading your looks…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-stone-900 flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error}</p>
+          <button onClick={fetchEntries} className="text-white hover:underline cursor-pointer">
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (entries.length === 0) {
+    return (
+      <div className="min-h-screen bg-sand-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <ImageIcon size={64} className="mx-auto text-stone-300 mb-4" />
+          <p className="text-stone-500 text-lg">Your lookbook is being curated…</p>
+          <p className="text-stone-400 text-sm mt-2">Check back soon for your personalized style selections.</p>
+          <Link to="/" className="inline-block mt-6 text-sage-600 hover:text-sage-700">
+            ← Back to Style Forage
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const handleToggleChecked = async (itemId: string, checked: boolean) => {
+    // Optimistic update
+    setShoppingItems(prev => prev.map(item => 
+      item.id === itemId ? { ...item, checked } : item
+    ));
+
+    try {
+      await fetch('/.netlify/functions/cms-shopping', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '',
+        },
+        body: JSON.stringify({ slug, id: itemId, checked }),
+      });
+    } catch {
+      // Revert on error
+      setShoppingItems(prev => prev.map(item => 
+        item.id === itemId ? { ...item, checked: !checked } : item
+      ));
+    }
+  };
+
+  const handleToggleLinkChecked = async (linkId: string, checked: boolean) => {
+    // Optimistic update
+    setShoppingLinks(prev => prev.map(link => 
+      link.id === linkId ? { ...link, checked } : link
+    ));
+
+    try {
+      await fetch('/.netlify/functions/cms-links', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '',
+        },
+        body: JSON.stringify({ slug, id: linkId, checked }),
+      });
+    } catch {
+      // Revert on error
+      setShoppingLinks(prev => prev.map(link => 
+        link.id === linkId ? { ...link, checked: !checked } : link
+      ));
+    }
+  };
+
+  // Story-style lookbook view with shopping list modal
+  return (
+    <>
+      <StoryView
+        entries={entries}
+        slug={slug}
+        passcode={sessionStorage.getItem(passcodeKey) || ''}
+        clientName={clientName}
+        lookbookTitle={lookbookTitle}
+        lookbookDescription={lookbookDescription}
+        currentSeason={currentSeason}
+        relatedLookbooks={relatedLookbooks}
+        shoppingItemsCount={shoppingItems.length}
+        shoppingLinksCount={shoppingLinks.length}
+        onShowShoppingList={() => setShowShoppingList(true)}
+        onShowShoppingLinks={() => setShowShoppingLinks(true)}
+      />
+      
+      {/* Mobile: Shopping list bottom sheet modal */}
+      {showShoppingList && (
+        <div 
+          className="md:hidden fixed inset-0 z-50 bg-black/50"
+          onClick={() => setShowShoppingList(false)}
+        >
+          <div 
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-stone-100 flex-shrink-0">
+              <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif text-lg text-stone-900">Shopping List</h3>
+                <button
+                  onClick={() => setShowShoppingList(false)}
+                  className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <ShoppingListContent
+                items={shoppingItems}
+                onToggleChecked={handleToggleChecked}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop: Shopping list as overlay */}
+      {showShoppingList && (
+        <div className="hidden md:block fixed inset-0 z-50">
+          <ShoppingListView
+            items={shoppingItems}
+            clientName={clientName}
+            onBack={() => setShowShoppingList(false)}
+            onToggleChecked={handleToggleChecked}
+          />
+        </div>
+      )}
+
+      {/* Mobile: Shopping links bottom sheet modal */}
+      {showShoppingLinks && (
+        <div 
+          className="md:hidden fixed inset-0 z-50 bg-black/50"
+          onClick={() => setShowShoppingLinks(false)}
+        >
+          <div 
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-stone-100 flex-shrink-0">
+              <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif text-lg text-stone-900">Shop Links</h3>
+                <button
+                  onClick={() => setShowShoppingLinks(false)}
+                  className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <ShoppingLinksContent links={shoppingLinks} onToggleChecked={handleToggleLinkChecked} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop: Shopping links as overlay */}
+      {showShoppingLinks && (
+        <div className="hidden md:block fixed inset-0 z-50">
+          <ShoppingLinksView
+            links={shoppingLinks}
+            clientName={clientName}
+            onBack={() => setShowShoppingLinks(false)}
+            onToggleChecked={handleToggleLinkChecked}
+          />
+        </div>
+      )}
+    </>
+  );
+};
+
+// Instagram Story-style viewer
+interface StoryViewProps {
+  entries: EditorialEntry[];
+  slug: string;
+  passcode: string;
+  clientName: string | null;
+  lookbookTitle: string | null;
+  lookbookDescription: string | null;
+  currentSeason?: Season;
+  relatedLookbooks: RelatedLookbook[];
+  shoppingItemsCount: number;
+  shoppingLinksCount: number;
+  onShowShoppingList: () => void;
+  onShowShoppingLinks: () => void;
+}
+
+const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, shoppingLinksCount, onShowShoppingList, onShowShoppingLinks }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState<Season | 'all'>('all');
+  const [showSeasonMenu, setShowSeasonMenu] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Filter entries by selected season
+  const filteredEntries = selectedSeason === 'all' 
+    ? entries 
+    : entries.filter(e => e.season === selectedSeason);
+
+  // Check if any entries have seasons assigned
+  const hasSeasonedEntries = entries.some(e => e.season);
+
+  // Reset currentIndex when filter changes
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [selectedSeason]);
+
+  // Minimum swipe distance
+  const minSwipeDistance = 50;
+
+  const goToNext = useCallback(() => {
+    if (currentIndex < filteredEntries.length - 1 && !isTransitioning) {
+      setIsTransitioning(true);
+      setCurrentIndex(currentIndex + 1);
+      setTimeout(() => setIsTransitioning(false), 300);
+    }
+  }, [currentIndex, filteredEntries.length, isTransitioning]);
+
+  const goToPrev = useCallback(() => {
+    if (currentIndex > 0 && !isTransitioning) {
+      setIsTransitioning(true);
+      setCurrentIndex(currentIndex - 1);
+      setTimeout(() => setIsTransitioning(false), 300);
+    }
+  }, [currentIndex, isTransitioning]);
+
+  // Touch handlers
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientY);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientY);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isUpSwipe = distance > minSwipeDistance;
+    const isDownSwipe = distance < -minSwipeDistance;
+
+    if (isUpSwipe) {
+      goToNext();
+    } else if (isDownSwipe) {
+      goToPrev();
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        goToNext();
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goToPrev();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goToNext, goToPrev]);
+
+  // Tap navigation (tap top third = prev, tap bottom third = next)
+  const handleTap = (e: React.MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const clickY = e.clientY - rect.top;
+    const thirdHeight = rect.height / 3;
+
+    if (clickY < thirdHeight) {
+      goToPrev();
+    } else if (clickY > thirdHeight * 2) {
+      goToNext();
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 bg-stone-900 md:bg-stone-100 overflow-hidden select-none"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onClick={handleTap}
+    >
+      {/* Mobile: Progress indicators */}
+      <div className="md:hidden absolute top-0 left-0 right-0 z-20 p-3 safe-top">
+        <div className="flex gap-1">
+          {filteredEntries.map((_, index) => (
+            <div
+              key={index}
+              className="flex-1 h-0.5 rounded-full overflow-hidden bg-white/30"
+            >
+              <div
+                className={`h-full bg-white transition-all duration-300 ${
+                  index < currentIndex
+                    ? 'w-full'
+                    : index === currentIndex
+                    ? 'w-full'
+                    : 'w-0'
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop: Header */}
+      <div className="hidden md:flex absolute top-0 left-0 right-0 z-20 items-center justify-between px-8 py-6 bg-gradient-to-b from-stone-100 to-transparent">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-4">
+            <span className="font-serif text-stone-900 text-2xl">
+              {lookbookTitle || (clientName ? `${clientName}'s Lookbook` : 'Style Forage')}
+            </span>
+          </div>
+          {lookbookDescription && (
+            <p className="text-stone-500 text-sm mt-1 max-w-md">
+              {lookbookDescription}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Season switcher */}
+          {relatedLookbooks.length > 1 && (
+            <div className="flex gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1" onClick={(e) => e.stopPropagation()}>
+              {relatedLookbooks.filter(l => l.season).map((lookbook) => (
+                <Link
+                  key={lookbook.slug}
+                  to={`/lookbook/${lookbook.slug}`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    lookbook.slug === slug
+                      ? 'bg-sage-500 text-white'
+                      : 'text-stone-600 hover:bg-stone-100'
+                  }`}
+                >
+                  {lookbook.season ? SEASON_LABELS[lookbook.season] : 'View'}
+                </Link>
+              ))}
+            </div>
+          )}
+          <span className="text-stone-500 text-sm font-medium">
+            {currentIndex + 1} of {filteredEntries.length}
+          </span>
+          {shoppingItemsCount > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
+              className="flex items-center gap-2 px-4 py-2 bg-sage-500 text-white rounded-full text-sm font-medium hover:bg-sage-600 transition-colors cursor-pointer"
+            >
+              <ShoppingBag size={16} />
+              Shopping List ({shoppingItemsCount})
+            </button>
+          )}
+          {shoppingLinksCount > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onShowShoppingLinks(); }}
+              className="flex items-center gap-2 px-4 py-2 bg-stone-800 text-white rounded-full text-sm font-medium hover:bg-stone-900 transition-colors cursor-pointer"
+            >
+              <Link2 size={16} />
+              Shop Links ({shoppingLinksCount})
+            </button>
+          )}
+          {/* Season filter for entries */}
+          {hasSeasonedEntries && (
+            <div className="flex gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setSelectedSeason('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                  selectedSeason === 'all'
+                    ? 'bg-sage-500 text-white'
+                    : 'text-stone-600 hover:bg-stone-100'
+                }`}
+              >
+                All
+              </button>
+              {SEASON_ORDER.map((season) => (
+                <button
+                  key={season}
+                  onClick={() => setSelectedSeason(season)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                    selectedSeason === season
+                      ? 'bg-sage-500 text-white'
+                      : 'text-stone-600 hover:bg-stone-100'
+                  }`}
+                >
+                  {SEASON_LABELS[season]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile: Top buttons */}
+      <div className="md:hidden absolute top-12 right-4 z-20 flex flex-col items-end gap-2">
+        {shoppingItemsCount > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
+            className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors cursor-pointer"
+            aria-label="View shopping list"
+          >
+            <ShoppingBag size={24} />
+          </button>
+        )}
+        {shoppingLinksCount > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onShowShoppingLinks(); }}
+            className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors cursor-pointer"
+            aria-label="View shopping links"
+          >
+            <Link2 size={24} />
+          </button>
+        )}
+        {/* Season filter button */}
+        {hasSeasonedEntries && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowSeasonMenu(true); }}
+            className={`p-2 backdrop-blur-sm rounded-full transition-colors cursor-pointer ${
+              selectedSeason !== 'all'
+                ? 'bg-sage-500 text-white'
+                : 'bg-white/20 text-white hover:bg-white/30'
+            }`}
+            aria-label="Filter by season"
+          >
+            <SlidersHorizontal size={24} />
+          </button>
+        )}
+      </div>
+
+      {/* Mobile: Navigation hints */}
+      <div className="md:hidden absolute left-1/2 -translate-x-1/2 top-16 z-20 flex flex-col items-center gap-1 text-white/40 pointer-events-none">
+        {currentIndex > 0 && <ChevronUp size={20} className="animate-bounce" />}
+      </div>
+      <div className="md:hidden absolute left-1/2 -translate-x-1/2 bottom-32 z-20 flex flex-col items-center gap-1 text-white/40 pointer-events-none">
+        {currentIndex < filteredEntries.length - 1 && <ChevronDown size={20} className="animate-bounce" />}
+      </div>
+
+      {/* Desktop: Side navigation arrows */}
+      <div className="hidden md:flex absolute inset-y-0 left-0 z-20 items-center px-4">
+        <button
+          onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+          disabled={currentIndex === 0}
+          className={`p-3 rounded-full bg-white shadow-lg transition-all cursor-pointer ${
+            currentIndex === 0
+              ? 'opacity-30 cursor-not-allowed'
+              : 'opacity-80 hover:opacity-100 hover:scale-105'
+          }`}
+          aria-label="Previous"
+        >
+          <ChevronUp size={24} className="text-stone-700 -rotate-90" />
+        </button>
+      </div>
+      <div className="hidden md:flex absolute inset-y-0 right-0 z-20 items-center px-4">
+        <button
+          onClick={(e) => { e.stopPropagation(); goToNext(); }}
+          disabled={currentIndex === filteredEntries.length - 1}
+          className={`p-3 rounded-full bg-white shadow-lg transition-all cursor-pointer ${
+            currentIndex === filteredEntries.length - 1
+              ? 'opacity-30 cursor-not-allowed'
+              : 'opacity-80 hover:opacity-100 hover:scale-105'
+          }`}
+          aria-label="Next"
+        >
+          <ChevronDown size={24} className="-rotate-90 text-stone-700" />
+        </button>
+      </div>
+
+      {/* Story slides */}
+      <div className="relative w-full h-full md:flex md:items-center md:justify-center md:py-20 md:px-24">
+        {filteredEntries.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center p-8">
+            <p className="text-stone-500 text-lg mb-2">No outfits for this season</p>
+            <button
+              onClick={() => setSelectedSeason('all')}
+              className="text-sage-600 hover:text-sage-700 font-medium cursor-pointer"
+            >
+              View all outfits
+            </button>
+          </div>
+        ) : (
+          filteredEntries.map((entry, index) => (
+            <StorySlide
+              key={entry.id}
+              entry={entry}
+              slug={slug}
+              passcode={passcode}
+              isActive={index === currentIndex}
+              isPrev={index < currentIndex}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Mobile: Page counter */}
+      <div
+        className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-20 text-white/60 text-sm font-medium"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {currentIndex + 1} / {filteredEntries.length}
+      </div>
+
+      {/* Mobile: Branding with title and description */}
+      <div className="md:hidden absolute top-14 left-4 right-4 z-10 pointer-events-none">
+        <span className="font-serif text-white/90 text-lg drop-shadow-md block">
+          {lookbookTitle || (clientName ? `${clientName}'s Lookbook` : 'Style Forage')}
+        </span>
+        {lookbookDescription && (
+          <span className="block text-white/70 text-sm mt-1 drop-shadow-md line-clamp-2">
+            {lookbookDescription}
+          </span>
+        )}
+      </div>
+
+
+      {/* Mobile: Related lookbooks switcher */}
+      {relatedLookbooks.length > 1 && !hasSeasonedEntries && (
+        <div
+          className="md:hidden absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex gap-1 bg-black/30 backdrop-blur-sm rounded-full p-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {relatedLookbooks.filter(l => l.season).map((lookbook) => (
+            <Link
+              key={lookbook.slug}
+              to={`/lookbook/${lookbook.slug}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                lookbook.slug === slug
+                  ? 'bg-white text-stone-900'
+                  : 'text-white/80 hover:text-white'
+              }`}
+            >
+              {lookbook.season ? SEASON_LABELS[lookbook.season] : 'View'}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop: Thumbnail navigation */}
+      <div
+        className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 z-20 gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {filteredEntries.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              setIsTransitioning(true);
+              setCurrentIndex(index);
+              setTimeout(() => setIsTransitioning(false), 300);
+            }}
+            className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
+              index === currentIndex
+                ? 'bg-sage-600 scale-125'
+                : 'bg-stone-300 hover:bg-stone-400'
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      {/* Mobile: Season filter bottom sheet modal */}
+      {showSeasonMenu && (
+        <div 
+          className="md:hidden fixed inset-0 z-50 bg-black/50"
+          onClick={() => setShowSeasonMenu(false)}
+        >
+          <div 
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 pb-10 animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-6" />
+            <h3 className="font-serif text-lg text-stone-900 mb-4 text-center">Filter by Season</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => { setSelectedSeason('all'); setShowSeasonMenu(false); }}
+                className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors cursor-pointer ${
+                  selectedSeason === 'all'
+                    ? 'bg-sage-500 text-white'
+                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+              >
+                All Seasons
+              </button>
+              {SEASON_ORDER.map((season) => (
+                <button
+                  key={season}
+                  onClick={() => { setSelectedSeason(season); setShowSeasonMenu(false); }}
+                  className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors cursor-pointer ${
+                    selectedSeason === season
+                      ? 'bg-sage-500 text-white'
+                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                  }`}
+                >
+                  {SEASON_LABELS[season]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Individual story slide
+interface StorySlideProps {
+  entry: EditorialEntry;
+  slug: string;
+  passcode: string;
+  isActive: boolean;
+  isPrev: boolean;
+}
+
+const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive, isPrev }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    const fetchImage = async () => {
+      try {
+        const res = await fetch(`/.netlify/functions/cms-image?key=${encodeURIComponent(entry.imageKey)}&slug=${slug}`, {
+          headers: { 'X-View-Passcode': passcode },
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          setImageUrl(URL.createObjectURL(blob));
+        } else {
+          setImageError(true);
+        }
+      } catch {
+        setImageError(true);
+      } finally {
+        setImageLoading(false);
+      }
+    };
+    fetchImage();
+
+    return () => {
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [entry.imageKey, slug, passcode]);
+
+  // Mobile: Full-screen story style
+  // Desktop: Editorial layout with maintained aspect ratio
+  return (
+    <>
+      {/* Mobile Layout */}
+      <div
+        className={`md:hidden absolute inset-0 transition-all duration-300 ease-out ${
+          isActive
+            ? 'opacity-100 scale-100 translate-y-0'
+            : isPrev
+            ? 'opacity-0 scale-95 -translate-y-full'
+            : 'opacity-0 scale-95 translate-y-full'
+        }`}
+      >
+        {/* Image */}
+        <div className="absolute inset-0">
+          {imageLoading && (
+            <div className="w-full h-full flex items-center justify-center bg-stone-800">
+              <div className="h-8 w-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {imageError && (
+            <div className="w-full h-full flex items-center justify-center bg-stone-800 text-stone-500">
+              <ImageIcon size={48} />
+            </div>
+          )}
+          {imageUrl && (
+            <img
+              src={imageUrl}
+              alt={entry.caption || 'Curated outfit'}
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
+
+        {/* Gradient overlay for caption */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+
+        {/* Caption */}
+        {entry.caption && (
+          <div className="absolute inset-x-0 bottom-16 z-10 px-6 pointer-events-none">
+            <p className="font-serif text-xl text-white leading-relaxed text-center drop-shadow-lg">
+              {entry.caption}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Editorial Layout */}
+      <div
+        className={`hidden md:flex absolute inset-0 items-center justify-center transition-all duration-500 ease-out ${
+          isActive
+            ? 'opacity-100 scale-100'
+            : 'opacity-0 scale-95 pointer-events-none'
+        }`}
+      >
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 max-w-6xl mx-auto px-4">
+          {/* Image container - maintains aspect ratio */}
+          <div className="relative flex-shrink-0 max-h-[70vh] max-w-[50vw]">
+            {imageLoading && (
+              <div className="w-96 h-[500px] flex items-center justify-center bg-stone-200 rounded-lg">
+                <div className="h-8 w-8 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            {imageError && (
+              <div className="w-96 h-[500px] flex items-center justify-center bg-stone-200 rounded-lg text-stone-400">
+                <ImageIcon size={48} />
+              </div>
+            )}
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt={entry.caption || 'Curated outfit'}
+                className="max-h-[70vh] max-w-[50vw] w-auto h-auto object-contain rounded-lg shadow-2xl"
+              />
+            )}
+          </div>
+
+          {/* Caption area */}
+          <div className="flex-1 max-w-md text-center lg:text-left">
+            {entry.caption ? (
+              <p className="font-serif text-2xl lg:text-3xl text-stone-800 leading-relaxed">
+                {entry.caption}
+              </p>
+            ) : (
+              <p className="text-stone-400">Curated with care</p>
+            )}
+            <div className="mt-8 pt-6 border-t border-stone-200">
+              <p className="text-xs text-stone-400 uppercase tracking-widest">Style Forage</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Shopping List View Component
+interface ShoppingListViewProps {
+  items: ShoppingItem[];
+  clientName: string | null;
+  onBack: () => void;
+  onToggleChecked: (itemId: string, checked: boolean) => void;
+}
+
+const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, onBack, onToggleChecked }) => {
+  const uncheckedItems = items.filter(item => !item.checked);
+  const checkedItems = items.filter(item => item.checked);
+
+  const renderItem = (item: ShoppingItem) => (
+    <div
+      key={item.id}
+      className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-opacity ${
+        item.checked ? 'border-stone-200 opacity-60' : 'border-stone-100'
+      }`}
+    >
+      {/* Link Preview Image */}
+      {item.linkPreview?.image && (
+        <div className={`aspect-[16/9] w-full bg-stone-100 ${item.checked ? 'grayscale' : ''}`}>
+          <img
+            src={item.linkPreview.image}
+            alt={item.name}
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+          />
+        </div>
+      )}
+
+      <div className="p-4">
+        {/* Checkbox and name row */}
+        <div className="flex items-start gap-3">
+          <button
+            onClick={() => onToggleChecked(item.id, !item.checked)}
+            className={`mt-1 flex-shrink-0 cursor-pointer transition-colors ${
+              item.checked ? 'text-sage-500' : 'text-stone-300 hover:text-sage-500'
+            }`}
+            aria-label={item.checked ? 'Mark as not purchased' : 'Mark as purchased'}
+          >
+            {item.checked ? <CheckSquare size={24} /> : <Square size={24} />}
+          </button>
+          <div className="flex-1 min-w-0">
+            {/* Price badge */}
+            {item.price && (
+              <span className={`inline-block font-semibold text-lg mb-1 ${item.checked ? 'text-stone-400' : 'text-sage-700'}`}>
+                {item.price.startsWith('$') ? item.price : `$${item.price}`}
+              </span>
+            )}
+
+            {/* Item name */}
+            <h3 className={`font-medium text-lg ${item.checked ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
+              {item.name}
+            </h3>
+
+            {/* Description or link preview description */}
+            {(item.description || item.linkPreview?.description) && (
+              <p className="text-stone-500 text-sm mt-2 line-clamp-2">
+                {item.description || item.linkPreview?.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Link info and button */}
+        {item.link && (
+          <div className="mt-4 flex items-center justify-between pl-9">
+            <div className="flex items-center gap-2 text-stone-400 text-sm">
+              {item.linkPreview?.favicon && (
+                <img
+                  src={item.linkPreview.favicon}
+                  alt=""
+                  className="w-4 h-4"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
+              <span className="truncate max-w-[150px]">
+                {item.linkPreview?.siteName || (() => {
+                  try { return new URL(item.link!).hostname; } catch { return 'Shop'; }
+                })()}
+              </span>
+            </div>
+            <a
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                item.checked
+                  ? 'bg-stone-200 text-stone-500'
+                  : 'bg-sage-500 text-white hover:bg-sage-600'
+              }`}
+            >
+              <ExternalLink size={14} />
+              {item.checked ? 'View' : 'Shop Now'}
+            </a>
+          </div>
+        )}
+
+        {/* Full URL display */}
+        {item.link && (
+          <p className="mt-3 ml-9 text-xs text-stone-400 break-all border-t border-stone-100 pt-3">
+            {item.link}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-stone-50">
+      {/* Header */}
+      <header className="bg-white border-b border-stone-100 sticky top-0 z-10">
+        <div className="px-4 py-4 flex items-center justify-between max-w-2xl mx-auto">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="p-1 text-stone-500 hover:text-sage-600 transition-colors cursor-pointer"
+              aria-label="Back to lookbook"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h1 className="font-serif text-lg text-stone-900">Shopping List</h1>
+              {clientName && (
+                <p className="text-xs text-stone-400">Curated for {clientName}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-stone-400">
+            <ShoppingBag size={18} />
+            <span className="text-sm font-medium">
+              {uncheckedItems.length} of {items.length} remaining
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* Shopping List */}
+      <main className="px-4 py-6 max-w-2xl mx-auto">
+        {items.length === 0 ? (
+          <div className="text-center py-12 text-stone-500">
+            <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
+            <p>No shopping items yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Unchecked items grouped by category */}
+            {CATEGORY_ORDER.map((cat) => {
+              const categoryItems = uncheckedItems.filter((item) => (item.category || 'uncategorized') === cat);
+              if (categoryItems.length === 0) return null;
+
+              return (
+                <div key={cat}>
+                  <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-4">
+                    {CATEGORY_LABELS[cat]}
+                  </h3>
+                  <div className="space-y-4">
+                    {categoryItems.map(renderItem)}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Purchased section */}
+            {checkedItems.length > 0 && (
+              <div className="pt-4 border-t border-stone-200">
+                <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Check size={14} />
+                  Purchased ({checkedItems.length})
+                </h3>
+                <div className="space-y-4">
+                  {checkedItems.map(renderItem)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Back button */}
+        <div className="mt-8 text-center">
+          <button
+            onClick={onBack}
+            className="text-sage-600 hover:text-sage-700 text-sm font-medium cursor-pointer"
+          >
+            ← Back to Lookbook
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// Shopping List Content (for mobile modal)
+interface ShoppingListContentProps {
+  items: ShoppingItem[];
+  onToggleChecked: (itemId: string, checked: boolean) => void;
+}
+
+const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onToggleChecked }) => {
+  const uncheckedItems = items.filter(item => !item.checked);
+  const checkedItems = items.filter(item => item.checked);
+
+  const renderItem = (item: ShoppingItem) => (
+    <div
+      key={item.id}
+      className={`bg-stone-50 rounded-xl overflow-hidden transition-opacity ${
+        item.checked ? 'opacity-60' : ''
+      }`}
+    >
+      {/* Link Preview Image */}
+      {item.linkPreview?.image && (
+        <div className={`aspect-[16/9] w-full bg-stone-100 ${item.checked ? 'grayscale' : ''}`}>
+          <img
+            src={item.linkPreview.image}
+            alt={item.name}
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+          />
+        </div>
+      )}
+
+      <div className="p-3">
+        <div className="flex items-start gap-3">
+          <button
+            onClick={() => onToggleChecked(item.id, !item.checked)}
+            className={`mt-0.5 flex-shrink-0 cursor-pointer transition-colors ${
+              item.checked ? 'text-sage-500' : 'text-stone-300 hover:text-sage-500'
+            }`}
+          >
+            {item.checked ? <CheckSquare size={20} /> : <Square size={20} />}
+          </button>
+          <div className="flex-1 min-w-0">
+            {item.price && (
+              <span className={`font-semibold text-base ${item.checked ? 'text-stone-400' : 'text-sage-700'}`}>
+                {item.price.startsWith('$') ? item.price : `$${item.price}`}
+              </span>
+            )}
+            <h4 className={`font-medium text-sm ${item.checked ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
+              {item.name}
+            </h4>
+            {item.link && (
+              <a
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-2 text-xs text-sage-600 hover:text-sage-700"
+              >
+                <ExternalLink size={12} />
+                Shop
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-8 text-stone-500">
+        <ShoppingBag size={36} className="mx-auto mb-3 opacity-50" />
+        <p className="text-sm">No shopping items yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Unchecked items grouped by category */}
+      {CATEGORY_ORDER.map((cat) => {
+        const categoryItems = uncheckedItems.filter((item) => (item.category || 'uncategorized') === cat);
+        if (categoryItems.length === 0) return null;
+
+        return (
+          <div key={cat}>
+            <h4 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-3">
+              {CATEGORY_LABELS[cat]}
+            </h4>
+            <div className="space-y-3">
+              {categoryItems.map(renderItem)}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Purchased section */}
+      {checkedItems.length > 0 && (
+        <div className="pt-4 border-t border-stone-200">
+          <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <Check size={12} />
+            Purchased ({checkedItems.length})
+          </h4>
+          <div className="space-y-3">
+            {checkedItems.map(renderItem)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Shopping Links View Component (Desktop)
+interface ShoppingLinksViewProps {
+  links: ShoppingLink[];
+  clientName: string | null;
+  onBack: () => void;
+  onToggleChecked: (linkId: string, checked: boolean) => void;
+}
+
+const ShoppingLinksView: React.FC<ShoppingLinksViewProps> = ({ links, clientName, onBack, onToggleChecked }) => {
+  const uncheckedLinks = links.filter(link => !link.checked);
+  const checkedLinks = links.filter(link => link.checked);
+
+  return (
+    <div className="min-h-screen bg-stone-50">
+      {/* Header */}
+      <header className="bg-white border-b border-stone-100 sticky top-0 z-10">
+        <div className="px-4 py-4 flex items-center justify-between max-w-4xl mx-auto">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="p-1 text-stone-500 hover:text-sage-600 transition-colors cursor-pointer"
+              aria-label="Back to lookbook"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h1 className="font-serif text-lg text-stone-900">Shop Links</h1>
+              {clientName && (
+                <p className="text-xs text-stone-400">Curated for {clientName}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-stone-400">
+            <Link2 size={18} />
+            <span className="text-sm font-medium">{links.length} links</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Links List */}
+      <main className="px-4 py-6 max-w-2xl mx-auto">
+        {links.length === 0 ? (
+          <div className="text-center py-12 text-stone-500">
+            <Link2 size={48} className="mx-auto mb-4 opacity-50" />
+            <p>No shopping links yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Unchecked links */}
+            {uncheckedLinks.length > 0 && (
+              <div className="space-y-2">
+                {uncheckedLinks.map((link) => {
+                  const displayTitle = link.title || link.linkPreview?.title || 'View Product';
+                  const displaySiteName = link.linkPreview?.siteName || (() => {
+                    try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
+                  })();
+
+                  return (
+                    <div
+                      key={link.id}
+                      className="bg-white rounded-xl border border-stone-100 shadow-sm p-4 flex items-center gap-3"
+                    >
+                      <button
+                        onClick={() => onToggleChecked(link.id, true)}
+                        className="flex-shrink-0 cursor-pointer"
+                        aria-label="Mark as purchased"
+                      >
+                        <Square size={22} className="text-stone-300 hover:text-stone-400" />
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-stone-900 hover:text-sage-600 transition-colors"
+                        >
+                          {displayTitle}
+                        </a>
+                        <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
+                          <ExternalLink size={10} />
+                          {displaySiteName}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Purchased section */}
+            {checkedLinks.length > 0 && (
+              <div className="pt-4 border-t border-stone-200">
+                <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Check size={12} />
+                  Purchased ({checkedLinks.length})
+                </h4>
+                <div className="space-y-2">
+                  {checkedLinks.map((link) => {
+                    const displayTitle = link.title || link.linkPreview?.title || 'View Product';
+                    const displaySiteName = link.linkPreview?.siteName || (() => {
+                      try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
+                    })();
+
+                    return (
+                      <div
+                        key={link.id}
+                        className="bg-white rounded-xl border border-stone-100 shadow-sm p-4 flex items-center gap-3 opacity-60"
+                      >
+                        <button
+                          onClick={() => onToggleChecked(link.id, false)}
+                          className="flex-shrink-0 cursor-pointer"
+                          aria-label="Mark as not purchased"
+                        >
+                          <CheckSquare size={22} className="text-sage-500" />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-stone-500 line-through hover:text-sage-600 transition-colors"
+                          >
+                            {displayTitle}
+                          </a>
+                          <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
+                            <ExternalLink size={10} />
+                            {displaySiteName}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Back button */}
+        <div className="mt-8 text-center">
+          <button
+            onClick={onBack}
+            className="text-sage-600 hover:text-sage-700 text-sm font-medium cursor-pointer"
+          >
+            ← Back to Lookbook
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// Shopping Links Content (for mobile modal)
+interface ShoppingLinksContentProps {
+  links: ShoppingLink[];
+  onToggleChecked: (linkId: string, checked: boolean) => void;
+}
+
+const ShoppingLinksContent: React.FC<ShoppingLinksContentProps> = ({ links, onToggleChecked }) => {
+  if (links.length === 0) {
+    return (
+      <div className="text-center py-8 text-stone-500">
+        <Link2 size={36} className="mx-auto mb-3 opacity-50" />
+        <p className="text-sm">No shopping links yet.</p>
+      </div>
+    );
+  }
+
+  const uncheckedLinks = links.filter(link => !link.checked);
+  const checkedLinks = links.filter(link => link.checked);
+
+  const renderLink = (link: ShoppingLink) => {
+    const displayTitle = link.title || link.linkPreview?.title || 'View Product';
+    const displaySiteName = link.linkPreview?.siteName || (() => {
+      try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
+    })();
+
+    return (
+      <div
+        key={link.id}
+        className={`bg-stone-50 rounded-xl p-3 flex items-center gap-3 ${link.checked ? 'opacity-60' : ''}`}
+      >
+        <button
+          onClick={() => onToggleChecked(link.id, !link.checked)}
+          className="flex-shrink-0 cursor-pointer"
+          aria-label={link.checked ? 'Mark as not purchased' : 'Mark as purchased'}
+        >
+          {link.checked ? (
+            <CheckSquare size={20} className="text-sage-500" />
+          ) : (
+            <Square size={20} className="text-stone-300" />
+          )}
+        </button>
+        <div className="flex-1 min-w-0">
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`font-medium text-sm hover:text-sage-600 transition-colors ${
+              link.checked ? 'text-stone-500 line-through' : 'text-stone-900'
+            }`}
+          >
+            {displayTitle}
+          </a>
+          <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
+            <ExternalLink size={10} />
+            {displaySiteName}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Unchecked links */}
+      {uncheckedLinks.length > 0 && (
+        <div className="space-y-2">
+          {uncheckedLinks.map(renderLink)}
+        </div>
+      )}
+
+      {/* Purchased section */}
+      {checkedLinks.length > 0 && (
+        <div className="pt-4 border-t border-stone-200">
+          <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <Check size={12} />
+            Purchased ({checkedLinks.length})
+          </h4>
+          <div className="space-y-2">
+            {checkedLinks.map(renderLink)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

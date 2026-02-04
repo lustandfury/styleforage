@@ -294,7 +294,7 @@ export const Header: React.FC = () => {
               </div>
               {/* Book Now: fade down on scroll; fixed space, aligned end */}
               <span
-                className="min-w-[6.5rem] overflow-hidden shrink-0 flex justify-end"
+                className="min-w-[6.5rem] overflow-hidden shrink-0 flex justify-end ml-6"
                 style={{
                   opacity: headerFadeProgress,
                   transform: `translateY(${(1 - headerFadeProgress) * 10}px)`,
