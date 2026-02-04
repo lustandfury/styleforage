@@ -44,7 +44,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    const store = getStorage('cms-editorial');
+    const store = getStorage('cms-editorial', event);
 
     // Check admin passcode first
     const adminPasscode = event.headers['x-admin-passcode'];

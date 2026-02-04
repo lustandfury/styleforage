@@ -146,7 +146,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     // Get the editorial store
-    const store = getStorage('cms-editorial');
+    const store = getStorage('cms-editorial', event);
 
     // Verify lookbook exists
     const lookbooksData = await store.get('lookbooks', { type: 'json' });

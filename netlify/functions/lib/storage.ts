@@ -137,35 +137,36 @@ export interface Store {
 const storeCache = new Map<string, Store>();
 
 /**
- * Get a store that works in both local dev and production
- * Uses local file storage only when running netlify dev locally
+ * Get a store that works in both local dev and production.
+ * Uses local file storage when running `netlify dev` locally.
+ * In production, pass the handler event so Netlify Blobs can use connectLambda(event) before getStore (required for Lambda compatibility).
  */
-export function getStorage(storeName: string): Store {
-  // Return cached store if available
-  if (storeCache.has(storeName)) {
-    return storeCache.get(storeName)!;
-  }
-
+export function getStorage(storeName: string, lambdaEvent?: unknown): Store {
   // Only use local file storage when explicitly in local dev mode
   // NETLIFY_DEV is set when running `netlify dev` locally
   const isLocalDev = !!process.env.NETLIFY_DEV;
-  
+
   if (isLocalDev) {
+    if (storeCache.has(storeName)) {
+      return storeCache.get(storeName)!;
+    }
     console.log(`[Storage] Using local file storage for "${storeName}" (NETLIFY_DEV detected)`);
     const localStore = new LocalStore(storeName);
     storeCache.set(storeName, localStore);
     return localStore;
   }
 
-  // In all other cases (production, deploy previews, etc.), use Netlify Blobs
+  // Production: use Netlify Blobs. Must call connectLambda(event) before getStore when running in Lambda.
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getStore } = require('@netlify/blobs');
+    const { connectLambda, getStore } = require('@netlify/blobs');
+    if (lambdaEvent != null) {
+      connectLambda(lambdaEvent);
+    }
     const netlifyStore = getStore(storeName);
-    
+
     console.log(`[Storage] Using Netlify Blobs for "${storeName}"`);
-    
-    // Wrap Netlify Blobs store with our interface
+
     const store: Store = {
       get: (key, options) => netlifyStore.get(key, options),
       set: (key, value) => netlifyStore.set(key, value as string),
@@ -174,8 +175,11 @@ export function getStorage(storeName: string): Store {
       getWithMetadata: (key, options) => netlifyStore.getWithMetadata(key, options),
       setWithMetadata: (key, value, metadata) => netlifyStore.set(key, value as string, { metadata }),
     };
-    
-    storeCache.set(storeName, store);
+
+    // Do not cache when using per-request connectLambda so each request gets correct context
+    if (lambdaEvent == null) {
+      storeCache.set(storeName, store);
+    }
     return store;
   } catch (error) {
     console.error(`[Storage] Failed to initialize Netlify Blobs:`, error);

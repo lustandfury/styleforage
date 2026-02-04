@@ -54,7 +54,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     // Get the editorial store
-    const store = getStorage('cms-editorial');
+    const store = getStorage('cms-editorial', event);
     
     // Read current entries for this lookbook
     const entriesData = await store.get(`entries/${slug}`, { type: 'json' });

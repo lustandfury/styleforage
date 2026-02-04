@@ -56,7 +56,7 @@ async function isViewValid(event: HandlerEvent, slug: string): Promise<boolean> 
   const viewPasscode = event.headers['x-view-passcode'];
   if (!viewPasscode) return false;
 
-  const store = getStorage('cms-editorial');
+  const store = getStorage('cms-editorial', event);
   const lookbooksData = await store.get('lookbooks', { type: 'json' });
   const lookbooks: Lookbook[] = (lookbooksData as Lookbook[]) || [];
   const lookbook = lookbooks.find(l => l.slug === slug);
@@ -72,7 +72,7 @@ async function isViewValid(event: HandlerEvent, slug: string): Promise<boolean> 
  * DELETE /api/cms-links?slug=xxx&id=yyy - Delete link (admin only)
  */
 const handler: Handler = async (event: HandlerEvent) => {
-  const store = getStorage('cms-editorial');
+  const store = getStorage('cms-editorial', event);
 
   try {
     const slug = event.queryStringParameters?.slug || 

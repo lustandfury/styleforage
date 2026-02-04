@@ -74,7 +74,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
-  const store = getStorage('cms-editorial');
+  const store = getStorage('cms-editorial', event);
 
   try {
     // GET - List all lookbooks

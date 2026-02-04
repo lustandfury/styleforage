@@ -85,7 +85,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       // Get lookbooks to find the passcode
-      const store = getStorage('cms-editorial');
+      const store = getStorage('cms-editorial', event);
       const lookbooksData = await store.get('lookbooks', { type: 'json' });
       const lookbooks: Lookbook[] = lookbooksData || [];
 
