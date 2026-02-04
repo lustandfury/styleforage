@@ -199,7 +199,7 @@ export const Admin: React.FC = () => {
 
   // Show lookbook editor if slug is provided, otherwise show lookbook list
   if (slug) {
-    return <LookbookEditor slug={slug} onLogout={handleLogout} />;
+    return <LookbookEditor slug={slug} />;
   }
 
   return <LookbookList onLogout={handleLogout} />;
@@ -558,10 +558,9 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
 // Lookbook Editor Component
 interface LookbookEditorProps {
   slug: string;
-  onLogout: () => void;
 }
 
-const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, onLogout }) => {
+const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const navigate = useNavigate();
   
   // Tab state
@@ -1246,13 +1245,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, onLogout }) => {
             >
               <Eye size={16} />
               <span className="hidden sm:inline">Preview</span>
-            </button>
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-1.5 md:gap-2 text-sm text-stone-500 hover:text-red-600 transition-colors cursor-pointer p-1"
-            >
-              <LogOut size={16} />
-              <span className="hidden sm:inline">Log out</span>
             </button>
           </div>
         </div>
