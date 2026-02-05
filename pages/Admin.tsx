@@ -782,6 +782,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [error, setError] = useState('');
   const [lookbookInfo, setLookbookInfo] = useState<{ clientName: string; passcode: string } | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [isResettingPasscode, setIsResettingPasscode] = useState(false);
 
   // Upload state
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
@@ -871,6 +872,33 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
       }
     } catch {
       // Ignore - not critical
+    }
+  };
+
+  const handleResetPasscode = async () => {
+    if (!slug || !lookbookInfo) return;
+    const newCode = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    setIsResettingPasscode(true);
+    setError('');
+    try {
+      const res = await fetch('/.netlify/functions/cms-lookbooks', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
+        },
+        body: JSON.stringify({ slug, passcode: newCode }),
+      });
+      if (res.ok) {
+        setLookbookInfo((prev) => (prev ? { ...prev, passcode: newCode } : null));
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to reset passcode');
+      }
+    } catch {
+      setError('Failed to reset passcode');
+    } finally {
+      setIsResettingPasscode(false);
     }
   };
 
@@ -1806,7 +1834,19 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 {lookbookInfo?.clientName || 'Lookbook'}
               </h1>
               {lookbookInfo && (
-                <p className="text-xs text-stone-400 mt-0.5">Code: {lookbookInfo.passcode}</p>
+                <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                  <span>Code: {lookbookInfo.passcode}</span>
+                  {!/^\d{4}$/.test(lookbookInfo.passcode) && (
+                    <button
+                      type="button"
+                      onClick={handleResetPasscode}
+                      disabled={isResettingPasscode}
+                      className="text-sage-600 hover:text-sage-700 text-xs font-medium disabled:opacity-50 cursor-pointer"
+                    >
+                      {isResettingPasscode ? 'Resetting…' : 'Reset to 4-digit code'}
+                    </button>
+                  )}
+                </p>
               )}
             </div>
           </div>

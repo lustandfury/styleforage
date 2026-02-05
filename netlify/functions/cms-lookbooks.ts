@@ -149,13 +149,24 @@ const handler: Handler = async (event: HandlerEvent) => {
     // PATCH - Update a lookbook
     if (event.httpMethod === 'PATCH') {
       const body = JSON.parse(event.body || '{}');
-      const { slug, title, description, season } = body;
+      const { slug, title, description, season, passcode: passcodeBody } = body;
 
       if (!slug) {
         return {
           statusCode: 400,
           body: JSON.stringify({ error: 'Lookbook slug is required' }),
         };
+      }
+
+      // Optional passcode: must be exactly 4 digits
+      if (passcodeBody !== undefined) {
+        const trimmed = typeof passcodeBody === 'string' ? passcodeBody.trim() : '';
+        if (!/^\d{4}$/.test(trimmed)) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Passcode must be exactly 4 digits' }),
+          };
+        }
       }
 
       // Get lookbooks
@@ -181,6 +192,9 @@ const handler: Handler = async (event: HandlerEvent) => {
       if (season !== undefined) {
         const validSeasons: Season[] = ['spring', 'summer', 'fall', 'winter'];
         lookbooks[lookbookIndex].season = validSeasons.includes(season) ? season : undefined;
+      }
+      if (passcodeBody !== undefined) {
+        lookbooks[lookbookIndex].passcode = (typeof passcodeBody === 'string' ? passcodeBody.trim() : '').padStart(4, '0');
       }
 
       await store.setJSON('lookbooks', lookbooks);
