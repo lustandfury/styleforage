@@ -667,7 +667,8 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [lookbookInfo, setLookbookInfo] = useState<{ clientName: string; passcode: string } | null>(null);
 
   // Upload state
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadCaption, setUploadCaption] = useState('');
   const [uploadSeason, setUploadSeason] = useState<Season | ''>('');
@@ -782,10 +783,12 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const toPreview = isHeicFile(file) ? await convertHeicToJpeg(file) : file;
-    setUploadFile(toPreview);
+    const files = e.target.files;
+    if (!files?.length) return;
+    const list: File[] = Array.from(files);
+    setUploadFiles(list);
+    const first = list[0] as File;
+    const toPreview: File = isHeicFile(first) ? await convertHeicToJpeg(first) : first;
     const reader = new FileReader();
     reader.onload = (ev) => {
       setUploadPreview(ev.target?.result as string);
@@ -795,49 +798,70 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadFile) return;
+    if (uploadFiles.length === 0) return;
 
     setIsUploading(true);
     setError('');
 
     try {
-      const jpegFile = await convertHeicToJpeg(uploadFile);
-      const fileToUpload = await resizeImageFile(
-        jpegFile,
-        CLIENT_IMAGE_MAX_DIMENSION,
-        CLIENT_IMAGE_QUALITY
-      );
-      const formData = new FormData();
-      formData.append('file', fileToUpload);
-      formData.append('caption', uploadCaption);
-      formData.append('slug', slug);
-      if (uploadSeason) {
-        formData.append('season', uploadSeason);
-      }
+      const total = uploadFiles.length;
+      let entryId: string | null = null;
 
-      const res = await fetch('/.netlify/functions/cms-upload', {
-        method: 'POST',
-        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-        body: formData,
-      });
+      for (let i = 0; i < total; i++) {
+        setUploadProgress(total > 1 ? `Uploading ${i + 1} of ${total}…` : null);
+        const file = uploadFiles[i];
+        const jpegFile = await convertHeicToJpeg(file);
+        const fileToUpload = await resizeImageFile(
+          jpegFile,
+          CLIENT_IMAGE_MAX_DIMENSION,
+          CLIENT_IMAGE_QUALITY
+        );
 
-      if (res.ok) {
-        const newEntry = await res.json();
-        setEntries([...entries, newEntry]);
-        resetUploadForm();
-      } else {
+        const formData = new FormData();
+        formData.append('file', fileToUpload);
+        formData.append('slug', slug);
+        formData.append('title', uploadTitle);
+        formData.append('caption', uploadCaption);
+        if (uploadSeason) {
+          formData.append('season', uploadSeason);
+        }
+        if (entryId) {
+          formData.append('entryId', entryId);
+          formData.append('addPhoto', 'true');
+        }
+
+        const res = await fetch('/.netlify/functions/cms-upload', {
+          method: 'POST',
+          headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || `Upload failed (photo ${i + 1} of ${total})`);
+          return;
+        }
+
         const data = await res.json();
-        setError(data.error || 'Upload failed');
+        if (!entryId) {
+          entryId = data.id;
+          setEntries((prev) => [...prev, data]);
+        }
       }
+
+      await fetchEntries();
+      resetUploadForm();
     } catch {
       setError('Upload failed. Please try again.');
     } finally {
+      setUploadProgress(null);
       setIsUploading(false);
     }
   };
 
   const resetUploadForm = () => {
-    setUploadFile(null);
+    setUploadFiles([]);
+    setUploadProgress(null);
     setUploadTitle('');
     setUploadCaption('');
     setUploadSeason('');
@@ -1646,17 +1670,20 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                   </div>
                   <UploadForm
                     fileInputRef={fileInputRef}
-                    uploadFile={uploadFile}
+                    uploadFiles={uploadFiles}
                     uploadPreview={uploadPreview}
+                    uploadProgress={uploadProgress}
+                    uploadTitle={uploadTitle}
                     uploadCaption={uploadCaption}
                     uploadSeason={uploadSeason}
                     isUploading={isUploading}
                     onFileChange={handleFileChange}
+                    onTitleChange={setUploadTitle}
                     onCaptionChange={setUploadCaption}
                     onSeasonChange={setUploadSeason}
                     onSubmit={handleUpload}
                     onClearFile={() => {
-                      setUploadFile(null);
+                      setUploadFiles([]);
                       setUploadPreview(null);
                       if (fileInputRef.current) fileInputRef.current.value = '';
                     }}
@@ -1673,17 +1700,20 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
               </h2>
               <UploadForm
                 fileInputRef={fileInputRef}
-                uploadFile={uploadFile}
+                uploadFiles={uploadFiles}
                 uploadPreview={uploadPreview}
+                uploadProgress={uploadProgress}
+                uploadTitle={uploadTitle}
                 uploadCaption={uploadCaption}
                 uploadSeason={uploadSeason}
                 isUploading={isUploading}
                 onFileChange={handleFileChange}
+                onTitleChange={setUploadTitle}
                 onCaptionChange={setUploadCaption}
                 onSeasonChange={setUploadSeason}
                 onSubmit={handleUpload}
                 onClearFile={() => {
-                  setUploadFile(null);
+                  setUploadFiles([]);
                   setUploadPreview(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
                 }}
@@ -1744,8 +1774,10 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                       slug={slug}
                       passcode={sessionStorage.getItem(PASSCODE_KEY) || ''}
                       isEditing={editingId === entry.id}
+                      editTitle={editTitle}
                       editCaption={editCaption}
                       editSeason={editSeason}
+                      onEditTitleChange={setEditTitle}
                       onEditCaptionChange={setEditCaption}
                       onEditSeasonChange={setEditSeason}
                       onStartEdit={() => startEdit(entry)}
@@ -2228,8 +2260,9 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 // Upload Form Component
 interface UploadFormProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
-  uploadFile: File | null;
+  uploadFiles: File[];
   uploadPreview: string | null;
+  uploadProgress: string | null;
   uploadTitle: string;
   uploadCaption: string;
   uploadSeason: Season | '';
@@ -2244,8 +2277,9 @@ interface UploadFormProps {
 
 const UploadForm: React.FC<UploadFormProps> = ({
   fileInputRef,
-  uploadFile,
+  uploadFiles,
   uploadPreview,
+  uploadProgress,
   uploadTitle,
   uploadCaption,
   uploadSeason,
@@ -2262,25 +2296,33 @@ const UploadForm: React.FC<UploadFormProps> = ({
       {/* File Input */}
       <div>
         <label htmlFor="upload-file" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
-          Photo
+          Photo{uploadFiles.length > 1 ? 's' : ''}
         </label>
         <input
           ref={fileInputRef}
           id="upload-file"
           type="file"
           accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif,.heic,.heif"
+          multiple
           onChange={onFileChange}
           className="hidden"
         />
 
-        {uploadPreview ? (
-          <div className="relative inline-block">
-            <img src={uploadPreview} alt="Preview" className="h-40 md:h-32 w-auto rounded-xl object-cover" />
+        {uploadPreview || uploadFiles.length > 0 ? (
+          <div className="relative inline-block min-h-[80px]">
+            {uploadPreview && (
+              <img src={uploadPreview} alt="Preview" className="h-40 md:h-32 w-auto rounded-xl object-cover" />
+            )}
+            {uploadFiles.length > 1 && (
+              <p className="mt-2 text-sm text-stone-600">
+                {uploadFiles.length} photos selected. Title and description apply to the whole set.
+              </p>
+            )}
             <button
               type="button"
               onClick={onClearFile}
               className="absolute -top-2 -right-2 h-7 w-7 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 cursor-pointer shadow-md"
-              aria-label="Remove photo"
+              aria-label="Remove photos"
             >
               <X size={16} />
             </button>
@@ -2292,7 +2334,7 @@ const UploadForm: React.FC<UploadFormProps> = ({
             className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-xl border-2 border-dashed border-stone-200 text-stone-500 hover:border-sage-400 hover:text-sage-600 transition-colors cursor-pointer"
           >
             <ImageIcon size={20} />
-            <span>Choose photo</span>
+            <span>Choose photo(s)</span>
           </button>
         )}
       </div>
@@ -2351,8 +2393,11 @@ const UploadForm: React.FC<UploadFormProps> = ({
       </div>
     </div>
 
-    <Button type="submit" variant="primary" size="lg" className="mt-4 w-full md:w-auto rounded-full" disabled={!uploadFile || isUploading}>
-      {isUploading ? 'Uploading…' : 'Add to Lookbook'}
+    {uploadProgress && (
+      <p className="text-sm text-stone-500">{uploadProgress}</p>
+    )}
+    <Button type="submit" variant="primary" size="lg" className="mt-4 w-full md:w-auto rounded-full" disabled={uploadFiles.length === 0 || isUploading}>
+      {isUploading ? (uploadProgress || 'Uploading…') : uploadFiles.length > 1 ? `Add ${uploadFiles.length} photos` : 'Add to Lookbook'}
     </Button>
   </form>
 );
@@ -2445,8 +2490,10 @@ interface EntryCardProps {
   slug: string;
   passcode: string;
   isEditing: boolean;
+  editTitle: string;
   editCaption: string;
   editSeason: Season | '';
+  onEditTitleChange: (value: string) => void;
   onEditCaptionChange: (value: string) => void;
   onEditSeasonChange: (value: Season | '') => void;
   onStartEdit: () => void;
@@ -2463,8 +2510,10 @@ const EntryCard: React.FC<EntryCardProps> = ({
   slug,
   passcode,
   isEditing,
+  editTitle,
   editCaption,
   editSeason,
+  onEditTitleChange,
   onEditCaptionChange,
   onEditSeasonChange,
   onStartEdit,
@@ -2562,12 +2611,23 @@ const EntryCard: React.FC<EntryCardProps> = ({
         <div className="flex-1 min-w-0">
           {isEditing ? (
             <div>
+              <label htmlFor="edit-title" className="block text-xs font-medium text-stone-500 mb-1">Title</label>
+              <input
+                id="edit-title"
+                type="text"
+                value={editTitle}
+                onChange={(e) => onEditTitleChange(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-stone-200 bg-white text-stone-900 text-base font-serif focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent mb-3"
+                placeholder="Optional title"
+              />
+              <label htmlFor="edit-caption" className="block text-xs font-medium text-stone-500 mb-1">Description</label>
               <textarea
+                id="edit-caption"
                 value={editCaption}
                 onChange={(e) => onEditCaptionChange(e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2.5 rounded-xl border border-stone-200 bg-white text-stone-900 text-base focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent resize-none"
-                autoFocus
+                placeholder="Description (line breaks kept)"
               />
               {/* Season selector */}
               <div className="flex flex-wrap gap-1.5 mt-3">
@@ -2606,8 +2666,11 @@ const EntryCard: React.FC<EntryCardProps> = ({
           ) : (
             <div className="flex flex-col sm:flex-row sm:items-start gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-stone-700 text-sm md:text-base line-clamp-2">
-                  {entry.caption ? normalizePastedText(entry.caption) : <span className="italic text-stone-400">No caption</span>}
+                {entry.title ? (
+                  <p className="font-serif text-stone-900 text-base md:text-lg mb-1">{normalizePastedText(entry.title)}</p>
+                ) : null}
+                <p className="text-stone-600 text-sm whitespace-pre-wrap line-clamp-3">
+                  {entry.caption ? normalizePastedText(entry.caption) : <span className="italic text-stone-400">No description</span>}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-stone-400 text-xs">{new Date(entry.createdAt).toLocaleDateString()}</p>

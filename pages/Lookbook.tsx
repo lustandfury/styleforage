@@ -19,6 +19,7 @@ interface EditorialEntry {
   id: string;
   imageKey: string;
   imageKeys?: string[];
+  title?: string;
   caption: string;
   order: number;
   createdAt: string;
@@ -1162,10 +1163,13 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
           className="absolute inset-x-0 bottom-0 z-10 flex flex-col justify-end pt-12 pb-6 safe-bottom min-h-[100px] pointer-events-none"
           style={{ backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 45%, transparent 100%)' }}
         >
-          {entry.caption ? (
+          {(entry.title || entry.caption) ? (
             <div className="pointer-events-auto px-4 flex flex-col items-stretch text-left" onClick={(e) => e.stopPropagation()}>
-              <div className="font-serif text-sm text-white leading-relaxed drop-shadow-lg max-h-16 overflow-hidden">
-                <p>{normalizePastedText(entry.caption)}</p>
+              {entry.title ? (
+                <p className="font-serif text-lg text-white drop-shadow-lg">{normalizePastedText(entry.title)}</p>
+              ) : null}
+              <div className="font-sans text-sm text-white/95 leading-relaxed drop-shadow-lg max-h-16 overflow-hidden whitespace-pre-wrap">
+                {entry.caption ? <p>{normalizePastedText(entry.caption)}</p> : null}
               </div>
               <button
                 type="button"
@@ -1178,14 +1182,19 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
           ) : null}
         </div>
 
-        {entry.caption && (
+        {(entry.title || entry.caption) && (
           <ActionSheet
             isOpen={captionExpanded}
             onClose={() => setCaptionExpanded(false)}
-            title="Caption"
+            title={entry.title || 'Caption'}
             bodyClassName="caption-modal-body"
           >
-            <p className="font-serif text-stone-800 text-base leading-relaxed break-words">{normalizePastedText(entry.caption)}</p>
+            {entry.title ? (
+              <p className="font-serif text-xl text-stone-900 mb-3">{normalizePastedText(entry.title)}</p>
+            ) : null}
+            {entry.caption ? (
+              <p className="font-sans text-sm text-stone-700 leading-relaxed break-words whitespace-pre-wrap">{normalizePastedText(entry.caption)}</p>
+            ) : null}
           </ActionSheet>
         )}
       </div>
@@ -1226,11 +1235,16 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
 
           {/* Caption area - vertical scroll only, no horizontal scroll */}
           <div className="flex-1 max-w-md text-center lg:text-left flex flex-col min-w-0 overflow-hidden">
-            {entry.caption ? (
+            {(entry.title || entry.caption) ? (
               <div className="max-h-[40vh] overflow-y-auto overflow-x-hidden pr-1 caption-modal-body">
-                <p className="font-serif text-base lg:text-lg text-stone-800 leading-relaxed break-words">
-                  {normalizePastedText(entry.caption)}
-                </p>
+                {entry.title ? (
+                  <p className="font-serif text-xl lg:text-2xl text-stone-900 mb-2">{normalizePastedText(entry.title)}</p>
+                ) : null}
+                {entry.caption ? (
+                  <p className="font-sans text-sm text-stone-600 leading-relaxed break-words whitespace-pre-wrap">
+                    {normalizePastedText(entry.caption)}
+                  </p>
+                ) : null}
               </div>
             ) : (
               <p className="text-stone-400">Curated with care</p>
