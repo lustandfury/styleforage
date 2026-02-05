@@ -12,6 +12,11 @@ export interface LinkPreview {
 
 export type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'footwear' | 'outerwear' | 'uncategorized';
 
+export interface ShoppingItemLink {
+  url: string;
+  linkPreview?: LinkPreview;
+}
+
 export interface ShoppingItem {
   id: string;
   name: string;
@@ -19,6 +24,8 @@ export interface ShoppingItem {
   link?: string;
   price?: string;
   linkPreview?: LinkPreview;
+  /** Multiple product links (e.g. same item at different retailers). When set, link/linkPreview are derived from the first. */
+  links?: ShoppingItemLink[];
   category: ShoppingCategory;
   checked: boolean;
   order: number;
@@ -164,13 +171,22 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       // Admin can update all fields
-      const { name, description, link, price, linkPreview, category, order } = body;
+      const { name, description, link, price, linkPreview, category, order, links: linksBody } = body;
 
       if (name !== undefined) items[itemIndex].name = name.trim();
       if (description !== undefined) items[itemIndex].description = description?.trim() || undefined;
       if (link !== undefined) items[itemIndex].link = link?.trim() || undefined;
       if (price !== undefined) items[itemIndex].price = price?.trim() || undefined;
       if (linkPreview !== undefined) items[itemIndex].linkPreview = linkPreview || undefined;
+      if (linksBody !== undefined && Array.isArray(linksBody)) {
+        const linksArray: ShoppingItemLink[] = linksBody
+          .filter((l: { url?: string }) => l && typeof l.url === 'string' && l.url.trim())
+          .map((l: { url: string; linkPreview?: LinkPreview }) => ({ url: l.url.trim(), linkPreview: l.linkPreview }));
+        items[itemIndex].links = linksArray.length > 0 ? linksArray : undefined;
+        const first = linksArray[0];
+        items[itemIndex].link = first?.url;
+        items[itemIndex].linkPreview = first?.linkPreview;
+      }
       if (category !== undefined) {
         const validCategories: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'footwear', 'outerwear', 'uncategorized'];
         items[itemIndex].category = validCategories.includes(category) ? category : 'uncategorized';
@@ -198,7 +214,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     // POST - Create new item
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-      const { name, description, link, price, linkPreview, category } = body;
+      const { name, description, link, price, linkPreview, category, links: linksBody } = body;
 
       if (!name || typeof name !== 'string' || name.trim().length === 0) {
         return {
@@ -211,6 +227,16 @@ const handler: Handler = async (event: HandlerEvent) => {
       const validCategories: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'footwear', 'outerwear', 'uncategorized'];
       const itemCategory: ShoppingCategory = validCategories.includes(category) ? category : 'uncategorized';
 
+      const linksArray: ShoppingItemLink[] = Array.isArray(linksBody) && linksBody.length > 0
+        ? linksBody
+            .filter((l: { url?: string }) => l && typeof l.url === 'string' && l.url.trim())
+            .map((l: { url: string; linkPreview?: LinkPreview }) => ({ url: l.url.trim(), linkPreview: l.linkPreview }))
+        : link && typeof link === 'string' && link.trim()
+          ? [{ url: link.trim(), linkPreview: linkPreview || undefined }]
+          : [];
+
+      const firstLink = linksArray[0];
+
       // Read current items
       const itemsData = await store.get(`shopping/${slug}`, { type: 'json' });
       const items: ShoppingItem[] = (itemsData as ShoppingItem[]) || [];
@@ -220,9 +246,10 @@ const handler: Handler = async (event: HandlerEvent) => {
         id: generateId(),
         name: name.trim(),
         description: description?.trim() || undefined,
-        link: link?.trim() || undefined,
+        link: firstLink?.url,
         price: price?.trim() || undefined,
-        linkPreview: linkPreview || undefined,
+        linkPreview: firstLink?.linkPreview,
+        ...(linksArray.length > 0 && { links: linksArray }),
         category: itemCategory,
         checked: false,
         order: items.length,
@@ -230,7 +257,24 @@ const handler: Handler = async (event: HandlerEvent) => {
       };
 
       items.push(newItem);
-      await store.setJSON(`shopping/${slug}`, items);
+
+      // Re-read before write to avoid losing items when multiple adds happen in quick succession
+      const latestData = await store.get(`shopping/${slug}`, { type: 'json' });
+      const latest: ShoppingItem[] = (latestData as ShoppingItem[]) || [];
+      const merged = latest.some((i) => i.id === newItem.id) ? latest : [...latest, newItem];
+      if (merged.length !== latest.length) {
+        merged[merged.length - 1].order = merged.length - 1;
+      }
+
+      try {
+        await store.setJSON(`shopping/${slug}`, merged);
+      } catch (writeError) {
+        console.error('cms-shopping: failed to save shopping list after add', writeError);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to save item. Please try again.' }),
+        };
+      }
 
       return {
         statusCode: 200,

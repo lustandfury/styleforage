@@ -71,7 +71,7 @@ const handler: Handler = async (event: HandlerEvent) => {
 
       return {
         statusCode: 401,
-        body: JSON.stringify({ error: 'Invalid passcode' }),
+        body: JSON.stringify({ error: 'Invalid code' }),
       };
     }
 
@@ -135,13 +135,13 @@ const handler: Handler = async (event: HandlerEvent) => {
 
       return {
         statusCode: 401,
-        body: JSON.stringify({ error: 'Invalid passcode' }),
+        body: JSON.stringify({ error: 'Invalid code' }),
       };
     }
 
     return {
       statusCode: 401,
-      body: JSON.stringify({ error: 'Invalid passcode' }),
+      body: JSON.stringify({ error: 'Invalid code' }),
     };
   } catch (error) {
     console.error('Auth error:', error);

@@ -1,5 +1,6 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
+import { normalizePastedText } from './lib/text';
 
 export interface Tip {
   id: string;
@@ -114,7 +115,15 @@ const handler: Handler = async (event: HandlerEvent) => {
       };
 
       tips.push(newTip);
-      await store.setJSON(`tips/${slug}`, tips);
+      try {
+        await store.setJSON(`tips/${slug}`, tips);
+      } catch (writeError) {
+        console.error('cms-tips: failed to save tips after add', writeError);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to save tip. Please try again.' }),
+        };
+      }
 
       return {
         statusCode: 200,
@@ -148,7 +157,15 @@ const handler: Handler = async (event: HandlerEvent) => {
       if (text !== undefined) tips[tipIndex].text = normalizePastedText(String(text).trim());
       if (order !== undefined && typeof order === 'number') tips[tipIndex].order = order;
 
-      await store.setJSON(`tips/${slug}`, tips);
+      try {
+        await store.setJSON(`tips/${slug}`, tips);
+      } catch (writeError) {
+        console.error('cms-tips: failed to save tips after update', writeError);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to save tip. Please try again.' }),
+        };
+      }
 
       return {
         statusCode: 200,
@@ -180,7 +197,15 @@ const handler: Handler = async (event: HandlerEvent) => {
 
       tips.splice(tipIndex, 1);
       tips.forEach((t, i) => { t.order = i; });
-      await store.setJSON(`tips/${slug}`, tips);
+      try {
+        await store.setJSON(`tips/${slug}`, tips);
+      } catch (writeError) {
+        console.error('cms-tips: failed to save tips after delete', writeError);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to delete tip. Please try again.' }),
+        };
+      }
 
       return {
         statusCode: 200,

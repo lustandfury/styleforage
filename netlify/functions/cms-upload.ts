@@ -139,7 +139,7 @@ const handler: Handler = async (event: HandlerEvent) => {
         body: JSON.stringify({ error: 'Invalid content type - expected multipart/form-data' }),
       };
     }
-    const boundary = boundaryMatch[1] || boundaryMatch[2];
+    const boundary = (boundaryMatch[1] || boundaryMatch[2] || '').trim();
 
     // Parse multipart form data
     const { fields, files } = parseMultipart(event.body || '', boundary);
@@ -271,12 +271,12 @@ const handler: Handler = async (event: HandlerEvent) => {
     // Save the optimized image blob with metadata
     await store.setWithMetadata(imageKey, imageData, { contentType: imageContentType });
 
-    // Create new entry
+    // Create new entry (always persist title so it saves to the database)
     const newEntry: EditorialEntry = {
       id,
       imageKey,
       imageKeys: [imageKey],
-      ...(title && { title }),
+      title: title || '',
       caption,
       order: entries.length, // Append at end
       createdAt: new Date().toISOString(),

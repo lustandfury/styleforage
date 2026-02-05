@@ -26,15 +26,10 @@ function generateId(): string {
 }
 
 /**
- * Generate a random passcode (6 alphanumeric characters)
+ * Generate a random 4-digit passcode (0000–9999)
  */
 function generatePasscode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars like 0/O, 1/I
-  let passcode = '';
-  for (let i = 0; i < 6; i++) {
-    passcode += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return passcode;
+  return Math.floor(Math.random() * 10000).toString().padStart(4, '0');
 }
 
 /**

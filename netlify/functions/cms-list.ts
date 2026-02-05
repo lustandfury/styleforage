@@ -81,7 +81,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       if (viewPasscode !== lookbook.passcode) {
         return {
           statusCode: 401,
-          body: JSON.stringify({ error: 'Invalid passcode' }),
+          body: JSON.stringify({ error: 'Invalid code' }),
         };
       }
     }
@@ -90,10 +90,11 @@ const handler: Handler = async (event: HandlerEvent) => {
     const entriesData = await store.get(`entries/${slug}`, { type: 'json' });
     const rawEntries: EditorialEntry[] = entriesData || [];
 
-    // Normalize imageKeys for client (always send array)
+    // Normalize imageKeys and title for client (always send array and title string)
     const entries = rawEntries.map((e) => ({
       ...e,
       imageKeys: (e.imageKeys && e.imageKeys.length > 0) ? e.imageKeys : [e.imageKey],
+      title: e.title ?? '',
     }));
 
     // Sort by order

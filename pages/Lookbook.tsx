@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, ArrowLeft, Check, Square, CheckSquare, SlidersHorizontal, Link2, Lightbulb } from 'lucide-react';
+import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, ArrowLeft, Check, Square, CheckSquare, SlidersHorizontal, Link2, Lightbulb, Share, Plus, MoreVertical, Smartphone } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { normalizePastedText } from '../utils/normalizeText';
 
@@ -14,6 +14,113 @@ const SEASON_LABELS: Record<Season, string> = {
 };
 
 const SEASON_ORDER: Season[] = ['spring', 'summer', 'fall', 'winter'];
+
+// Device detection for Add to Home Screen instructions
+type DeviceType = 'ios' | 'android' | 'desktop';
+
+function detectDevice(): DeviceType {
+  if (typeof window === 'undefined') return 'desktop';
+  
+  const ua = navigator.userAgent.toLowerCase();
+  
+  // Check for iOS (iPhone, iPad, iPod)
+  if (/iphone|ipad|ipod/.test(ua)) {
+    return 'ios';
+  }
+  
+  // Check for Android
+  if (/android/.test(ua)) {
+    return 'android';
+  }
+  
+  return 'desktop';
+}
+
+// Add to Home Screen CTA Component
+const AddToHomeScreenCTA: React.FC = () => {
+  const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    setDeviceType(detectDevice());
+  }, []);
+
+  const getInstructions = () => {
+    switch (deviceType) {
+      case 'ios':
+        return {
+          icon: <Share size={18} className="text-sage-600" />,
+          title: 'Add to your iPhone',
+          steps: [
+            { icon: <Share size={16} />, text: 'Tap the Share button in Safari' },
+            { icon: <Plus size={16} />, text: 'Scroll down and tap "Add to Home Screen"' },
+            { icon: <Check size={16} />, text: 'Tap "Add" to confirm' },
+          ],
+        };
+      case 'android':
+        return {
+          icon: <MoreVertical size={18} className="text-sage-600" />,
+          title: 'Add to your Android',
+          steps: [
+            { icon: <MoreVertical size={16} />, text: 'Tap the menu (⋮) in Chrome' },
+            { icon: <Smartphone size={16} />, text: 'Tap "Add to Home screen"' },
+            { icon: <Check size={16} />, text: 'Tap "Add" to confirm' },
+          ],
+        };
+      default:
+        return {
+          icon: <Smartphone size={18} className="text-sage-600" />,
+          title: 'Add as an app',
+          steps: [
+            { icon: <Plus size={16} />, text: 'Look for the install icon (⊕) in your browser\'s address bar' },
+            { icon: <MoreVertical size={16} />, text: 'Chrome/Edge: Click ⋮ menu → "Install Style Forage..."' },
+            { icon: <Check size={16} />, text: 'Click "Install" to add the app to your desktop' },
+          ],
+        };
+    }
+  };
+
+  const instructions = getInstructions();
+
+  return (
+    <div className="mt-6 bg-sage-50 rounded-2xl border border-sage-100 overflow-hidden">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-4 py-3 flex items-center justify-between text-left cursor-pointer hover:bg-sage-100/50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          {instructions.icon}
+          <span className="text-sm font-medium text-stone-700">{instructions.title}</span>
+        </div>
+        <ChevronDown
+          size={18}
+          className={`text-stone-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+        />
+      </button>
+      
+      {isExpanded && (
+        <div className="px-4 pb-4 pt-1">
+          <p className="text-xs text-stone-500 mb-3">
+            Save this lookbook to your home screen for quick access:
+          </p>
+          <ol className="space-y-2">
+            {instructions.steps.map((step, index) => (
+              <li key={index} className="flex items-start gap-2 text-sm text-stone-600">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-sage-100 flex items-center justify-center text-sage-600">
+                  {index + 1}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  {step.icon}
+                  {step.text}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface EditorialEntry {
   id: string;
@@ -250,7 +357,7 @@ export const Lookbook: React.FC = () => {
         if (res.status === 404) {
           setAuthError('Lookbook not found');
         } else {
-          setAuthError(data.error || 'Invalid passcode');
+          setAuthError(data.error || 'Invalid code');
         }
       }
     } catch {
@@ -369,22 +476,24 @@ export const Lookbook: React.FC = () => {
               <Lock size={32} />
             </div>
             <h1 className="font-serif text-2xl md:text-3xl text-stone-900 mb-2">Style Lookbook</h1>
-            <p className="text-stone-500 text-sm">Enter the passcode to view your curated looks</p>
+            <p className="text-stone-500 text-sm">Enter your 4-digit code to view your curated looks</p>
           </div>
 
           <form onSubmit={handleAuthSubmit} className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
             <div className="mb-4">
               <label htmlFor="passcode" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
-                Passcode
+                4-digit code
               </label>
               <input
                 id="passcode"
                 type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
                 value={passcode}
-                onChange={(e) => setPasscode(e.target.value.toUpperCase())}
-                className="w-full h-11 px-4 rounded-lg border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-center tracking-widest font-mono text-lg uppercase"
-                placeholder="XXXXXX"
-                maxLength={6}
+                onChange={(e) => setPasscode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="w-full h-11 px-4 rounded-lg border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-center tracking-[0.4em] font-mono text-lg"
+                placeholder="0000"
+                maxLength={4}
                 autoFocus
               />
             </div>
@@ -399,6 +508,8 @@ export const Lookbook: React.FC = () => {
               {isAuthenticating ? 'Verifying…' : 'View Lookbook'}
             </Button>
           </form>
+
+          <AddToHomeScreenCTA />
 
           <div className="text-center mt-6">
             <Link to="/" className="text-sm text-stone-500 hover:text-sage-600 transition-colors">

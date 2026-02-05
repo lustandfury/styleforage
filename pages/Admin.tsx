@@ -1,7 +1,23 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import heic2any from 'heic2any';
-import { Lock, Upload, Trash2, Edit3, Save, X, LogOut, Image as ImageIcon, ArrowLeft, Plus, Users, Copy, Check, FolderOpen, Eye, Camera, ShoppingBag, ExternalLink, DollarSign, Link2, Square, CheckSquare, Lightbulb } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Lock, Upload, Trash2, Edit3, Save, X, LogOut, Image as ImageIcon, ArrowLeft, Plus, Users, Copy, Check, FolderOpen, Eye, Camera, ShoppingBag, ExternalLink, DollarSign, Link2, Square, CheckSquare, Lightbulb, ChevronUp, ChevronDown, Share2, GripVertical } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { normalizePastedText } from '../utils/normalizeText';
 
@@ -156,6 +172,7 @@ interface ShoppingItem {
   link?: string;
   price?: string;
   linkPreview?: LinkPreview;
+  links?: { url: string; linkPreview?: LinkPreview }[];
   category: ShoppingCategory;
   checked: boolean;
   order: number;
@@ -181,6 +198,115 @@ interface Tip {
 }
 
 const PASSCODE_KEY = 'admin_passcode';
+
+/** Message template for sharing lookbook with client (paste into email/text). */
+function getShareMessage(clientName: string, url: string, code: string): string {
+  return `Hi${clientName ? ` ${clientName}` : ''}! Here's your lookbook:\n\n${url}\n\nUse this code to view it: ${code}`;
+}
+
+interface ShareLookbookModalProps {
+  clientName: string;
+  passcode: string;
+  slug: string;
+  onClose: () => void;
+}
+
+function ShareLookbookModal({ clientName, passcode, slug, onClose }: ShareLookbookModalProps): React.ReactElement {
+  const url = typeof window !== 'undefined' ? `${window.location.origin}/lookbook/${slug}` : '';
+  const message = getShareMessage(clientName, url, passcode);
+  const [copied, setCopied] = useState<'message' | 'url' | 'code' | null>(null);
+
+  const copy = async (text: string, key: 'message' | 'url' | 'code') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      alert(text);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl max-w-md w-full p-5 border border-stone-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-serif text-lg text-stone-900">Share with your client</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <p className="text-sm text-stone-500 mb-4">
+          Send your client the link and code below so they can view their lookbook.
+        </p>
+        <div className="space-y-3 mb-4">
+          <div>
+            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1">Link</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                readOnly
+                value={url}
+                className="flex-1 px-3 py-2 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => copy(url, 'url')}
+                className="flex-shrink-0 px-3 py-2 rounded-xl bg-sage-100 text-sage-700 hover:bg-sage-200 font-medium text-sm cursor-pointer flex items-center gap-1.5"
+              >
+                {copied === 'url' ? <Check size={16} /> : <Copy size={16} />}
+                {copied === 'url' ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-1">Password</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                readOnly
+                value={passcode}
+                className="flex-1 px-3 py-2 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => copy(passcode, 'code')}
+                className="flex-shrink-0 px-3 py-2 rounded-xl bg-sage-100 text-sage-700 hover:bg-sage-200 font-medium text-sm cursor-pointer flex items-center gap-1.5"
+              >
+                {copied === 'code' ? <Check size={16} /> : <Copy size={16} />}
+                {copied === 'code' ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => copy(message, 'message')}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-sage-500 text-white font-medium hover:bg-sage-600 cursor-pointer"
+          >
+            {copied === 'message' ? <Check size={18} /> : <Share2 size={18} />}
+            {copied === 'message' ? 'Copied!' : 'Copy message (link + password)'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full px-4 py-2 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50 cursor-pointer text-sm"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export const Admin: React.FC = () => {
   const { slug } = useParams<{ slug?: string }>();
@@ -217,7 +343,7 @@ export const Admin: React.FC = () => {
         setPasscode(code);
         setIsAuthenticated(true);
       } else if (!silent) {
-        setAuthError('Invalid passcode');
+        setAuthError('Invalid code');
       }
     } catch {
       if (!silent) {
@@ -251,21 +377,24 @@ export const Admin: React.FC = () => {
               <Lock size={32} />
             </div>
             <h1 className="font-serif text-2xl text-stone-900 mb-2">Admin Access</h1>
-            <p className="text-stone-500 text-sm">Enter your passcode to manage lookbooks</p>
+            <p className="text-stone-500 text-sm">Enter your 4-digit code to manage lookbooks</p>
           </div>
 
           <form onSubmit={handleAuthSubmit} className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm">
             <div className="mb-4">
               <label htmlFor="passcode" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
-                Passcode
+                4-digit code
               </label>
               <input
                 id="passcode"
                 type="password"
+                inputMode="numeric"
+                autoComplete="one-time-code"
                 value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                className="w-full h-11 px-4 rounded-lg border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent"
-                placeholder="Enter passcode"
+                onChange={(e) => setPasscode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="w-full h-11 px-4 rounded-lg border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-center tracking-[0.4em] font-mono text-lg"
+                placeholder="0000"
+                maxLength={4}
                 autoFocus
               />
             </div>
@@ -315,7 +444,7 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
   const [newDescription, setNewDescription] = useState('');
   const [newSeason, setNewSeason] = useState<Season>(getCurrentSeason());
   const [isCreating, setIsCreating] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [shareLookbook, setShareLookbook] = useState<Lookbook | null>(null);
   const [selectedSeasonFilter, setSelectedSeasonFilter] = useState<Season | 'all'>('all');
 
   useEffect(() => {
@@ -401,20 +530,6 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
       }
     } catch {
       setError('Failed to delete lookbook');
-    }
-  };
-
-  const copyToClipboard = async (lookbook: Lookbook) => {
-    const url = `${window.location.origin}/lookbook/${lookbook.slug}`;
-    const text = `Your Style Lookbook\nURL: ${url}\nPasscode: ${lookbook.passcode}`;
-    
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedId(lookbook.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      // Fallback for older browsers
-      alert(`URL: ${url}\nPasscode: ${lookbook.passcode}`);
     }
   };
 
@@ -610,18 +725,19 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
                         <span className="text-xs text-stone-500 bg-stone-100 px-2 py-1 rounded-full font-mono">
                           {lookbook.passcode}
                         </span>
-                        <button
-                          onClick={() => copyToClipboard(lookbook)}
-                          className="text-xs text-sage-600 hover:text-sage-700 flex items-center gap-1 cursor-pointer"
-                        >
-                          {copiedId === lookbook.id ? <Check size={14} /> : <Copy size={14} />}
-                          {copiedId === lookbook.id ? 'Copied!' : 'Copy link & code'}
-                        </button>
                       </div>
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setShareLookbook(lookbook)}
+                        className="p-2.5 rounded-full bg-sage-100 text-sage-600 hover:bg-sage-200 transition-colors cursor-pointer"
+                        aria-label="Share with client"
+                        title="Share with client"
+                      >
+                        <Share2 size={18} />
+                      </button>
                       <button
                         onClick={() => window.open(`/lookbook/${lookbook.slug}`, '_blank')}
                         className="p-2.5 rounded-full bg-stone-100 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer"
@@ -665,6 +781,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [lookbookInfo, setLookbookInfo] = useState<{ clientName: string; passcode: string } | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Upload state
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
@@ -692,11 +809,10 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemDescription, setNewItemDescription] = useState('');
-  const [newItemLink, setNewItemLink] = useState('');
+  const [newItemLinks, setNewItemLinks] = useState<{ url: string; linkPreview: LinkPreview | null }[]>([{ url: '', linkPreview: null }]);
   const [newItemPrice, setNewItemPrice] = useState('');
-  const [newItemLinkPreview, setNewItemLinkPreview] = useState<LinkPreview | null>(null);
   const [newItemCategory, setNewItemCategory] = useState<ShoppingCategory>('uncategorized');
-  const [isFetchingPreview, setIsFetchingPreview] = useState(false);
+  const [isFetchingPreviewIndex, setIsFetchingPreviewIndex] = useState<number | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editItemName, setEditItemName] = useState('');
@@ -905,6 +1021,81 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     setEditSeason('');
   };
 
+  const sortedEntries = [...entries].sort((a, b) => a.order - b.order);
+  const entrySensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  const shoppingSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  const moveEntryUp = async (entry: EditorialEntry) => {
+    const idx = sortedEntries.findIndex((e) => e.id === entry.id);
+    if (idx <= 0) return;
+    const prev = sortedEntries[idx - 1];
+    try {
+      await Promise.all([
+        fetch('/.netlify/functions/cms-update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: entry.id, order: prev.order }),
+        }),
+        fetch('/.netlify/functions/cms-update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: prev.id, order: entry.order }),
+        }),
+      ]);
+      await fetchEntries();
+    } catch {
+      setError('Failed to reorder');
+    }
+  };
+  const moveEntryDown = async (entry: EditorialEntry) => {
+    const idx = sortedEntries.findIndex((e) => e.id === entry.id);
+    if (idx < 0 || idx >= sortedEntries.length - 1) return;
+    const next = sortedEntries[idx + 1];
+    try {
+      await Promise.all([
+        fetch('/.netlify/functions/cms-update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: entry.id, order: next.order }),
+        }),
+        fetch('/.netlify/functions/cms-update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: next.id, order: entry.order }),
+        }),
+      ]);
+      await fetchEntries();
+    } catch {
+      setError('Failed to reorder');
+    }
+  };
+
+  const handleEntryReorder = async (orderedIds: string[]) => {
+    const scrollY = window.scrollY;
+    try {
+      await Promise.all(
+        orderedIds.map((id, order) =>
+          fetch('/.netlify/functions/cms-update', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+            body: JSON.stringify({ slug, id, order }),
+          })
+        )
+      );
+      await fetchEntries();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      });
+    } catch {
+      setError('Failed to reorder');
+    }
+  };
+
   const handleUpdate = async (id: string) => {
     try {
       const res = await fetch('/.netlify/functions/cms-update', {
@@ -1051,17 +1242,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           slug,
           name: newItemName,
           description: newItemDescription,
-          link: newItemLink,
+          links: newItemLinks.filter((l) => l.url.trim()).map((l) => ({ url: l.url.trim(), linkPreview: l.linkPreview || undefined })),
           price: newItemPrice,
-          linkPreview: newItemLinkPreview,
           category: newItemCategory,
         }),
       });
 
       if (res.ok) {
-        const newItem = await res.json();
-        setShoppingItems([...shoppingItems, newItem]);
         resetAddItemForm();
+        await fetchShoppingItems();
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to add item');
@@ -1076,9 +1265,8 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const resetAddItemForm = () => {
     setNewItemName('');
     setNewItemDescription('');
-    setNewItemLink('');
+    setNewItemLinks([{ url: '', linkPreview: null }]);
     setNewItemPrice('');
-    setNewItemLinkPreview(null);
     setNewItemCategory('uncategorized');
     setShowAddItem(false);
   };
@@ -1089,7 +1277,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     if (isEdit) {
       setIsFetchingEditPreview(true);
     } else {
-      setIsFetchingPreview(true);
+      setIsFetchingPreviewIndex(0);
     }
 
     try {
@@ -1102,27 +1290,40 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         if (!preview.error) {
           if (isEdit) {
             setEditItemLinkPreview(preview);
-            // Auto-fill name if empty
-            if (!editItemName && preview.title) {
-              setEditItemName(preview.title);
-            }
+            if (!editItemName && preview.title) setEditItemName(preview.title);
           } else {
-            setNewItemLinkPreview(preview);
-            // Auto-fill name if empty
-            if (!newItemName && preview.title) {
-              setNewItemName(preview.title);
-            }
+            setNewItemLinks((prev) => prev.map((l, i) => (i === 0 ? { ...l, linkPreview: preview } : l)));
+            if (!newItemName && preview.title) setNewItemName(preview.title);
           }
         }
       }
     } catch {
-      // Ignore preview fetch errors
+      // Ignore
     } finally {
-      if (isEdit) {
-        setIsFetchingEditPreview(false);
-      } else {
-        setIsFetchingPreview(false);
+      if (isEdit) setIsFetchingEditPreview(false);
+      else setIsFetchingPreviewIndex(null);
+    }
+  };
+
+  const fetchLinkPreviewForIndex = async (index: number) => {
+    const url = newItemLinks[index]?.url;
+    if (!url || !url.startsWith('http')) return;
+    setIsFetchingPreviewIndex(index);
+    try {
+      const res = await fetch(`/.netlify/functions/fetch-link-preview?url=${encodeURIComponent(url)}`, {
+        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+      });
+      if (res.ok) {
+        const preview = await res.json();
+        if (!preview.error) {
+          setNewItemLinks((prev) => prev.map((l, i) => (i === index ? { ...l, linkPreview: preview } : l)));
+          if (index === 0 && !newItemName && preview.title) setNewItemName(preview.title);
+        }
       }
+    } catch {
+      // Ignore
+    } finally {
+      setIsFetchingPreviewIndex(null);
     }
   };
 
@@ -1189,6 +1390,73 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     setEditItemPrice(item.price || '');
     setEditItemCategory(item.category || 'uncategorized');
     setEditItemLinkPreview(item.linkPreview || null);
+  };
+
+  const sortedShoppingItems = [...shoppingItems].sort((a, b) => a.order - b.order);
+  const moveShoppingItemUp = async (item: ShoppingItem) => {
+    const idx = sortedShoppingItems.findIndex((i) => i.id === item.id);
+    if (idx <= 0) return;
+    const prev = sortedShoppingItems[idx - 1];
+    try {
+      await Promise.all([
+        fetch('/.netlify/functions/cms-shopping', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: item.id, order: prev.order }),
+        }),
+        fetch('/.netlify/functions/cms-shopping', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: prev.id, order: item.order }),
+        }),
+      ]);
+      await fetchShoppingItems();
+    } catch {
+      setError('Failed to reorder');
+    }
+  };
+  const moveShoppingItemDown = async (item: ShoppingItem) => {
+    const idx = sortedShoppingItems.findIndex((i) => i.id === item.id);
+    if (idx < 0 || idx >= sortedShoppingItems.length - 1) return;
+    const next = sortedShoppingItems[idx + 1];
+    try {
+      await Promise.all([
+        fetch('/.netlify/functions/cms-shopping', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: item.id, order: next.order }),
+        }),
+        fetch('/.netlify/functions/cms-shopping', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: next.id, order: item.order }),
+        }),
+      ]);
+      await fetchShoppingItems();
+    } catch {
+      setError('Failed to reorder');
+    }
+  };
+
+  const handleShoppingReorder = async (orderedIds: string[]) => {
+    const scrollY = window.scrollY;
+    try {
+      await Promise.all(
+        orderedIds.map((id, order) =>
+          fetch('/.netlify/functions/cms-shopping', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+            body: JSON.stringify({ slug, id, order }),
+          })
+        )
+      );
+      await fetchShoppingItems();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      });
+    } catch {
+      setError('Failed to reorder');
+    }
   };
 
   // Shopping links functions
@@ -1530,11 +1798,20 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 {lookbookInfo?.clientName || 'Lookbook'}
               </h1>
               {lookbookInfo && (
-                <p className="text-xs text-stone-400 mt-0.5">Passcode: {lookbookInfo.passcode}</p>
+                <p className="text-xs text-stone-400 mt-0.5">Code: {lookbookInfo.passcode}</p>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 transition-colors cursor-pointer"
+              title="Share with client"
+              aria-label="Share with client"
+            >
+              <Share2 size={16} />
+              <span className="hidden sm:inline">Share</span>
+            </button>
             <button
               onClick={() => window.open(`/lookbook/${slug}`, '_blank')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sage-50 text-sage-600 text-sm font-medium hover:bg-sage-100 transition-colors cursor-pointer"
@@ -1546,6 +1823,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           </div>
         </div>
       </header>
+
+      {showShareModal && lookbookInfo && (
+        <ShareLookbookModal
+          clientName={lookbookInfo.clientName}
+          passcode={lookbookInfo.passcode}
+          slug={slug}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
 
       {/* Tabs */}
       <div className="bg-white border-b border-stone-100">
@@ -1577,19 +1863,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
             </span>
           </button>
           <button
-            onClick={() => setActiveTab('links')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'links'
-                ? 'border-sage-500 text-sage-600'
-                : 'border-transparent text-stone-500 hover:text-stone-700'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Link2 size={16} />
-              Links {shoppingLinks.length > 0 && `(${shoppingLinks.length})`}
-            </span>
-          </button>
-          <button
             onClick={() => setActiveTab('tips')}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               activeTab === 'tips'
@@ -1600,6 +1873,19 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
             <span className="flex items-center gap-2">
               <Lightbulb size={16} />
               Tips {tips.length > 0 && `(${tips.length})`}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('links')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+              activeTab === 'links'
+                ? 'border-sage-500 text-sage-600'
+                : 'border-transparent text-stone-500 hover:text-stone-700'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Link2 size={16} />
+              Links {shoppingLinks.length > 0 && `(${shoppingLinks.length})`}
             </span>
           </button>
         </div>
@@ -1694,8 +1980,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
             {/* Desktop: Upload Form */}
             <section className="hidden md:block bg-white p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
-              <h2 className="font-serif text-lg text-stone-900 mb-4 flex items-center gap-2">
-                <Upload size={20} className="text-sage-600" />
+              <h2 className="font-serif text-lg text-stone-900 mb-4">
                 Add New Outfit
               </h2>
               <UploadForm
@@ -1763,11 +2048,61 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                   <ImageIcon size={48} className="mx-auto mb-4 opacity-50" />
                   <p className="text-sm md:text-base">No entries yet. Upload the first outfit.</p>
                 </div>
+              ) : selectedEntrySeason === 'all' ? (
+                <DndContext
+                  sensors={entrySensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(event: DragEndEvent) => {
+                    const { active, over } = event;
+                    if (!over || active.id === over.id) return;
+                    const oldIndex = sortedEntries.findIndex((e) => e.id === active.id);
+                    const newIndex = sortedEntries.findIndex((e) => e.id === over.id);
+                    if (oldIndex === -1 || newIndex === -1) return;
+                    const reordered = [...sortedEntries];
+                    const [removed] = reordered.splice(oldIndex, 1);
+                    reordered.splice(newIndex, 0, removed);
+                    handleEntryReorder(reordered.map((e) => e.id));
+                  }}
+                >
+                  <SortableContext items={sortedEntries.map((e) => e.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-3 md:space-y-4">
+                      {sortedEntries.map((entry) => {
+                        const entryIndex = sortedEntries.findIndex((e) => e.id === entry.id);
+                        return (
+                          <SortableEntryCard
+                            key={entry.id}
+                            entry={entry}
+                            slug={slug}
+                            passcode={sessionStorage.getItem(PASSCODE_KEY) || ''}
+                            isEditing={editingId === entry.id}
+                            editTitle={editTitle}
+                            editCaption={editCaption}
+                            editSeason={editSeason}
+                            onEditTitleChange={setEditTitle}
+                            onEditCaptionChange={setEditCaption}
+                            onEditSeasonChange={setEditSeason}
+                            onStartEdit={() => startEdit(entry)}
+                            onCancelEdit={cancelEdit}
+                            onSave={() => handleUpdate(entry.id)}
+                            onDelete={() => handleDelete(entry.id)}
+                            onReplacePhoto={handleReplacePhoto}
+                            onAddPhoto={handleAddPhoto}
+                            onDeleteImage={handleDeleteImage}
+                            canMoveUp={entryIndex > 0}
+                            canMoveDown={entryIndex >= 0 && entryIndex < sortedEntries.length - 1}
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               ) : (
                 <div className="space-y-3 md:space-y-4">
                   {entries
-                    .filter((entry) => selectedEntrySeason === 'all' || entry.season === selectedEntrySeason)
-                    .map((entry) => (
+                    .filter((entry) => entry.season === selectedEntrySeason)
+                    .map((entry) => {
+                    const entryIndex = sortedEntries.findIndex((e) => e.id === entry.id);
+                    return (
                     <EntryCard
                       key={entry.id}
                       entry={entry}
@@ -1787,8 +2122,12 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                       onReplacePhoto={handleReplacePhoto}
                       onAddPhoto={handleAddPhoto}
                       onDeleteImage={handleDeleteImage}
+                      onMoveUp={() => moveEntryUp(entry)}
+                      onMoveDown={() => moveEntryDown(entry)}
+                      canMoveUp={entryIndex > 0}
+                      canMoveDown={entryIndex >= 0 && entryIndex < sortedEntries.length - 1}
                     />
-                  ))}
+                  ); })}
                 </div>
               )}
             </section>
@@ -1815,17 +2154,18 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                   <ShoppingItemForm
                     name={newItemName}
                     description={newItemDescription}
-                    link={newItemLink}
+                    links={newItemLinks}
                     price={newItemPrice}
                     category={newItemCategory}
-                    linkPreview={newItemLinkPreview}
-                    isFetchingPreview={isFetchingPreview}
+                    isFetchingPreviewIndex={isFetchingPreviewIndex}
                     onNameChange={setNewItemName}
                     onDescriptionChange={setNewItemDescription}
-                    onLinkChange={setNewItemLink}
+                    onLinkChange={(i, url) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, url } : l)))}
                     onPriceChange={setNewItemPrice}
                     onCategoryChange={setNewItemCategory}
-                    onFetchPreview={() => fetchLinkPreview(newItemLink, false)}
+                    onFetchPreview={fetchLinkPreviewForIndex}
+                    onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', linkPreview: null }])}
+                    onRemoveLink={(i) => setNewItemLinks((prev) => prev.filter((_, j) => j !== i))}
                     onSubmit={handleAddShoppingItem}
                     isSubmitting={isAddingItem}
                     submitLabel="Add Item"
@@ -1836,31 +2176,31 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
             {/* Desktop: Add Item Form */}
             <section className="hidden md:block bg-white p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
-              <h2 className="font-serif text-lg text-stone-900 mb-4 flex items-center gap-2">
-                <ShoppingBag size={20} className="text-sage-600" />
+              <h2 className="font-serif text-lg text-stone-900 mb-4">
                 Add Shopping Item
               </h2>
               <ShoppingItemForm
                 name={newItemName}
                 description={newItemDescription}
-                link={newItemLink}
+                links={newItemLinks}
                 price={newItemPrice}
                 category={newItemCategory}
-                linkPreview={newItemLinkPreview}
-                isFetchingPreview={isFetchingPreview}
+                isFetchingPreviewIndex={isFetchingPreviewIndex}
                 onNameChange={setNewItemName}
                 onDescriptionChange={setNewItemDescription}
-                onLinkChange={setNewItemLink}
+                onLinkChange={(i, url) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, url } : l)))}
                 onPriceChange={setNewItemPrice}
                 onCategoryChange={setNewItemCategory}
-                onFetchPreview={() => fetchLinkPreview(newItemLink, false)}
+                onFetchPreview={fetchLinkPreviewForIndex}
+                onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', linkPreview: null }])}
+                onRemoveLink={(i) => setNewItemLinks((prev) => prev.filter((_, j) => j !== i))}
                 onSubmit={handleAddShoppingItem}
                 isSubmitting={isAddingItem}
                 submitLabel="Add to List"
               />
             </section>
 
-            {/* Shopping Items List - Grouped by Category */}
+            {/* Shopping Items List - Drag to reorder */}
             <section>
               <h2 className="font-serif text-base md:text-lg text-stone-900 mb-3 md:mb-4">
                 Shopping Items {shoppingItems.length > 0 && <span className="text-stone-400">({shoppingItems.length})</span>}
@@ -1874,20 +2214,35 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                   <p className="text-sm md:text-base">No items yet. Add the first shopping item.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {CATEGORY_ORDER.map((cat) => {
-                    const categoryItems = shoppingItems.filter((item) => (item.category || 'uncategorized') === cat);
-                    if (categoryItems.length === 0) return null;
-
-                    return (
-                      <div key={cat}>
-                        <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-3">
-                          {CATEGORY_LABELS[cat]} <span className="text-stone-400">({categoryItems.length})</span>
-                        </h3>
-                        <div className="space-y-3">
-                          {categoryItems.map((item) => (
-                            <ShoppingItemCard
-                              key={item.id}
+                <DndContext
+                  sensors={shoppingSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(event: DragEndEvent) => {
+                    const { active, over } = event;
+                    if (!over || active.id === over.id) return;
+                    const oldIndex = sortedShoppingItems.findIndex((i) => i.id === active.id);
+                    const newIndex = sortedShoppingItems.findIndex((i) => i.id === over.id);
+                    if (oldIndex === -1 || newIndex === -1) return;
+                    const reordered = [...sortedShoppingItems];
+                    const [removed] = reordered.splice(oldIndex, 1);
+                    reordered.splice(newIndex, 0, removed);
+                    handleShoppingReorder(reordered.map((i) => i.id));
+                  }}
+                >
+                  <SortableContext items={sortedShoppingItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-3">
+                      {sortedShoppingItems.map((item, index) => {
+                        const itemIndex = sortedShoppingItems.findIndex((i) => i.id === item.id);
+                        const cat = item.category || 'uncategorized';
+                        const showCategoryHeader = index === 0 || (sortedShoppingItems[index - 1]?.category || 'uncategorized') !== cat;
+                        return (
+                          <div key={item.id}>
+                            {showCategoryHeader && (
+                              <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-2 mt-4 first:mt-0">
+                                {CATEGORY_LABELS[cat]}
+                              </h3>
+                            )}
+                            <SortableShoppingItemCard
                               item={item}
                               isEditing={editingItemId === item.id}
                               editName={editItemName}
@@ -1904,13 +2259,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                               onCancelEdit={() => setEditingItemId(null)}
                               onSave={() => handleUpdateShoppingItem(item.id)}
                               onDelete={() => handleDeleteShoppingItem(item.id)}
+                              canMoveUp={itemIndex > 0}
+                              canMoveDown={itemIndex >= 0 && itemIndex < sortedShoppingItems.length - 1}
                             />
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </section>
           </>
@@ -2159,8 +2516,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         {activeTab === 'tips' && (
           <>
             <section className="bg-white p-4 md:p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
-              <h2 className="font-serif text-lg text-stone-900 mb-4 flex items-center gap-2">
-                <Lightbulb size={20} className="text-sage-600" />
+              <h2 className="font-serif text-lg text-stone-900 mb-4">
                 Add Tip
               </h2>
               <form onSubmit={handleAddTip} className="space-y-3">
@@ -2503,6 +2859,12 @@ interface EntryCardProps {
   onReplacePhoto: (entryId: string, file: File) => Promise<void>;
   onAddPhoto: (entryId: string, file: File) => Promise<void>;
   onDeleteImage: (entryId: string, imageKey: string) => Promise<void>;
+  /** When provided, shows drag handle instead of move up/down buttons */
+  dragHandleProps?: { listeners: unknown; attributes: unknown };
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 const EntryCard: React.FC<EntryCardProps> = ({
@@ -2523,6 +2885,11 @@ const EntryCard: React.FC<EntryCardProps> = ({
   onReplacePhoto,
   onAddPhoto,
   onDeleteImage,
+  dragHandleProps,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
 }) => {
   const [isReplacing, setIsReplacing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
@@ -2666,10 +3033,10 @@ const EntryCard: React.FC<EntryCardProps> = ({
           ) : (
             <div className="flex flex-col sm:flex-row sm:items-start gap-3">
               <div className="flex-1 min-w-0">
-                {entry.title ? (
-                  <p className="font-serif text-stone-900 text-base md:text-lg mb-1">{normalizePastedText(entry.title)}</p>
-                ) : null}
-                <p className="text-stone-600 text-sm whitespace-pre-wrap line-clamp-3">
+                <h3 className="font-serif text-lg md:text-xl text-stone-900 mb-1">
+                  {entry.title ? normalizePastedText(entry.title) : <span className="italic text-stone-400">No title</span>}
+                </h3>
+                <p className="font-sans text-stone-600 text-sm whitespace-pre-wrap line-clamp-3">
                   {entry.caption ? normalizePastedText(entry.caption) : <span className="italic text-stone-400">No description</span>}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
@@ -2684,6 +3051,39 @@ const EntryCard: React.FC<EntryCardProps> = ({
 
               {/* Actions */}
               <div className="flex sm:flex-col gap-2">
+                <div className="flex gap-1 sm:flex-col sm:gap-1">
+                  {dragHandleProps ? (
+                    <span
+                      {...(dragHandleProps.listeners as Record<string, unknown>)}
+                      {...(dragHandleProps.attributes as Record<string, unknown>)}
+                      className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-grab active:cursor-grabbing touch-none inline-flex"
+                      aria-label="Drag to reorder"
+                    >
+                      <GripVertical size={18} />
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={onMoveUp}
+                        disabled={!canMoveUp}
+                        className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        aria-label="Move up"
+                      >
+                        <ChevronUp size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onMoveDown}
+                        disabled={!canMoveDown}
+                        className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        aria-label="Move down"
+                      >
+                        <ChevronDown size={18} />
+                      </button>
+                    </>
+                  )}
+                </div>
                 <button
                   onClick={handleReplaceClick}
                   disabled={isReplacing}
@@ -2718,21 +3118,48 @@ const EntryCard: React.FC<EntryCardProps> = ({
   );
 };
 
+// Sortable wrapper for EntryCard (drag-and-drop reorder)
+const SortableEntryCard: React.FC<EntryCardProps> = (props) => {
+  const { entry } = props;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: entry.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className={isDragging ? 'opacity-60 z-10' : undefined}>
+      <EntryCard
+        {...props}
+        dragHandleProps={{ listeners, attributes }}
+      />
+    </div>
+  );
+};
+
 // Shopping Item Form Component
+type ShoppingItemLinkRow = { url: string; linkPreview: LinkPreview | null };
 interface ShoppingItemFormProps {
   name: string;
   description: string;
-  link: string;
+  links: ShoppingItemLinkRow[];
   price: string;
   category: ShoppingCategory;
-  linkPreview: LinkPreview | null;
-  isFetchingPreview: boolean;
+  isFetchingPreviewIndex: number | null;
   onNameChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
-  onLinkChange: (value: string) => void;
+  onLinkChange: (index: number, url: string) => void;
   onPriceChange: (value: string) => void;
   onCategoryChange: (value: ShoppingCategory) => void;
-  onFetchPreview: () => void;
+  onFetchPreview: (index: number) => void;
+  onAddLink: () => void;
+  onRemoveLink: (index: number) => void;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   submitLabel: string;
@@ -2741,22 +3168,24 @@ interface ShoppingItemFormProps {
 const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
   name,
   description,
-  link,
+  links,
   price,
   category,
-  linkPreview,
-  isFetchingPreview,
+  isFetchingPreviewIndex,
   onNameChange,
   onDescriptionChange,
   onLinkChange,
   onPriceChange,
   onCategoryChange,
   onFetchPreview,
+  onAddLink,
+  onRemoveLink,
   onSubmit,
   isSubmitting,
   submitLabel,
 }) => {
-  const [showOptional, setShowOptional] = React.useState(false);
+  const [showOptional, setShowOptional] = React.useState(true);
+  const hasAnyLink = links.some((l) => l.url.trim());
 
   return (
     <form onSubmit={onSubmit}>
@@ -2802,7 +3231,7 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
         </div>
 
         {/* Toggle for optional fields */}
-        {!showOptional && !link && !price && !description && (
+        {!showOptional && !hasAnyLink && !price && !description && (
           <button
             type="button"
             onClick={() => setShowOptional(true)}
@@ -2813,67 +3242,67 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
         )}
 
         {/* Optional fields */}
-        {(showOptional || link || price || description) && (
+        {(showOptional || hasAnyLink || price || description) && (
           <>
-            {/* Link with preview fetch */}
+            {/* Product links (multiple) - auto-fetch preview on blur */}
             <div>
-              <label htmlFor="item-link" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
-                Product Link <span className="font-normal text-stone-400">(optional)</span>
+              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
+                Product Link(s) <span className="font-normal text-stone-400">(optional)</span>
               </label>
-              <div className="flex gap-2">
-                <input
-                  id="item-link"
-                  type="url"
-                  value={link}
-                  onChange={(e) => onLinkChange(e.target.value)}
-                  className="flex-1 h-11 px-4 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-base"
-                  placeholder="https://..."
-                />
-                <button
-                  type="button"
-                  onClick={onFetchPreview}
-                  disabled={!link || !link.startsWith('http') || isFetchingPreview}
-                  className="px-4 h-11 rounded-xl bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer whitespace-nowrap"
-                >
-                  {isFetchingPreview ? 'Loading…' : 'Fetch Preview'}
-                </button>
-              </div>
-            </div>
-
-            {/* Link Preview Display */}
-            {linkPreview && (
-              <div className="p-4 bg-stone-50 rounded-xl border border-stone-200">
-                <div className="flex gap-4">
-                  {linkPreview.image && (
-                    <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-200">
-                      <img
-                        src={linkPreview.image}
-                        alt={linkPreview.title || 'Preview'}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
+              {links.map((linkRow, index) => (
+                <div key={index} className="mb-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={linkRow.url}
+                      onChange={(e) => onLinkChange(index, e.target.value)}
+                      onBlur={() => linkRow.url && linkRow.url.startsWith('http') && onFetchPreview(index)}
+                      className="flex-1 h-11 px-4 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-base"
+                      placeholder="https://..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onFetchPreview(index)}
+                      disabled={!linkRow.url || !linkRow.url.startsWith('http') || isFetchingPreviewIndex !== null}
+                      className="px-4 h-11 rounded-xl bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      {isFetchingPreviewIndex === index ? 'Loading…' : 'Fetch'}
+                    </button>
+                    {links.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveLink(index)}
+                        className="p-2 h-11 rounded-xl bg-stone-100 text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        aria-label="Remove link"
+                      >
+                        <X size={18} />
+                      </button>
+                    )}
+                  </div>
+                  {linkRow.linkPreview && (
+                    <div className="mt-2 p-3 bg-stone-50 rounded-xl border border-stone-200 flex gap-3">
+                      {linkRow.linkPreview.image && (
+                        <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-stone-200">
+                          <img src={linkRow.linkPreview.image} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-stone-900 text-sm line-clamp-2">{linkRow.linkPreview.title || 'No title'}</p>
+                        <span className="text-xs text-stone-400">{linkRow.linkPreview.siteName || new URL(linkRow.linkPreview.url).hostname}</span>
+                      </div>
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-stone-900 line-clamp-2">{linkPreview.title || 'No title'}</p>
-                    {linkPreview.description && (
-                      <p className="text-stone-500 text-sm mt-1 line-clamp-2">{linkPreview.description}</p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2 text-xs text-stone-400">
-                      {linkPreview.favicon && (
-                        <img
-                          src={linkPreview.favicon}
-                          alt=""
-                          className="w-4 h-4"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      )}
-                      <span>{linkPreview.siteName || new URL(linkPreview.url).hostname}</span>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            )}
+              ))}
+              <button
+                type="button"
+                onClick={onAddLink}
+                className="text-sage-600 text-sm hover:text-sage-700 cursor-pointer flex items-center gap-1"
+              >
+                <Plus size={16} />
+                Add another link
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Price */}
@@ -2935,6 +3364,12 @@ interface ShoppingItemCardProps {
   onCancelEdit: () => void;
   onSave: () => void;
   onDelete: () => void;
+  /** When provided, shows drag handle instead of move up/down buttons */
+  dragHandleProps?: { listeners: unknown; attributes: unknown };
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
 const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
@@ -2954,6 +3389,11 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
   onCancelEdit,
   onSave,
   onDelete,
+  dragHandleProps,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
 }) => {
   return (
     <div className="bg-white p-3 md:p-4 rounded-2xl border border-stone-100 shadow-sm">
@@ -3081,6 +3521,39 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
 
           {/* Actions */}
           <div className="flex sm:flex-col gap-2">
+            <div className="flex gap-1 sm:flex-col sm:gap-1">
+              {dragHandleProps ? (
+                <span
+                  {...(dragHandleProps.listeners as Record<string, unknown>)}
+                  {...(dragHandleProps.attributes as Record<string, unknown>)}
+                  className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-grab active:cursor-grabbing touch-none inline-flex"
+                  aria-label="Drag to reorder"
+                >
+                  <GripVertical size={18} />
+                </span>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={onMoveUp}
+                    disabled={!canMoveUp}
+                    className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Move up"
+                  >
+                    <ChevronUp size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onMoveDown}
+                    disabled={!canMoveDown}
+                    className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Move down"
+                  >
+                    <ChevronDown size={18} />
+                  </button>
+                </>
+              )}
+            </div>
             <button
               onClick={onStartEdit}
               className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer"
@@ -3100,6 +3573,31 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// Sortable wrapper for ShoppingItemCard (drag-and-drop reorder)
+const SortableShoppingItemCard: React.FC<ShoppingItemCardProps> = (props) => {
+  const { item } = props;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className={isDragging ? 'opacity-60 z-10' : undefined}>
+      <ShoppingItemCard
+        {...props}
+        dragHandleProps={{ listeners, attributes }}
+      />
     </div>
   );
 };
