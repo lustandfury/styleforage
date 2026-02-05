@@ -212,6 +212,11 @@ const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, title, child
   const bodyScrollTop = useRef<number>(0);
   const bodyRef = useRef<HTMLDivElement>(null);
 
+  // Reset exit state when opening so a re-opened sheet doesn't show exit animation
+  useEffect(() => {
+    if (isOpen) setIsExiting(false);
+  }, [isOpen]);
+
   const startClose = useCallback(() => {
     if (isExiting) return;
     setIsExiting(true);
