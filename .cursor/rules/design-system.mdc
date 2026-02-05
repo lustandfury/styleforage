@@ -60,19 +60,25 @@ We use a "Serif for Soul, Sans for Clarity" approach.
 
 ### 4. Action sheet (bottom sheet) modal
 
-Use a single pattern for slide-up modals that reveal lists or detail content (e.g. Shopping List, Shop Links, Tips, Read more caption). Keeps mobile UX consistent and recognizable.
+Use a single pattern for slide-up modals that reveal lists or detail content (e.g. Shopping List, Shop Links, Tips, Read more caption). Keeps mobile UX consistent and recognizable. Implement via the shared `ActionSheet` component in `Lookbook.tsx` so behavior is consistent.
+
+**Behavior:**
+
+- **Open:** Panel animates up with `animate-slide-up` (0.3s ease-out). Backdrop is `bg-black/50`.
+- **Close:** When the user taps backdrop, close button, or swipes down to close, the panel runs `animate-slide-down` (0.3s ease-in), the backdrop fades out (`opacity-0` + `transition-opacity duration-300`), then `onClose` is called after 300ms so the parent can unmount.
+- **Swipe to close (mobile):** If the user swipes down on the panel and the body content is scrolled to the top (scrollTop ≤ 2), and the swipe distance exceeds the threshold (~80px), the sheet closes with the same close animation. This avoids closing when the user is scrolling the list.
 
 **Structure:**
 
-1. **Backdrop:** `fixed inset-0 z-50 bg-black/50` with `onClick` to close. No centering or padding.
-2. **Panel:** `absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col` with `onClick={(e) => e.stopPropagation()}` so tapping the panel doesn’t close.
+1. **Backdrop:** `fixed inset-0 z-50 bg-black/50 transition-opacity duration-300`; when exiting add `opacity-0 pointer-events-none`. `onClick` to start close.
+2. **Panel:** `absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col`; use `animate-slide-up` when opening and `animate-slide-down` when exiting. `onClick={(e) => e.stopPropagation()}`. Attach `onTouchStart` and `onTouchEnd` for swipe-to-close (record touch Y and body scrollTop at start; at end, if deltaY > threshold and was at top, start close).
 3. **Header (flex-shrink-0):**
    - Drag handle: `w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4`
    - Row: `flex items-center justify-between` with title and close button.
    - Title: `font-serif text-lg text-stone-900` (e.g. "Shopping List", "Caption").
    - Close button: `p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer`, `<X size={24} />`, `aria-label="Close"`.
    - Wrapper: `p-4 border-b border-stone-100 flex-shrink-0`.
-4. **Body:** `flex-1 overflow-y-auto p-4` (or `overflow-x-hidden` and `min-h-0` if using a scroll utility like `caption-modal-body` for scrollbar styling).
+4. **Body:** `flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-0` (ref for scrollTop check). Optional `bodyClassName` for scrollbar styling (e.g. `caption-modal-body`).
 
 **Example (Caption):**
 ```tsx

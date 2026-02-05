@@ -89,14 +89,26 @@ const handler: Handler = async (event: HandlerEvent) => {
         // Ignore blob delete errors
       }
       const newKeys = keys.filter(k => k !== keyToDelete);
+      let updatedEntries: EditorialEntry[];
       if (newKeys.length === 0) {
-        entries.splice(entryIndex, 1);
-        entries.forEach((e, i) => { e.order = i; });
+        updatedEntries = entries.filter((_, i) => i !== entryIndex);
+        updatedEntries.forEach((e, i) => { e.order = i; });
       } else {
-        entry.imageKeys = newKeys;
-        entry.imageKey = newKeys[0];
+        updatedEntries = entries.map((e, i) =>
+          i === entryIndex
+            ? { ...e, imageKeys: newKeys, imageKey: newKeys[0] }
+            : e
+        );
       }
-      await store.setJSON(`entries/${slug}`, entries);
+      try {
+        await store.setJSON(`entries/${slug}`, updatedEntries);
+      } catch (persistError) {
+        console.error('cms-delete: failed to persist entries after image delete', persistError);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to save changes after deleting image' }),
+        };
+      }
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -114,9 +126,17 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
     }
 
-    entries.splice(entryIndex, 1);
-    entries.forEach((e, i) => { e.order = i; });
-    await store.setJSON(`entries/${slug}`, entries);
+    const updatedEntries = entries.filter((_, i) => i !== entryIndex);
+    updatedEntries.forEach((e, i) => { e.order = i; });
+    try {
+      await store.setJSON(`entries/${slug}`, updatedEntries);
+    } catch (persistError) {
+      console.error('cms-delete: failed to persist entries after entry delete', persistError);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Failed to save changes after deleting entry' }),
+      };
+    }
 
     return {
       statusCode: 200,

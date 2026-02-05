@@ -86,6 +86,84 @@ interface Tip {
 
 const PASSCODE_KEY_PREFIX = 'view_passcode_';
 
+const ACTION_SHEET_CLOSE_MS = 300;
+const SWIPE_CLOSE_THRESHOLD_PX = 80;
+
+/** Action sheet (bottom sheet) with slide-up/slide-down animation and swipe-down to close on mobile. */
+interface ActionSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  bodyClassName?: string;
+}
+
+const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, title, children, bodyClassName = '' }) => {
+  const [isExiting, setIsExiting] = useState(false);
+  const touchStartY = useRef<number>(0);
+  const bodyScrollTop = useRef<number>(0);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  const startClose = useCallback(() => {
+    if (isExiting) return;
+    setIsExiting(true);
+    setTimeout(() => {
+      onClose();
+    }, ACTION_SHEET_CLOSE_MS);
+  }, [isExiting, onClose]);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    bodyScrollTop.current = bodyRef.current?.scrollTop ?? 0;
+  }, []);
+
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    const endY = e.changedTouches[0].clientY;
+    const deltaY = endY - touchStartY.current;
+    const wasAtTop = bodyScrollTop.current <= 2;
+    if (deltaY > SWIPE_CLOSE_THRESHOLD_PX && wasAtTop) {
+      startClose();
+    }
+  }, [startClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className={`md:hidden fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 ${isExiting ? 'opacity-0 pointer-events-none' : ''}`}
+      onClick={startClose}
+    >
+      <div
+        className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col ${isExiting ? 'animate-slide-down' : 'animate-slide-up'}`}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <div className="p-4 border-b border-stone-100 flex-shrink-0">
+          <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
+          <div className="flex items-center justify-between">
+            <h3 className="font-serif text-lg text-stone-900">{title}</h3>
+            <button
+              type="button"
+              onClick={startClose}
+              className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
+              aria-label="Close"
+            >
+              <X size={24} />
+            </button>
+          </div>
+        </div>
+        <div
+          ref={bodyRef}
+          className={`flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-0 ${bodyClassName}`}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const Lookbook: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   
@@ -439,37 +517,16 @@ export const Lookbook: React.FC = () => {
         onShowTips={() => setShowTips(true)}
       />
       
-      {/* Mobile: Shopping list bottom sheet modal */}
-      {showShoppingList && (
-        <div 
-          className="md:hidden fixed inset-0 z-50 bg-black/50"
-          onClick={() => setShowShoppingList(false)}
-        >
-          <div 
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-stone-100 flex-shrink-0">
-              <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif text-lg text-stone-900">Shopping List</h3>
-                <button
-                  onClick={() => setShowShoppingList(false)}
-                  className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <ShoppingListContent
-                items={shoppingItems}
-                onToggleChecked={handleToggleChecked}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <ActionSheet
+        isOpen={showShoppingList}
+        onClose={() => setShowShoppingList(false)}
+        title="Shopping List"
+      >
+        <ShoppingListContent
+          items={shoppingItems}
+          onToggleChecked={handleToggleChecked}
+        />
+      </ActionSheet>
 
       {/* Desktop: Shopping list as overlay */}
       {showShoppingList && (
@@ -483,34 +540,13 @@ export const Lookbook: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile: Shopping links bottom sheet modal */}
-      {showShoppingLinks && (
-        <div 
-          className="md:hidden fixed inset-0 z-50 bg-black/50"
-          onClick={() => setShowShoppingLinks(false)}
-        >
-          <div 
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-stone-100 flex-shrink-0">
-              <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif text-lg text-stone-900">Shop Links</h3>
-                <button
-                  onClick={() => setShowShoppingLinks(false)}
-                  className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <ShoppingLinksContent links={shoppingLinks} onToggleChecked={handleToggleLinkChecked} />
-            </div>
-          </div>
-        </div>
-      )}
+      <ActionSheet
+        isOpen={showShoppingLinks}
+        onClose={() => setShowShoppingLinks(false)}
+        title="Shop Links"
+      >
+        <ShoppingLinksContent links={shoppingLinks} onToggleChecked={handleToggleLinkChecked} />
+      </ActionSheet>
 
       {/* Desktop: Shopping links as overlay */}
       {showShoppingLinks && (
@@ -524,50 +560,29 @@ export const Lookbook: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile: Tips bottom sheet modal */}
-      {showTips && (
-        <div
-          className="md:hidden fixed inset-0 z-50 bg-black/50"
-          onClick={() => setShowTips(false)}
-        >
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-stone-100 flex-shrink-0">
-              <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
-              <div className="flex items-center justify-between">
-                <h3 className="font-serif text-lg text-stone-900">Tips</h3>
-                <button
-                  onClick={() => setShowTips(false)}
-                  className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
-                >
-                  <X size={24} />
-                </button>
+      <ActionSheet
+        isOpen={showTips}
+        onClose={() => setShowTips(false)}
+        title="Tips"
+      >
+        {tips.length === 0 ? (
+          <p className="text-stone-500 text-sm text-center py-8">No tips yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {tips.map((tip, index) => (
+              <div
+                key={tip.id}
+                className="bg-stone-50 rounded-xl border border-stone-100 p-4 flex items-start gap-3"
+              >
+                <span className="flex-shrink-0 w-8 h-8 rounded-full bg-sage-100 text-sage-700 text-sm font-semibold flex items-center justify-center">
+                  {index + 1}
+                </span>
+                <p className="text-stone-700 text-sm md:text-base leading-relaxed flex-1">{normalizePastedText(tip.text)}</p>
               </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {tips.length === 0 ? (
-                <p className="text-stone-500 text-sm text-center py-8">No tips yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {tips.map((tip, index) => (
-                    <div
-                      key={tip.id}
-                      className="bg-stone-50 rounded-xl border border-stone-100 p-4 flex items-start gap-3"
-                    >
-                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-sage-100 text-sage-700 text-sm font-semibold flex items-center justify-center">
-                        {index + 1}
-                      </span>
-                      <p className="text-stone-700 text-sm md:text-base leading-relaxed flex-1">{normalizePastedText(tip.text)}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </ActionSheet>
 
       {/* Desktop: Tips overlay */}
       {showTips && (
@@ -1163,35 +1178,15 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
           ) : null}
         </div>
 
-        {/* Mobile: Caption — same action-sheet pattern as Shopping List / Shop Links / Tips */}
-        {entry.caption && captionExpanded && (
-          <div
-            className="md:hidden fixed inset-0 z-50 bg-black/50"
-            onClick={() => setCaptionExpanded(false)}
+        {entry.caption && (
+          <ActionSheet
+            isOpen={captionExpanded}
+            onClose={() => setCaptionExpanded(false)}
+            title="Caption"
+            bodyClassName="caption-modal-body"
           >
-            <div
-              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-4 border-b border-stone-100 flex-shrink-0">
-                <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
-                <div className="flex items-center justify-between">
-                  <h3 className="font-serif text-lg text-stone-900">Caption</h3>
-                  <button
-                    type="button"
-                    onClick={() => setCaptionExpanded(false)}
-                    className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
-                    aria-label="Close"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-              </div>
-              <div className="caption-modal-body flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-0">
-                <p className="font-serif text-stone-800 text-base leading-relaxed break-words">{normalizePastedText(entry.caption)}</p>
-              </div>
-            </div>
-          </div>
+            <p className="font-serif text-stone-800 text-base leading-relaxed break-words">{normalizePastedText(entry.caption)}</p>
+          </ActionSheet>
         )}
       </div>
 

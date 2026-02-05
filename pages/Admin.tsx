@@ -976,15 +976,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
       );
 
       if (res.ok) {
-        setEntries((prev) => {
-          const entry = prev.find((e) => e.id === entryId);
-          if (!entry) return prev;
-          const keys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
-          const newKeys = keys.filter((k) => k !== imageKey);
-          if (newKeys.length === 0) return prev.filter((e) => e.id !== entryId);
-          const updated = { ...entry, imageKeys: newKeys, imageKey: newKeys[0] };
-          return prev.map((e) => (e.id === entryId ? updated : e));
-        });
+        await fetchEntries();
       } else {
         setError('Failed to remove photo');
       }
