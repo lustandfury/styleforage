@@ -295,6 +295,7 @@ export const Lookbook: React.FC = () => {
   const [showShoppingLinks, setShowShoppingLinks] = useState(false);
   const [tips, setTips] = useState<Tip[]>([]);
   const [showTips, setShowTips] = useState(false);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
 
   const passcodeKey = `${PASSCODE_KEY_PREFIX}${slug}`;
 
@@ -624,9 +625,11 @@ export const Lookbook: React.FC = () => {
         shoppingItemsCount={shoppingItems.length}
         shoppingLinksCount={shoppingLinks.length}
         tipsCount={tips.length}
-        onShowShoppingList={() => setShowShoppingList(true)}
-        onShowShoppingLinks={() => setShowShoppingLinks(true)}
-        onShowTips={() => setShowTips(true)}
+        captionExpanded={captionExpanded}
+        setCaptionExpanded={setCaptionExpanded}
+        onShowShoppingList={() => { setCaptionExpanded(false); setShowShoppingList(true); }}
+        onShowShoppingLinks={() => { setCaptionExpanded(false); setShowShoppingLinks(true); }}
+        onShowTips={() => { setCaptionExpanded(false); setShowTips(true); }}
       />
       
       <ActionSheet
@@ -748,12 +751,14 @@ interface StoryViewProps {
   shoppingItemsCount: number;
   shoppingLinksCount: number;
   tipsCount: number;
+  captionExpanded: boolean;
+  setCaptionExpanded: (value: boolean) => void;
   onShowShoppingList: () => void;
   onShowShoppingLinks: () => void;
   onShowTips: () => void;
 }
 
-const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, shoppingLinksCount, tipsCount, onShowShoppingList, onShowShoppingLinks, onShowTips }) => {
+const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, shoppingLinksCount, tipsCount, captionExpanded, setCaptionExpanded, onShowShoppingList, onShowShoppingLinks, onShowTips }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -761,6 +766,11 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
   const [selectedSeason, setSelectedSeason] = useState<Season | 'all'>('all');
   const [showSeasonMenu, setShowSeasonMenu] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close Read more panel when changing slides
+  useEffect(() => {
+    setCaptionExpanded(false);
+  }, [currentIndex, setCaptionExpanded]);
 
   // Filter entries by selected season
   const filteredEntries = selectedSeason === 'all' 
@@ -983,8 +993,8 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
         </div>
       </div>
 
-      {/* Mobile: Top buttons */}
-      <div className="md:hidden absolute top-12 right-4 z-20 flex flex-col items-end gap-2">
+      {/* Mobile: Top buttons - z-[60] so they stay above Read more ActionSheet (z-50) */}
+      <div className="md:hidden absolute top-12 right-4 z-[60] flex flex-col items-end gap-2">
         {shoppingItemsCount > 0 && (
           <button
             onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
@@ -1079,6 +1089,8 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
               passcode={passcode}
               isActive={index === currentIndex}
               isPrev={index < currentIndex}
+              captionExpanded={captionExpanded}
+              setCaptionExpanded={setCaptionExpanded}
             />
           ))
         )}
@@ -1170,19 +1182,16 @@ interface StorySlideProps {
   passcode: string;
   isActive: boolean;
   isPrev: boolean;
+  captionExpanded: boolean;
+  setCaptionExpanded: (value: boolean) => void;
 }
 
-const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive, isPrev }) => {
+const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive, isPrev, captionExpanded, setCaptionExpanded }) => {
   const imageKeys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const [captionExpanded, setCaptionExpanded] = useState(false);
   const urlsRef = useRef<string[]>([]);
-
-  useEffect(() => {
-    setCaptionExpanded(false);
-  }, [entry.id]);
 
   useEffect(() => {
     const headers = { 'X-View-Passcode': passcode };
@@ -1510,6 +1519,9 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
 
       {/* Shopping List - scrollable */}
       <main className="flex-1 min-h-0 overflow-y-auto px-4 py-6 max-w-2xl mx-auto">
+        {items.length > 0 && (
+          <p className="text-xs text-stone-500 mb-4">Tap the box next to an item to mark it as purchased.</p>
+        )}
         {items.length === 0 ? (
           <div className="text-center py-12 text-stone-500">
             <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
@@ -1639,6 +1651,7 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
 
   return (
     <div className="space-y-6">
+      <p className="text-xs text-stone-500">Tap the box next to an item to mark it as purchased.</p>
       {/* Unchecked items grouped by category */}
       {CATEGORY_ORDER.map((cat) => {
         const categoryItems = uncheckedItems.filter((item) => (item.category || 'uncategorized') === cat);
@@ -1713,6 +1726,9 @@ const ShoppingLinksView: React.FC<ShoppingLinksViewProps> = ({ links, clientName
 
       {/* Links List - scrollable */}
       <main className="flex-1 min-h-0 overflow-y-auto px-4 py-6 max-w-2xl mx-auto">
+        {links.length > 0 && (
+          <p className="text-xs text-stone-500 mb-4">Tap the box next to a link to mark it as purchased.</p>
+        )}
         {links.length === 0 ? (
           <div className="text-center py-12 text-stone-500">
             <Link2 size={48} className="mx-auto mb-4 opacity-50" />
@@ -1887,6 +1903,7 @@ const ShoppingLinksContent: React.FC<ShoppingLinksContentProps> = ({ links, onTo
 
   return (
     <div className="space-y-6">
+      <p className="text-xs text-stone-500">Tap the box next to a link to mark it as purchased.</p>
       {/* Unchecked links */}
       {uncheckedLinks.length > 0 && (
         <div className="space-y-2">
