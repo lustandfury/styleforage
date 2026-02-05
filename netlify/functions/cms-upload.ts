@@ -33,6 +33,7 @@ interface EditorialEntry {
   id: string;
   imageKey: string;
   imageKeys?: string[];
+  title?: string;
   caption: string;
   order: number;
   createdAt: string;
@@ -144,6 +145,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     const { fields, files } = parseMultipart(event.body || '', boundary);
     
     const imageFile = files.find(f => f.name === 'file');
+    const title = (fields.title || '').trim();
     const caption = normalizePastedText(fields.caption || '');
     const slug = fields.slug;
     const entryId = fields.entryId; // Optional - for replacing or adding to entry
@@ -274,6 +276,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       id,
       imageKey,
       imageKeys: [imageKey],
+      ...(title && { title }),
       caption,
       order: entries.length, // Append at end
       createdAt: new Date().toISOString(),

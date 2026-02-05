@@ -20,6 +20,7 @@ interface EditorialEntry {
   id: string;
   imageKey: string;
   imageKeys?: string[];
+  title?: string;
   caption: string;
   order: number;
   createdAt: string;
@@ -667,6 +668,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
   // Upload state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState('');
   const [uploadCaption, setUploadCaption] = useState('');
   const [uploadSeason, setUploadSeason] = useState<Season | ''>('');
   const [isUploading, setIsUploading] = useState(false);
@@ -676,6 +678,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
   const [editCaption, setEditCaption] = useState('');
   const [editSeason, setEditSeason] = useState<Season | ''>('');
   
@@ -835,6 +838,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
   const resetUploadForm = () => {
     setUploadFile(null);
+    setUploadTitle('');
     setUploadCaption('');
     setUploadSeason('');
     setUploadPreview(null);
@@ -865,12 +869,14 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
   const startEdit = (entry: EditorialEntry) => {
     setEditingId(entry.id);
+    setEditTitle(entry.title ?? '');
     setEditCaption(normalizePastedText(entry.caption));
     setEditSeason(entry.season || '');
   };
 
   const cancelEdit = () => {
     setEditingId(null);
+    setEditTitle('');
     setEditCaption('');
     setEditSeason('');
   };
@@ -2224,10 +2230,12 @@ interface UploadFormProps {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   uploadFile: File | null;
   uploadPreview: string | null;
+  uploadTitle: string;
   uploadCaption: string;
   uploadSeason: Season | '';
   isUploading: boolean;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onTitleChange: (value: string) => void;
   onCaptionChange: (value: string) => void;
   onSeasonChange: (value: Season | '') => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -2238,10 +2246,12 @@ const UploadForm: React.FC<UploadFormProps> = ({
   fileInputRef,
   uploadFile,
   uploadPreview,
+  uploadTitle,
   uploadCaption,
   uploadSeason,
   isUploading,
   onFileChange,
+  onTitleChange,
   onCaptionChange,
   onSeasonChange,
   onSubmit,
@@ -2287,18 +2297,33 @@ const UploadForm: React.FC<UploadFormProps> = ({
         )}
       </div>
 
-      {/* Caption */}
+      {/* Title */}
+      <div>
+        <label htmlFor="upload-title" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
+          Title <span className="font-normal text-stone-400">(optional)</span>
+        </label>
+        <input
+          id="upload-title"
+          type="text"
+          value={uploadTitle}
+          onChange={(e) => onTitleChange(e.target.value)}
+          className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-base font-serif"
+          placeholder="e.g. Weekend brunch"
+        />
+      </div>
+
+      {/* Description */}
       <div>
         <label htmlFor="upload-caption" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
-          Caption <span className="font-normal text-stone-400">(optional)</span>
+          Description <span className="font-normal text-stone-400">(optional)</span>
         </label>
         <textarea
           id="upload-caption"
           value={uploadCaption}
           onChange={(e) => onCaptionChange(e.target.value)}
-          rows={2}
+          rows={3}
           className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent resize-none text-base"
-          placeholder="Describe this outfit…"
+          placeholder="Describe this outfit… Line breaks are kept."
         />
       </div>
 

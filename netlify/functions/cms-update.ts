@@ -7,6 +7,7 @@ type Season = 'spring' | 'summer' | 'fall' | 'winter';
 interface EditorialEntry {
   id: string;
   imageKey: string;
+  title?: string;
   caption: string;
   order: number;
   createdAt: string;
@@ -14,10 +15,10 @@ interface EditorialEntry {
 }
 
 /**
- * CMS Update - Update caption or order of an entry in a specific lookbook
+ * CMS Update - Update title, caption or order of an entry in a specific lookbook
  * PATCH /api/cms-update
  * Headers: X-Admin-Passcode
- * Body: { slug: string, id: string, caption?: string, order?: number }
+ * Body: { slug: string, id: string, title?: string, caption?: string, order?: number }
  */
 const handler: Handler = async (event: HandlerEvent) => {
   // Only allow PATCH requests
@@ -41,7 +42,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const body = JSON.parse(event.body || '{}');
-    const { slug, id, caption, order, season } = body;
+    const { slug, id, title, caption, order, season } = body;
 
     if (!slug || typeof slug !== 'string') {
       return {
@@ -74,6 +75,9 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     // Update fields
+    if (title !== undefined) {
+      entries[entryIndex].title = typeof title === 'string' ? title.trim() : '';
+    }
     if (caption !== undefined) {
       entries[entryIndex].caption = normalizePastedText(caption);
     }

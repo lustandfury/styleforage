@@ -5,6 +5,7 @@ interface EditorialEntry {
   id: string;
   imageKey: string;
   imageKeys?: string[];
+  title?: string;
   caption: string;
   order: number;
   createdAt: string;

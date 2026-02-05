@@ -8,6 +8,8 @@ export interface EditorialEntry {
   imageKey: string;
   /** All image blob keys for this entry (use when present; else [imageKey]) */
   imageKeys?: string[];
+  /** Optional display title (serif, prominent) */
+  title?: string;
   caption: string;
   order: number;
   createdAt: string;
