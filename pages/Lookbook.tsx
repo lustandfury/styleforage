@@ -1480,9 +1480,9 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
   );
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-stone-50">
       {/* Header */}
-      <header className="bg-white border-b border-stone-100 sticky top-0 z-10">
+      <header className="bg-white border-b border-stone-100 flex-shrink-0 z-10">
         <div className="px-4 py-4 flex items-center justify-between max-w-2xl mx-auto">
           <div className="flex items-center gap-3">
             <button
@@ -1508,8 +1508,8 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
         </div>
       </header>
 
-      {/* Shopping List */}
-      <main className="px-4 py-6 max-w-2xl mx-auto">
+      {/* Shopping List - scrollable */}
+      <main className="flex-1 min-h-0 overflow-y-auto px-4 py-6 max-w-2xl mx-auto">
         {items.length === 0 ? (
           <div className="text-center py-12 text-stone-500">
             <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
@@ -1685,9 +1685,9 @@ const ShoppingLinksView: React.FC<ShoppingLinksViewProps> = ({ links, clientName
   const checkedLinks = links.filter(link => link.checked);
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-stone-50">
       {/* Header */}
-      <header className="bg-white border-b border-stone-100 sticky top-0 z-10">
+      <header className="bg-white border-b border-stone-100 flex-shrink-0 z-10">
         <div className="px-4 py-4 flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center gap-3">
             <button
@@ -1711,8 +1711,8 @@ const ShoppingLinksView: React.FC<ShoppingLinksViewProps> = ({ links, clientName
         </div>
       </header>
 
-      {/* Links List */}
-      <main className="px-4 py-6 max-w-2xl mx-auto">
+      {/* Links List - scrollable */}
+      <main className="flex-1 min-h-0 overflow-y-auto px-4 py-6 max-w-2xl mx-auto">
         {links.length === 0 ? (
           <div className="text-center py-12 text-stone-500">
             <Link2 size={48} className="mx-auto mb-4 opacity-50" />

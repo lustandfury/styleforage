@@ -2214,7 +2214,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 Shopping Items {shoppingItems.length > 0 && <span className="text-stone-400">({shoppingItems.length})</span>}
               </h2>
 
-              <div className="max-h-[60vh] overflow-y-auto pr-1">
+              <div className="pr-1">
                 {isLoadingShopping ? (
                   <div className="text-center py-12 text-stone-500">Loading…</div>
                 ) : shoppingItems.length === 0 ? (
@@ -2408,7 +2408,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 Shopping Links {shoppingLinks.length > 0 && <span className="text-stone-400">({shoppingLinks.length})</span>}
               </h2>
 
-              <div className="max-h-[60vh] overflow-y-auto pr-1">
+              <div className="pr-1">
                 {isLoadingLinks ? (
                   <div className="text-center py-12 text-stone-500">Loading…</div>
                 ) : shoppingLinks.length === 0 ? (
