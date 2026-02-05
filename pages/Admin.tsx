@@ -1392,7 +1392,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     setEditItemLinkPreview(item.linkPreview || null);
   };
 
-  const sortedShoppingItems = [...shoppingItems].sort((a, b) => a.order - b.order);
+  const categoryOrderIndex = (c: ShoppingCategory) => {
+    const i = CATEGORY_ORDER.indexOf(c || 'uncategorized');
+    return i === -1 ? CATEGORY_ORDER.length : i;
+  };
+  const sortedShoppingItems = [...shoppingItems].sort((a, b) => {
+    const byCat = categoryOrderIndex(a.category || 'uncategorized') - categoryOrderIndex(b.category || 'uncategorized');
+    if (byCat !== 0) return byCat;
+    return a.order - b.order;
+  });
   const moveShoppingItemUp = async (item: ShoppingItem) => {
     const idx = sortedShoppingItems.findIndex((i) => i.id === item.id);
     if (idx <= 0) return;
@@ -2206,69 +2214,71 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 Shopping Items {shoppingItems.length > 0 && <span className="text-stone-400">({shoppingItems.length})</span>}
               </h2>
 
-              {isLoadingShopping ? (
-                <div className="text-center py-12 text-stone-500">Loading…</div>
-              ) : shoppingItems.length === 0 ? (
-                <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
-                  <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
-                  <p className="text-sm md:text-base">No items yet. Add the first shopping item.</p>
-                </div>
-              ) : (
-                <DndContext
-                  sensors={shoppingSensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={(event: DragEndEvent) => {
-                    const { active, over } = event;
-                    if (!over || active.id === over.id) return;
-                    const oldIndex = sortedShoppingItems.findIndex((i) => i.id === active.id);
-                    const newIndex = sortedShoppingItems.findIndex((i) => i.id === over.id);
-                    if (oldIndex === -1 || newIndex === -1) return;
-                    const reordered = [...sortedShoppingItems];
-                    const [removed] = reordered.splice(oldIndex, 1);
-                    reordered.splice(newIndex, 0, removed);
-                    handleShoppingReorder(reordered.map((i) => i.id));
-                  }}
-                >
-                  <SortableContext items={sortedShoppingItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-3">
-                      {sortedShoppingItems.map((item, index) => {
-                        const itemIndex = sortedShoppingItems.findIndex((i) => i.id === item.id);
-                        const cat = item.category || 'uncategorized';
-                        const showCategoryHeader = index === 0 || (sortedShoppingItems[index - 1]?.category || 'uncategorized') !== cat;
-                        return (
-                          <div key={item.id}>
-                            {showCategoryHeader && (
-                              <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-2 mt-4 first:mt-0">
-                                {CATEGORY_LABELS[cat]}
-                              </h3>
-                            )}
-                            <SortableShoppingItemCard
-                              item={item}
-                              isEditing={editingItemId === item.id}
-                              editName={editItemName}
-                              editDescription={editItemDescription}
-                              editLink={editItemLink}
-                              editPrice={editItemPrice}
-                              editCategory={editItemCategory}
-                              onEditNameChange={setEditItemName}
-                              onEditDescriptionChange={setEditItemDescription}
-                              onEditLinkChange={setEditItemLink}
-                              onEditPriceChange={setEditItemPrice}
-                              onEditCategoryChange={setEditItemCategory}
-                              onStartEdit={() => startEditItem(item)}
-                              onCancelEdit={() => setEditingItemId(null)}
-                              onSave={() => handleUpdateShoppingItem(item.id)}
-                              onDelete={() => handleDeleteShoppingItem(item.id)}
-                              canMoveUp={itemIndex > 0}
-                              canMoveDown={itemIndex >= 0 && itemIndex < sortedShoppingItems.length - 1}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              )}
+              <div className="max-h-[60vh] overflow-y-auto pr-1">
+                {isLoadingShopping ? (
+                  <div className="text-center py-12 text-stone-500">Loading…</div>
+                ) : shoppingItems.length === 0 ? (
+                  <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
+                    <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
+                    <p className="text-sm md:text-base">No items yet. Add the first shopping item.</p>
+                  </div>
+                ) : (
+                  <DndContext
+                    sensors={shoppingSensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(event: DragEndEvent) => {
+                      const { active, over } = event;
+                      if (!over || active.id === over.id) return;
+                      const oldIndex = sortedShoppingItems.findIndex((i) => i.id === active.id);
+                      const newIndex = sortedShoppingItems.findIndex((i) => i.id === over.id);
+                      if (oldIndex === -1 || newIndex === -1) return;
+                      const reordered = [...sortedShoppingItems];
+                      const [removed] = reordered.splice(oldIndex, 1);
+                      reordered.splice(newIndex, 0, removed);
+                      handleShoppingReorder(reordered.map((i) => i.id));
+                    }}
+                  >
+                    <SortableContext items={sortedShoppingItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-3">
+                        {sortedShoppingItems.map((item, index) => {
+                          const itemIndex = sortedShoppingItems.findIndex((i) => i.id === item.id);
+                          const cat = item.category || 'uncategorized';
+                          const showCategoryHeader = index === 0 || (sortedShoppingItems[index - 1]?.category || 'uncategorized') !== cat;
+                          return (
+                            <div key={item.id}>
+                              {showCategoryHeader && (
+                                <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-2 mt-4 first:mt-0">
+                                  {CATEGORY_LABELS[cat]}
+                                </h3>
+                              )}
+                              <SortableShoppingItemCard
+                                item={item}
+                                isEditing={editingItemId === item.id}
+                                editName={editItemName}
+                                editDescription={editItemDescription}
+                                editLink={editItemLink}
+                                editPrice={editItemPrice}
+                                editCategory={editItemCategory}
+                                onEditNameChange={setEditItemName}
+                                onEditDescriptionChange={setEditItemDescription}
+                                onEditLinkChange={setEditItemLink}
+                                onEditPriceChange={setEditItemPrice}
+                                onEditCategoryChange={setEditItemCategory}
+                                onStartEdit={() => startEditItem(item)}
+                                onCancelEdit={() => setEditingItemId(null)}
+                                onSave={() => handleUpdateShoppingItem(item.id)}
+                                onDelete={() => handleDeleteShoppingItem(item.id)}
+                                canMoveUp={itemIndex > 0}
+                                canMoveDown={itemIndex >= 0 && itemIndex < sortedShoppingItems.length - 1}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </div>
             </section>
           </>
         )}
@@ -2398,16 +2408,17 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 Shopping Links {shoppingLinks.length > 0 && <span className="text-stone-400">({shoppingLinks.length})</span>}
               </h2>
 
-              {isLoadingLinks ? (
-                <div className="text-center py-12 text-stone-500">Loading…</div>
-              ) : shoppingLinks.length === 0 ? (
-                <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
-                  <Link2 size={48} className="mx-auto mb-4 opacity-50" />
-                  <p className="text-sm md:text-base">No links yet. Add product links for your client.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {shoppingLinks.map((link) => {
+              <div className="max-h-[60vh] overflow-y-auto pr-1">
+                {isLoadingLinks ? (
+                  <div className="text-center py-12 text-stone-500">Loading…</div>
+                ) : shoppingLinks.length === 0 ? (
+                  <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
+                    <Link2 size={48} className="mx-auto mb-4 opacity-50" />
+                    <p className="text-sm md:text-base">No links yet. Add product links for your client.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {shoppingLinks.map((link) => {
                     const displayTitle = link.title || link.linkPreview?.title || 'Untitled';
                     const displaySiteName = link.linkPreview?.siteName || (() => {
                       try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
@@ -2506,8 +2517,9 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                       </div>
                     );
                   })}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </section>
           </>
         )}
