@@ -731,34 +731,37 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
       onTouchEnd={onTouchEnd}
       onClick={handleTap}
     >
-      {/* Mobile: Progress indicators */}
-      <div className="md:hidden absolute top-0 left-0 right-0 z-20 p-3 safe-top">
+      {/* Progress indicators: same on mobile + desktop — track stone, current sage, past stone */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-3 safe-top">
         <div className="flex gap-1">
-          {filteredEntries.map((_, index) => (
-            <div
-              key={index}
-              className="flex-1 h-0.5 rounded-full overflow-hidden bg-white/30"
-            >
+          {filteredEntries.map((_, index) => {
+            const isPast = index < currentIndex;
+            const isCurrent = index === currentIndex;
+            const fillWidth = isPast || isCurrent ? 'w-full' : 'w-0';
+            const fillColor = isCurrent ? 'bg-sage-500' : isPast ? 'bg-stone-300' : '';
+            return (
               <div
-                className={`h-full bg-white transition-all duration-300 ${
-                  index < currentIndex
-                    ? 'w-full'
-                    : index === currentIndex
-                    ? 'w-full'
-                    : 'w-0'
-                }`}
-              />
-            </div>
-          ))}
+                key={index}
+                className="flex-1 h-0.5 rounded-full overflow-hidden bg-stone-300"
+              >
+                <div
+                  className={`h-full transition-all duration-300 ${fillWidth} ${fillColor}`}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Desktop: Header */}
-      <div className="hidden md:flex absolute top-0 left-0 right-0 z-20 items-center justify-between px-8 py-6 bg-gradient-to-b from-stone-100 to-transparent">
+      <div className="hidden md:flex absolute top-0 left-0 right-0 z-20 items-center justify-between px-8 py-6 bg-gradient-to-b from-sage-400 to-transparent">
         <div className="flex flex-col">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="font-serif text-stone-900 text-2xl">
               {lookbookTitle || (clientName ? `${clientName}'s Lookbook` : 'Style Forage')}
+            </span>
+            <span className="text-stone-500 text-sm font-medium">
+              {currentIndex + 1} of {filteredEntries.length}
             </span>
           </div>
           {lookbookDescription && (
@@ -786,34 +789,40 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
               ))}
             </div>
           )}
-          <span className="text-stone-500 text-sm font-medium">
-            {currentIndex + 1} of {filteredEntries.length}
-          </span>
           {shoppingItemsCount > 0 && (
             <button
               onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
-              className="flex items-center gap-2 px-4 py-2 bg-sage-500 text-white rounded-full text-sm font-medium hover:bg-sage-600 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 border border-stone-300 text-stone-700 bg-transparent rounded-full text-sm font-medium hover:bg-stone-50 transition-colors cursor-pointer"
             >
               <ShoppingBag size={16} />
-              Shopping List ({shoppingItemsCount})
+              Shopping List
+              <span className="rounded-full bg-stone-300 px-2 py-0.5 text-xs font-medium text-stone-600">
+                {shoppingItemsCount}
+              </span>
             </button>
           )}
           {shoppingLinksCount > 0 && (
             <button
               onClick={(e) => { e.stopPropagation(); onShowShoppingLinks(); }}
-              className="flex items-center gap-2 px-4 py-2 bg-stone-800 text-white rounded-full text-sm font-medium hover:bg-stone-900 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 border border-stone-300 text-stone-700 bg-transparent rounded-full text-sm font-medium hover:bg-stone-50 transition-colors cursor-pointer"
             >
               <Link2 size={16} />
-              Shop Links ({shoppingLinksCount})
+              Shop Links
+              <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
+                {shoppingLinksCount}
+              </span>
             </button>
           )}
           {tipsCount > 0 && (
             <button
               onClick={(e) => { e.stopPropagation(); onShowTips(); }}
-              className="flex items-center gap-2 px-4 py-2 bg-sage-600 text-white rounded-full text-sm font-medium hover:bg-sage-700 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 border border-stone-300 text-stone-700 bg-transparent rounded-full text-sm font-medium hover:bg-stone-50 transition-colors cursor-pointer"
             >
               <Lightbulb size={16} />
-              Tips ({tipsCount})
+              Tips
+              <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
+                {tipsCount}
+              </span>
             </button>
           )}
           {/* Season filter for entries */}
@@ -983,29 +992,6 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
         </div>
       )}
 
-      {/* Desktop: Thumbnail navigation */}
-      <div
-        className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 z-20 gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {filteredEntries.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setIsTransitioning(true);
-              setCurrentIndex(index);
-              setTimeout(() => setIsTransitioning(false), 300);
-            }}
-            className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
-              index === currentIndex
-                ? 'bg-sage-600 scale-125'
-                : 'bg-stone-300 hover:bg-stone-400'
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
-
       {/* Mobile: Season filter bottom sheet modal */}
       {showSeasonMenu && (
         <div 
@@ -1162,14 +1148,14 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
           style={{ backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 45%, transparent 100%)' }}
         >
           {entry.caption ? (
-            <div className="pointer-events-auto px-4 text-left" onClick={(e) => e.stopPropagation()}>
+            <div className="pointer-events-auto px-4 flex flex-col items-stretch text-left" onClick={(e) => e.stopPropagation()}>
               <div className="font-serif text-sm text-white leading-relaxed drop-shadow-lg max-h-16 overflow-hidden">
                 <p>{normalizePastedText(entry.caption)}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setCaptionExpanded(true)}
-                className="mt-2 block text-left text-xs font-medium text-white/90 hover:text-white underline underline-offset-2 cursor-pointer"
+                className="mt-2 self-end text-xs font-medium text-white/90 hover:text-white underline underline-offset-2 cursor-pointer"
               >
                 Read more
               </button>
