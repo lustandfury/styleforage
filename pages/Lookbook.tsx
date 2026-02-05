@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, ArrowLeft, Check, Square, CheckSquare, SlidersHorizontal, Link2 } from 'lucide-react';
+import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, ArrowLeft, Check, Square, CheckSquare, SlidersHorizontal, Link2, Lightbulb } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { normalizePastedText } from '../utils/normalizeText';
 
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
@@ -17,6 +18,7 @@ const SEASON_ORDER: Season[] = ['spring', 'summer', 'fall', 'winter'];
 interface EditorialEntry {
   id: string;
   imageKey: string;
+  imageKeys?: string[];
   caption: string;
   order: number;
   createdAt: string;
@@ -32,16 +34,18 @@ interface LinkPreview {
   favicon?: string;
 }
 
-type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'uncategorized';
+type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'footwear' | 'outerwear' | 'uncategorized';
 
 const CATEGORY_LABELS: Record<ShoppingCategory, string> = {
   tops: 'Tops',
   bottoms: 'Bottoms',
   accessories: 'Accessories',
+  footwear: 'Footwear',
+  outerwear: 'Outerwear',
   uncategorized: 'Other',
 };
 
-const CATEGORY_ORDER: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'uncategorized'];
+const CATEGORY_ORDER: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'footwear', 'outerwear', 'uncategorized'];
 
 interface RelatedLookbook {
   slug: string;
@@ -73,6 +77,13 @@ interface ShoppingLink {
   createdAt: string;
 }
 
+interface Tip {
+  id: string;
+  text: string;
+  order: number;
+  createdAt: string;
+}
+
 const PASSCODE_KEY_PREFIX = 'view_passcode_';
 
 export const Lookbook: React.FC = () => {
@@ -96,6 +107,8 @@ export const Lookbook: React.FC = () => {
   const [error, setError] = useState('');
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [showShoppingLinks, setShowShoppingLinks] = useState(false);
+  const [tips, setTips] = useState<Tip[]>([]);
+  const [showTips, setShowTips] = useState(false);
 
   const passcodeKey = `${PASSCODE_KEY_PREFIX}${slug}`;
 
@@ -108,12 +121,13 @@ export const Lookbook: React.FC = () => {
     }
   }, [slug]);
 
-  // Fetch entries, shopping items and links when authenticated
+  // Fetch entries, shopping items, links and tips when authenticated
   useEffect(() => {
     if (isAuthenticated && slug) {
       fetchEntries();
       fetchShoppingItems();
       fetchShoppingLinks();
+      fetchTips();
     }
   }, [isAuthenticated, slug]);
 
@@ -231,6 +245,23 @@ export const Lookbook: React.FC = () => {
       }
     } catch {
       // Ignore - shopping links are optional
+    }
+  };
+
+  const fetchTips = async () => {
+    if (!slug) return;
+
+    try {
+      const res = await fetch(`/.netlify/functions/cms-tips?slug=${slug}`, {
+        headers: { 'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '' },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setTips(data);
+      }
+    } catch {
+      // Ignore - tips are optional
     }
   };
 
@@ -402,8 +433,10 @@ export const Lookbook: React.FC = () => {
         relatedLookbooks={relatedLookbooks}
         shoppingItemsCount={shoppingItems.length}
         shoppingLinksCount={shoppingLinks.length}
+        tipsCount={tips.length}
         onShowShoppingList={() => setShowShoppingList(true)}
         onShowShoppingLinks={() => setShowShoppingLinks(true)}
+        onShowTips={() => setShowTips(true)}
       />
       
       {/* Mobile: Shopping list bottom sheet modal */}
@@ -490,6 +523,87 @@ export const Lookbook: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Mobile: Tips bottom sheet modal */}
+      {showTips && (
+        <div
+          className="md:hidden fixed inset-0 z-50 bg-black/50"
+          onClick={() => setShowTips(false)}
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-stone-100 flex-shrink-0">
+              <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif text-lg text-stone-900">Tips</h3>
+                <button
+                  onClick={() => setShowTips(false)}
+                  className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {tips.length === 0 ? (
+                <p className="text-stone-500 text-sm text-center py-8">No tips yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {tips.map((tip, index) => (
+                    <div
+                      key={tip.id}
+                      className="bg-stone-50 rounded-xl border border-stone-100 p-4 flex items-start gap-3"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-sage-100 text-sage-700 text-sm font-semibold flex items-center justify-center">
+                        {index + 1}
+                      </span>
+                      <p className="text-stone-700 text-sm md:text-base leading-relaxed flex-1">{normalizePastedText(tip.text)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop: Tips overlay */}
+      {showTips && (
+        <div className="hidden md:block fixed inset-0 z-50 bg-white">
+          <div className="h-full flex flex-col max-w-2xl mx-auto">
+            <div className="p-6 border-b border-stone-100 flex-shrink-0 flex items-center justify-between">
+              <h2 className="font-serif text-xl text-stone-900">Tips</h2>
+              <button
+                onClick={() => setShowTips(false)}
+                className="p-2 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 cursor-pointer"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {tips.length === 0 ? (
+                <p className="text-stone-500 text-sm text-center py-12">No tips yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {tips.map((tip, index) => (
+                    <div
+                      key={tip.id}
+                      className="bg-stone-50 rounded-xl border border-stone-100 p-4 flex items-start gap-3"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-sage-100 text-sage-700 text-sm font-semibold flex items-center justify-center">
+                        {index + 1}
+                      </span>
+                      <p className="text-stone-700 text-sm md:text-base leading-relaxed flex-1">{normalizePastedText(tip.text)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
@@ -506,11 +620,13 @@ interface StoryViewProps {
   relatedLookbooks: RelatedLookbook[];
   shoppingItemsCount: number;
   shoppingLinksCount: number;
+  tipsCount: number;
   onShowShoppingList: () => void;
   onShowShoppingLinks: () => void;
+  onShowTips: () => void;
 }
 
-const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, shoppingLinksCount, onShowShoppingList, onShowShoppingLinks }) => {
+const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, shoppingLinksCount, tipsCount, onShowShoppingList, onShowShoppingLinks, onShowTips }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -691,6 +807,15 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
               Shop Links ({shoppingLinksCount})
             </button>
           )}
+          {tipsCount > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onShowTips(); }}
+              className="flex items-center gap-2 px-4 py-2 bg-sage-600 text-white rounded-full text-sm font-medium hover:bg-sage-700 transition-colors cursor-pointer"
+            >
+              <Lightbulb size={16} />
+              Tips ({tipsCount})
+            </button>
+          )}
           {/* Season filter for entries */}
           {hasSeasonedEntries && (
             <div className="flex gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1" onClick={(e) => e.stopPropagation()}>
@@ -742,6 +867,15 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
             <Link2 size={24} />
           </button>
         )}
+        {tipsCount > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onShowTips(); }}
+            className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors cursor-pointer"
+            aria-label="View tips"
+          >
+            <Lightbulb size={24} />
+          </button>
+        )}
         {/* Season filter button */}
         {hasSeasonedEntries && (
           <button
@@ -756,14 +890,6 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
             <SlidersHorizontal size={24} />
           </button>
         )}
-      </div>
-
-      {/* Mobile: Navigation hints */}
-      <div className="md:hidden absolute left-1/2 -translate-x-1/2 top-16 z-20 flex flex-col items-center gap-1 text-white/40 pointer-events-none">
-        {currentIndex > 0 && <ChevronUp size={20} className="animate-bounce" />}
-      </div>
-      <div className="md:hidden absolute left-1/2 -translate-x-1/2 bottom-32 z-20 flex flex-col items-center gap-1 text-white/40 pointer-events-none">
-        {currentIndex < filteredEntries.length - 1 && <ChevronDown size={20} className="animate-bounce" />}
       </div>
 
       {/* Desktop: Side navigation arrows */}
@@ -822,21 +948,13 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
         )}
       </div>
 
-      {/* Mobile: Page counter */}
-      <div
-        className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-20 text-white/60 text-sm font-medium"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {currentIndex + 1} / {filteredEntries.length}
-      </div>
-
       {/* Mobile: Branding with title and description */}
-      <div className="md:hidden absolute top-14 left-4 right-4 z-10 pointer-events-none">
-        <span className="font-serif text-white/90 text-lg drop-shadow-md block">
+      <div className="md:hidden absolute top-4 left-4 right-4 z-10 pointer-events-none">
+        <span className="font-serif text-white/90 text-sm drop-shadow-md block">
           {lookbookTitle || (clientName ? `${clientName}'s Lookbook` : 'Style Forage')}
         </span>
         {lookbookDescription && (
-          <span className="block text-white/70 text-sm mt-1 drop-shadow-md line-clamp-2">
+          <span className="block text-white/70 text-xs mt-0.5 drop-shadow-md line-clamp-2">
             {lookbookDescription}
           </span>
         )}
@@ -942,42 +1060,67 @@ interface StorySlideProps {
 }
 
 const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive, isPrev }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const imageKeys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
+  const urlsRef = useRef<string[]>([]);
 
   useEffect(() => {
-    const fetchImage = async () => {
+    setCaptionExpanded(false);
+  }, [entry.id]);
+
+  useEffect(() => {
+    const headers = { 'X-View-Passcode': passcode };
+    let cancelled = false;
+    urlsRef.current = [];
+
+    const fetchAll = async () => {
       try {
-        const res = await fetch(`/.netlify/functions/cms-image?key=${encodeURIComponent(entry.imageKey)}&slug=${slug}`, {
-          headers: { 'X-View-Passcode': passcode },
-        });
-        if (res.ok) {
-          const blob = await res.blob();
-          setImageUrl(URL.createObjectURL(blob));
-        } else {
-          setImageError(true);
+        const results = await Promise.all(
+          imageKeys.map(async (key) => {
+            const res = await fetch(
+              `/.netlify/functions/cms-image?key=${encodeURIComponent(key)}&slug=${slug}`,
+              { headers }
+            );
+            if (res.ok) {
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              if (!cancelled) urlsRef.current.push(url);
+              else URL.revokeObjectURL(url);
+              return url;
+            }
+            return null;
+          })
+        );
+        if (cancelled) {
+          results.forEach((u) => u && URL.revokeObjectURL(u));
+          return;
         }
+        const valid = results.filter((u): u is string => u != null);
+        setImageUrls(valid);
+        if (valid.length === 0) setImageError(true);
       } catch {
-        setImageError(true);
+        if (!cancelled) setImageError(true);
       } finally {
-        setImageLoading(false);
+        if (!cancelled) setImageLoading(false);
       }
     };
-    fetchImage();
+    fetchAll();
 
     return () => {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
+      cancelled = true;
+      urlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+      urlsRef.current = [];
     };
-  }, [entry.imageKey, slug, passcode]);
+  }, [slug, passcode, imageKeys.join(',')]);
 
-  // Mobile: Full-screen story style
-  // Desktop: Editorial layout with maintained aspect ratio
   return (
     <>
-      {/* Mobile Layout */}
+      {/* Mobile Layout - gallery scrolls; caption always anchored to bottom of screen */}
       <div
-        className={`md:hidden absolute inset-0 transition-all duration-300 ease-out ${
+        className={`md:hidden absolute inset-0 transition-all duration-300 ease-out flex flex-col min-h-0 ${
           isActive
             ? 'opacity-100 scale-100 translate-y-0'
             : isPrev
@@ -985,41 +1128,85 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
             : 'opacity-0 scale-95 translate-y-full'
         }`}
       >
-        {/* Image */}
-        <div className="absolute inset-0">
-          {imageLoading && (
-            <div className="w-full h-full flex items-center justify-center bg-stone-800">
-              <div className="h-8 w-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-          {imageError && (
-            <div className="w-full h-full flex items-center justify-center bg-stone-800 text-stone-500">
-              <ImageIcon size={48} />
-            </div>
-          )}
-          {imageUrl && (
-            <img
-              src={imageUrl}
-              alt={entry.caption || 'Curated outfit'}
-              className="w-full h-full object-cover"
-            />
-          )}
+        {/* Scrollable gallery only */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-stone-900">
+          <div className={`relative w-full flex items-center justify-center ${imageUrls.length === 1 ? 'h-[60vh] min-h-[60vh]' : 'min-h-[30vh]'}`}>
+            {imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-stone-800 min-h-[50vh]">
+                <div className="h-8 w-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            {imageError && !imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-stone-800 text-stone-500 min-h-[50vh]">
+                <ImageIcon size={48} />
+              </div>
+            )}
+            {imageUrls.length > 0 && !imageLoading && (
+              <div className={`lookbook-gallery-grid mobile-two-cols w-full p-1 ${imageUrls.length === 1 ? 'single-image h-full min-h-0' : ''}`}>
+                {imageUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={entry.caption ? `${entry.caption} ${i + 1}` : 'Curated outfit'}
+                    className="bg-stone-900"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Gradient overlay for caption */}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+        {/* Caption: always anchored to bottom of screen with gradient */}
+        <div
+          className="absolute inset-x-0 bottom-0 z-10 flex flex-col justify-end pt-12 pb-6 safe-bottom min-h-[100px] pointer-events-none"
+          style={{ backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 45%, transparent 100%)' }}
+        >
+          {entry.caption ? (
+            <div className="pointer-events-auto px-4 text-left" onClick={(e) => e.stopPropagation()}>
+              <div className="font-serif text-sm text-white leading-relaxed drop-shadow-lg max-h-16 overflow-hidden">
+                <p>{normalizePastedText(entry.caption)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCaptionExpanded(true)}
+                className="mt-2 block text-left text-xs font-medium text-white/90 hover:text-white underline underline-offset-2 cursor-pointer"
+              >
+                Read more
+              </button>
+            </div>
+          ) : null}
+        </div>
 
-        {/* Caption */}
-        {entry.caption && (
-          <div className="absolute inset-x-0 bottom-16 z-10 px-6 pointer-events-none">
-            <p className="font-serif text-xl text-white leading-relaxed text-center drop-shadow-lg">
-              {entry.caption}
-            </p>
+        {/* Mobile: Card modal for full caption (scrollable) */}
+        {entry.caption && captionExpanded && (
+          <div
+            className="md:hidden fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
+            onClick={() => setCaptionExpanded(false)}
+          >
+            <div
+              className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[75vh] flex flex-col animate-slide-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between flex-shrink-0 p-4 border-b border-stone-100">
+                <span className="text-xs font-semibold text-stone-500 uppercase tracking-widest">Caption</span>
+                <button
+                  type="button"
+                  onClick={() => setCaptionExpanded(false)}
+                  className="p-2 -mr-2 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="caption-modal-body flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-0">
+                <p className="font-serif text-stone-800 text-base leading-relaxed break-words">{normalizePastedText(entry.caption)}</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Desktop Editorial Layout */}
+      {/* Desktop Editorial Layout - gallery 40vw, caption vertical scroll only */}
       <div
         className={`hidden md:flex absolute inset-0 items-center justify-center transition-all duration-500 ease-out ${
           isActive
@@ -1027,38 +1214,44 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
             : 'opacity-0 scale-95 pointer-events-none'
         }`}
       >
-        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 max-w-6xl mx-auto px-4">
-          {/* Image container - maintains aspect ratio */}
-          <div className="relative flex-shrink-0 max-h-[70vh] max-w-[50vw]">
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 max-w-6xl mx-auto px-4 w-full">
+          <div className="relative flex-shrink-0 w-[40vw] max-w-[480px] h-[70vh] max-h-[85vh] rounded-lg overflow-hidden shadow-2xl bg-stone-200">
             {imageLoading && (
-              <div className="w-96 h-[500px] flex items-center justify-center bg-stone-200 rounded-lg">
+              <div className="absolute inset-0 flex items-center justify-center bg-stone-200 rounded-lg">
                 <div className="h-8 w-8 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
               </div>
             )}
-            {imageError && (
-              <div className="w-96 h-[500px] flex items-center justify-center bg-stone-200 rounded-lg text-stone-400">
+            {imageError && !imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-stone-200 rounded-lg text-stone-400">
                 <ImageIcon size={48} />
               </div>
             )}
-            {imageUrl && (
-              <img
-                src={imageUrl}
-                alt={entry.caption || 'Curated outfit'}
-                className="max-h-[70vh] max-w-[50vw] w-auto h-auto object-contain rounded-lg shadow-2xl"
-              />
+            {imageUrls.length > 0 && !imageLoading && (
+              <div className={`lookbook-gallery-grid w-full h-full overflow-auto p-2 ${imageUrls.length === 1 ? 'single-image' : ''}`}>
+                {imageUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={entry.caption ? `${entry.caption} ${i + 1}` : 'Curated outfit'}
+                    className="bg-stone-900"
+                  />
+                ))}
+              </div>
             )}
           </div>
 
-          {/* Caption area */}
-          <div className="flex-1 max-w-md text-center lg:text-left">
+          {/* Caption area - vertical scroll only, no horizontal scroll */}
+          <div className="flex-1 max-w-md text-center lg:text-left flex flex-col min-w-0 overflow-hidden">
             {entry.caption ? (
-              <p className="font-serif text-2xl lg:text-3xl text-stone-800 leading-relaxed">
-                {entry.caption}
-              </p>
+              <div className="max-h-[40vh] overflow-y-auto overflow-x-hidden pr-1 caption-modal-body">
+                <p className="font-serif text-base lg:text-lg text-stone-800 leading-relaxed break-words">
+                  {normalizePastedText(entry.caption)}
+                </p>
+              </div>
             ) : (
               <p className="text-stone-400">Curated with care</p>
             )}
-            <div className="mt-8 pt-6 border-t border-stone-200">
+            <div className="mt-6 pt-4 border-t border-stone-200 flex-shrink-0">
               <p className="text-xs text-stone-400 uppercase tracking-widest">Style Forage</p>
             </div>
           </div>

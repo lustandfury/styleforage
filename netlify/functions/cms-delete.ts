@@ -4,14 +4,16 @@ import { getStorage } from './lib/storage';
 interface EditorialEntry {
   id: string;
   imageKey: string;
+  imageKeys?: string[];
   caption: string;
   order: number;
   createdAt: string;
 }
 
 /**
- * CMS Delete - Delete an editorial entry and its image from a specific lookbook
- * DELETE /api/cms-delete?slug=xxx&id=yyy
+ * CMS Delete - Delete an editorial entry (and all its images) or a single image from an entry
+ * DELETE /api/cms-delete?slug=xxx&id=yyy - Delete whole entry
+ * DELETE /api/cms-delete?slug=xxx&id=yyy&key=images/xxx - Delete one image from entry
  * Headers: X-Admin-Passcode
  */
 const handler: Handler = async (event: HandlerEvent) => {
@@ -58,7 +60,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     
     // Read current entries for this lookbook
     const entriesData = await store.get(`entries/${slug}`, { type: 'json' });
-    const entries: EditorialEntry[] = entriesData || [];
+    const entries: EditorialEntry[] = (entriesData as EditorialEntry[]) || [];
 
     // Find the entry
     const entryIndex = entries.findIndex(e => e.id === id);
@@ -70,19 +72,50 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const entry = entries[entryIndex];
+    const keyToDelete = event.queryStringParameters?.key;
 
-    // Delete the image blob
-    await store.delete(entry.imageKey);
+    // Delete a single image from this entry
+    if (keyToDelete) {
+      const keys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
+      if (!keys.includes(keyToDelete)) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({ error: 'Image not found in entry' }),
+        };
+      }
+      try {
+        await store.delete(keyToDelete);
+      } catch {
+        // Ignore blob delete errors
+      }
+      const newKeys = keys.filter(k => k !== keyToDelete);
+      if (newKeys.length === 0) {
+        entries.splice(entryIndex, 1);
+        entries.forEach((e, i) => { e.order = i; });
+      } else {
+        entry.imageKeys = newKeys;
+        entry.imageKey = newKeys[0];
+      }
+      await store.setJSON(`entries/${slug}`, entries);
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, id, key: keyToDelete }),
+      };
+    }
 
-    // Remove from entries
+    // Delete whole entry and all its image blobs
+    const keysToDelete = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
+    for (const key of keysToDelete) {
+      try {
+        await store.delete(key);
+      } catch {
+        // Ignore
+      }
+    }
+
     entries.splice(entryIndex, 1);
-
-    // Reorder remaining entries
-    entries.forEach((e, i) => {
-      e.order = i;
-    });
-
-    // Save updated entries
+    entries.forEach((e, i) => { e.order = i; });
     await store.setJSON(`entries/${slug}`, entries);
 
     return {

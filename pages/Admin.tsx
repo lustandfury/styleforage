@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import heic2any from 'heic2any';
-import { Lock, Upload, Trash2, Edit3, Save, X, LogOut, Image as ImageIcon, ArrowLeft, Plus, Users, Copy, Check, FolderOpen, Eye, Camera, ShoppingBag, ExternalLink, DollarSign, Link2, Square, CheckSquare } from 'lucide-react';
+import { Lock, Upload, Trash2, Edit3, Save, X, LogOut, Image as ImageIcon, ArrowLeft, Plus, Users, Copy, Check, FolderOpen, Eye, Camera, ShoppingBag, ExternalLink, DollarSign, Link2, Square, CheckSquare, Lightbulb } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { normalizePastedText } from '../utils/normalizeText';
 
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
@@ -18,6 +19,7 @@ const SEASON_ORDER: Season[] = ['spring', 'summer', 'fall', 'winter'];
 interface EditorialEntry {
   id: string;
   imageKey: string;
+  imageKeys?: string[];
   caption: string;
   order: number;
   createdAt: string;
@@ -133,16 +135,18 @@ interface LinkPreview {
   favicon?: string;
 }
 
-type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'uncategorized';
+type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'footwear' | 'outerwear' | 'uncategorized';
 
 const CATEGORY_LABELS: Record<ShoppingCategory, string> = {
   tops: 'Tops',
   bottoms: 'Bottoms',
   accessories: 'Accessories',
+  footwear: 'Footwear',
+  outerwear: 'Outerwear',
   uncategorized: 'Other',
 };
 
-const CATEGORY_ORDER: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'uncategorized'];
+const CATEGORY_ORDER: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'footwear', 'outerwear', 'uncategorized'];
 
 interface ShoppingItem {
   id: string;
@@ -164,6 +168,13 @@ interface ShoppingLink {
   description?: string;
   linkPreview?: LinkPreview;
   checked: boolean;
+  order: number;
+  createdAt: string;
+}
+
+interface Tip {
+  id: string;
+  text: string;
   order: number;
   createdAt: string;
 }
@@ -646,7 +657,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const navigate = useNavigate();
   
   // Tab state
-  const [activeTab, setActiveTab] = useState<'looks' | 'shopping' | 'links'>('looks');
+  const [activeTab, setActiveTab] = useState<'looks' | 'shopping' | 'links' | 'tips'>('looks');
   
   // CMS state
   const [entries, setEntries] = useState<EditorialEntry[]>([]);
@@ -709,11 +720,21 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [editLinkPreview, setEditLinkPreview] = useState<LinkPreview | null>(null);
   const [isFetchingEditLinkPreview, setIsFetchingEditLinkPreview] = useState(false);
 
+  // Tips state
+  const [tips, setTips] = useState<Tip[]>([]);
+  const [isLoadingTips, setIsLoadingTips] = useState(false);
+  const [showAddTip, setShowAddTip] = useState(false);
+  const [newTipText, setNewTipText] = useState('');
+  const [isAddingTip, setIsAddingTip] = useState(false);
+  const [editingTipId, setEditingTipId] = useState<string | null>(null);
+  const [editTipText, setEditTipText] = useState('');
+
   useEffect(() => {
     fetchLookbookInfo();
     fetchEntries();
     fetchShoppingItems();
     fetchShoppingLinks();
+    fetchTips();
   }, [slug]);
 
   const fetchLookbookInfo = async () => {
@@ -844,7 +865,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
   const startEdit = (entry: EditorialEntry) => {
     setEditingId(entry.id);
-    setEditCaption(entry.caption);
+    setEditCaption(normalizePastedText(entry.caption));
     setEditSeason(entry.season || '');
   };
 
@@ -907,6 +928,68 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
       }
     } catch {
       setError('Failed to replace photo. Please try again.');
+    }
+  };
+
+  const handleAddPhoto = async (entryId: string, file: File) => {
+    setError('');
+
+    try {
+      const jpegFile = await convertHeicToJpeg(file);
+      const fileToUpload = await resizeImageFile(
+        jpegFile,
+        CLIENT_IMAGE_MAX_DIMENSION,
+        CLIENT_IMAGE_QUALITY
+      );
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      formData.append('slug', slug);
+      formData.append('entryId', entryId);
+      formData.append('addPhoto', 'true');
+
+      const res = await fetch('/.netlify/functions/cms-upload', {
+        method: 'POST',
+        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: formData,
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setEntries(entries.map((e) => (e.id === entryId ? updated : e)));
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to add photo');
+      }
+    } catch {
+      setError('Failed to add photo. Please try again.');
+    }
+  };
+
+  const handleDeleteImage = async (entryId: string, imageKey: string) => {
+    if (!confirm('Remove this photo from the entry?')) return;
+    setError('');
+
+    try {
+      const res = await fetch(
+        `/.netlify/functions/cms-delete?slug=${slug}&id=${entryId}&key=${encodeURIComponent(imageKey)}`,
+        { method: 'DELETE', headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' } }
+      );
+
+      if (res.ok) {
+        setEntries((prev) => {
+          const entry = prev.find((e) => e.id === entryId);
+          if (!entry) return prev;
+          const keys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
+          const newKeys = keys.filter((k) => k !== imageKey);
+          if (newKeys.length === 0) return prev.filter((e) => e.id !== entryId);
+          const updated = { ...entry, imageKeys: newKeys, imageKey: newKeys[0] };
+          return prev.map((e) => (e.id === entryId ? updated : e));
+        });
+      } else {
+        setError('Failed to remove photo');
+      }
+    } catch {
+      setError('Failed to remove photo');
     }
   };
 
@@ -1102,6 +1185,104 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     } finally {
       setIsLoadingLinks(false);
     }
+  };
+
+  const fetchTips = async () => {
+    if (!slug) return;
+    setIsLoadingTips(true);
+    try {
+      const res = await fetch(`/.netlify/functions/cms-tips?slug=${slug}`, {
+        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTips(data);
+      }
+    } catch {
+      // Ignore - not critical
+    } finally {
+      setIsLoadingTips(false);
+    }
+  };
+
+  const handleAddTip = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTipText.trim()) return;
+
+    setIsAddingTip(true);
+    setError('');
+
+    try {
+      const res = await fetch('/.netlify/functions/cms-tips', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
+        },
+        body: JSON.stringify({ slug, text: newTipText }),
+      });
+
+      if (res.ok) {
+        const newTip = await res.json();
+        setTips([...tips, newTip]);
+        setNewTipText('');
+        setShowAddTip(false);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to add tip');
+      }
+    } catch {
+      setError('Failed to add tip');
+    } finally {
+      setIsAddingTip(false);
+    }
+  };
+
+  const handleUpdateTip = async (id: string) => {
+    try {
+      const res = await fetch('/.netlify/functions/cms-tips', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
+        },
+        body: JSON.stringify({ slug, id, text: editTipText }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setTips(tips.map((t) => (t.id === id ? updated : t)));
+        setEditingTipId(null);
+      } else {
+        setError('Failed to update tip');
+      }
+    } catch {
+      setError('Failed to update tip');
+    }
+  };
+
+  const handleDeleteTip = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this tip?')) return;
+
+    try {
+      const res = await fetch(`/.netlify/functions/cms-tips?slug=${slug}&id=${id}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+      });
+
+      if (res.ok) {
+        setTips(tips.filter((t) => t.id !== id));
+      } else {
+        setError('Failed to delete tip');
+      }
+    } catch {
+      setError('Failed to delete tip');
+    }
+  };
+
+  const startEditTip = (tip: Tip) => {
+    setEditingTipId(tip.id);
+    setEditTipText(normalizePastedText(tip.text));
   };
 
   const handleAddShoppingLink = async (e: React.FormEvent) => {
@@ -1386,6 +1567,19 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
               Links {shoppingLinks.length > 0 && `(${shoppingLinks.length})`}
             </span>
           </button>
+          <button
+            onClick={() => setActiveTab('tips')}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+              activeTab === 'tips'
+                ? 'border-sage-500 text-sage-600'
+                : 'border-transparent text-stone-500 hover:text-stone-700'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Lightbulb size={16} />
+              Tips {tips.length > 0 && `(${tips.length})`}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -1414,6 +1608,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
             onClick={() => setShowAddLink(true)}
             className="md:hidden fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
             aria-label="Add shopping link"
+          >
+            <Plus size={28} />
+          </button>
+        )}
+        {activeTab === 'tips' && (
+          <button
+            onClick={() => setShowAddTip(true)}
+            className="md:hidden fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
+            aria-label="Add tip"
           >
             <Plus size={28} />
           </button>
@@ -1552,6 +1755,8 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                       onSave={() => handleUpdate(entry.id)}
                       onDelete={() => handleDelete(entry.id)}
                       onReplacePhoto={handleReplacePhoto}
+                      onAddPhoto={handleAddPhoto}
+                      onDeleteImage={handleDeleteImage}
                     />
                   ))}
                 </div>
@@ -1919,6 +2124,104 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
             </section>
           </>
         )}
+
+        {/* TIPS TAB */}
+        {activeTab === 'tips' && (
+          <>
+            <section className="bg-white p-4 md:p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
+              <h2 className="font-serif text-lg text-stone-900 mb-4 flex items-center gap-2">
+                <Lightbulb size={20} className="text-sage-600" />
+                Add Tip
+              </h2>
+              <form onSubmit={handleAddTip} className="space-y-3">
+                <textarea
+                  value={newTipText}
+                  onChange={(e) => setNewTipText(e.target.value)}
+                  placeholder="e.g. Try pairing with neutral accessories..."
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
+                />
+                <Button type="submit" variant="primary" size="lg" className="rounded-full" disabled={!newTipText.trim() || isAddingTip}>
+                  {isAddingTip ? 'Adding...' : 'Add Tip'}
+                </Button>
+              </form>
+            </section>
+
+            <section>
+              <h2 className="font-serif text-base md:text-lg text-stone-900 mb-3 md:mb-4">
+                Tips {tips.length > 0 && <span className="text-stone-400">({tips.length})</span>}
+              </h2>
+
+              {isLoadingTips ? (
+                <div className="text-center py-12 text-stone-500">Loading…</div>
+              ) : tips.length === 0 ? (
+                <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
+                  <Lightbulb size={48} className="mx-auto mb-4 opacity-50" />
+                  <p className="text-sm md:text-base">No tips yet. Add styling tips for your client.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {tips.map((tip, index) => (
+                    <div
+                      key={tip.id}
+                      className="bg-white rounded-xl border border-stone-100 shadow-sm p-3 md:p-4 flex items-start gap-3"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-sage-100 text-sage-700 text-sm font-semibold flex items-center justify-center">
+                        {index + 1}
+                      </span>
+                      {editingTipId === tip.id ? (
+                        <div className="flex-1 space-y-2">
+                          <textarea
+                            value={editTipText}
+                            onChange={(e) => setEditTipText(e.target.value)}
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleUpdateTip(tip.id)}
+                              className="flex items-center gap-1 px-3 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 cursor-pointer"
+                            >
+                              <Save size={14} />
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingTipId(null)}
+                              className="flex items-center gap-1 px-3 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 cursor-pointer"
+                            >
+                              <X size={14} />
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="flex-1 text-stone-700 text-sm md:text-base leading-relaxed">{normalizePastedText(tip.text)}</p>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <button
+                              onClick={() => startEditTip(tip)}
+                              className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
+                              title="Edit"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTip(tip.id)}
+                              className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </main>
     </div>
   );
@@ -2037,6 +2340,88 @@ const UploadForm: React.FC<UploadFormProps> = ({
   </form>
 );
 
+// Single image thumbnail (loads by key, optional delete)
+const EntryImageThumb: React.FC<{
+  imageKey: string;
+  slug: string;
+  passcode: string;
+  alt: string;
+  onReplace?: () => void;
+  onDelete?: () => void;
+  isReplacing?: boolean;
+}> = ({ imageKey, slug, passcode, alt, onReplace, onDelete, isReplacing }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let revoked = false;
+    const fetchImage = async () => {
+      try {
+        const res = await fetch(`/.netlify/functions/cms-image?key=${encodeURIComponent(imageKey)}&slug=${slug}`, {
+          headers: { 'X-Admin-Passcode': passcode },
+        });
+        if (res.ok && !revoked) {
+          const blob = await res.blob();
+          setImageUrl(URL.createObjectURL(blob));
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!revoked) setLoading(false);
+      }
+    };
+    fetchImage();
+    return () => {
+      revoked = true;
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [imageKey, slug, passcode]);
+
+  if (loading || isReplacing) {
+    return (
+      <div className="aspect-square rounded-lg bg-stone-100 flex items-center justify-center">
+        {isReplacing ? (
+          <div className="h-6 w-6 border-2 border-sage-500 border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <ImageIcon size={20} className="text-stone-400" />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative aspect-square rounded-lg overflow-hidden bg-stone-100 group">
+      {imageUrl ? (
+        <img src={imageUrl} alt={alt} className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <ImageIcon size={20} className="text-stone-400" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1">
+        {onReplace && (
+          <button
+            onClick={onReplace}
+            className="p-1.5 rounded-full bg-white/90 text-stone-700 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            aria-label="Replace photo"
+          >
+            <Camera size={14} />
+          </button>
+        )}
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-full bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            aria-label="Remove photo"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Entry Card Component
 interface EntryCardProps {
   entry: EditorialEntry;
@@ -2052,6 +2437,8 @@ interface EntryCardProps {
   onSave: () => void;
   onDelete: () => void;
   onReplacePhoto: (entryId: string, file: File) => Promise<void>;
+  onAddPhoto: (entryId: string, file: File) => Promise<void>;
+  onDeleteImage: (entryId: string, imageKey: string) => Promise<void>;
 }
 
 const EntryCard: React.FC<EntryCardProps> = ({
@@ -2068,95 +2455,90 @@ const EntryCard: React.FC<EntryCardProps> = ({
   onSave,
   onDelete,
   onReplacePhoto,
+  onAddPhoto,
+  onDeleteImage,
 }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState(true);
   const [isReplacing, setIsReplacing] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  const addInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchImage = async () => {
-      setImageLoading(true);
-      try {
-        const res = await fetch(`/.netlify/functions/cms-image?key=${encodeURIComponent(entry.imageKey)}&slug=${slug}`, {
-          headers: { 'X-Admin-Passcode': passcode },
-        });
-        if (res.ok) {
-          const blob = await res.blob();
-          if (imageUrl) URL.revokeObjectURL(imageUrl);
-          setImageUrl(URL.createObjectURL(blob));
-        }
-      } catch {
-        console.error('Failed to load image');
-      } finally {
-        setImageLoading(false);
-      }
-    };
-    fetchImage();
+  const imageKeys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
 
-    return () => {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
-    };
-  }, [entry.imageKey, passcode, slug]);
+  const handleReplaceClick = () => replaceInputRef.current?.click();
+  const handleAddClick = () => addInputRef.current?.click();
 
-  const handleReplaceClick = () => {
-    replaceInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReplaceFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setIsReplacing(true);
     try {
       await onReplacePhoto(entry.id, file);
     } finally {
       setIsReplacing(false);
-      if (replaceInputRef.current) {
-        replaceInputRef.current.value = '';
-      }
+      if (replaceInputRef.current) replaceInputRef.current.value = '';
+    }
+  };
+
+  const handleAddFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsAdding(true);
+    try {
+      await onAddPhoto(entry.id, file);
+    } finally {
+      setIsAdding(false);
+      if (addInputRef.current) addInputRef.current.value = '';
     }
   };
 
   return (
     <div className="bg-white p-3 md:p-4 rounded-2xl border border-stone-100 shadow-sm">
-      {/* Hidden file input for replacing photo */}
       <input
         ref={replaceInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif,.heic,.heif"
-        onChange={handleFileChange}
+        onChange={handleReplaceFile}
         className="hidden"
       />
-      
+      <input
+        ref={addInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/heic,image/heif,.heic,.heif"
+        onChange={handleAddFile}
+        className="hidden"
+      />
+
       <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-        {/* Thumbnail with replace overlay */}
-        <div className="relative w-full sm:w-20 md:w-24 h-32 sm:h-20 md:h-24 flex-shrink-0 rounded-xl overflow-hidden bg-stone-100 group">
-          {imageLoading || isReplacing ? (
-            <div className="w-full h-full flex items-center justify-center text-stone-400">
-              {isReplacing ? (
-                <div className="h-6 w-6 border-2 border-sage-500 border-t-transparent rounded-full animate-spin" />
+        {/* Photo grid */}
+        <div className="w-full sm:w-40 md:w-48 flex-shrink-0">
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
+            {imageKeys.map((key) => (
+              <EntryImageThumb
+                key={key}
+                imageKey={key}
+                slug={slug}
+                passcode={passcode}
+                alt={entry.caption || 'Outfit'}
+                onReplace={key === entry.imageKey ? handleReplaceClick : undefined}
+                onDelete={imageKeys.length > 1 ? () => onDeleteImage(entry.id, key) : undefined}
+                isReplacing={isReplacing && key === entry.imageKey}
+              />
+            ))}
+            <button
+              type="button"
+              onClick={handleAddClick}
+              disabled={isAdding}
+              className="aspect-square rounded-lg border-2 border-dashed border-stone-200 flex items-center justify-center text-stone-400 hover:border-sage-400 hover:text-sage-600 transition-colors cursor-pointer disabled:opacity-50"
+              aria-label="Add photo"
+            >
+              {isAdding ? (
+                <div className="h-5 w-5 border-2 border-sage-500 border-t-transparent rounded-full animate-spin" />
               ) : (
-                <ImageIcon size={24} />
+                <Plus size={24} />
               )}
-            </div>
-          ) : imageUrl ? (
-            <>
-              <img src={imageUrl} alt={entry.caption || 'Outfit'} className="w-full h-full object-cover" />
-              {/* Replace overlay on hover */}
-              <button
-                onClick={handleReplaceClick}
-                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                aria-label="Replace photo"
-              >
-                <Camera size={24} className="text-white" />
-              </button>
-            </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-stone-400">
-              <ImageIcon size={24} />
-            </div>
-          )}
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -2208,7 +2590,7 @@ const EntryCard: React.FC<EntryCardProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-start gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-stone-700 text-sm md:text-base line-clamp-2">
-                  {entry.caption || <span className="italic text-stone-400">No caption</span>}
+                  {entry.caption ? normalizePastedText(entry.caption) : <span className="italic text-stone-400">No caption</span>}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-stone-400 text-xs">{new Date(entry.createdAt).toLocaleDateString()}</p>

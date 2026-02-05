@@ -223,14 +223,16 @@ const handler: Handler = async (event: HandlerEvent) => {
 
       // Get entries to delete their images
       const entriesData = await store.get(`entries/${slug}`, { type: 'json' });
-      const entries: { imageKey: string }[] = entriesData || [];
+      const entries: { imageKey: string; imageKeys?: string[] }[] = entriesData || [];
 
-      // Delete all images
       for (const entry of entries) {
-        try {
-          await store.delete(entry.imageKey);
-        } catch {
-          // Ignore errors deleting individual images
+        const keys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
+        for (const key of keys) {
+          try {
+            await store.delete(key);
+          } catch {
+            // Ignore errors deleting individual images
+          }
         }
       }
 

@@ -10,7 +10,7 @@ export interface LinkPreview {
   favicon?: string;
 }
 
-export type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'uncategorized';
+export type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'footwear' | 'outerwear' | 'uncategorized';
 
 export interface ShoppingItem {
   id: string;
@@ -172,7 +172,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       if (price !== undefined) items[itemIndex].price = price?.trim() || undefined;
       if (linkPreview !== undefined) items[itemIndex].linkPreview = linkPreview || undefined;
       if (category !== undefined) {
-        const validCategories: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'uncategorized'];
+        const validCategories: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'footwear', 'outerwear', 'uncategorized'];
         items[itemIndex].category = validCategories.includes(category) ? category : 'uncategorized';
       }
       if (checked !== undefined) items[itemIndex].checked = checked;
@@ -208,7 +208,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       // Validate category
-      const validCategories: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'uncategorized'];
+      const validCategories: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'footwear', 'outerwear', 'uncategorized'];
       const itemCategory: ShoppingCategory = validCategories.includes(category) ? category : 'uncategorized';
 
       // Read current items

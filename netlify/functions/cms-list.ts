@@ -6,6 +6,8 @@ type Season = 'spring' | 'summer' | 'fall' | 'winter';
 export interface EditorialEntry {
   id: string;
   imageKey: string;
+  /** All image blob keys for this entry (use when present; else [imageKey]) */
+  imageKeys?: string[];
   caption: string;
   order: number;
   createdAt: string;
@@ -84,7 +86,13 @@ const handler: Handler = async (event: HandlerEvent) => {
 
     // Read the entries for this lookbook
     const entriesData = await store.get(`entries/${slug}`, { type: 'json' });
-    const entries: EditorialEntry[] = entriesData || [];
+    const rawEntries: EditorialEntry[] = entriesData || [];
+
+    // Normalize imageKeys for client (always send array)
+    const entries = rawEntries.map((e) => ({
+      ...e,
+      imageKeys: (e.imageKeys && e.imageKeys.length > 0) ? e.imageKeys : [e.imageKey],
+    }));
 
     // Sort by order
     entries.sort((a, b) => a.order - b.order);

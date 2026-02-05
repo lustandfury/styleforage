@@ -1,5 +1,6 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
+import { normalizePastedText } from './lib/text';
 
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
@@ -74,7 +75,7 @@ const handler: Handler = async (event: HandlerEvent) => {
 
     // Update fields
     if (caption !== undefined) {
-      entries[entryIndex].caption = caption;
+      entries[entryIndex].caption = normalizePastedText(caption);
     }
     if (order !== undefined && typeof order === 'number') {
       entries[entryIndex].order = order;

@@ -1,6 +1,7 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import sharp from 'sharp';
 import { getStorage } from './lib/storage';
+import { normalizePastedText } from './lib/text';
 
 /** Max length of the longest side after resize (keeps aspect ratio). */
 const MAX_IMAGE_DIMENSION = 2400;
@@ -31,6 +32,7 @@ type Season = 'spring' | 'summer' | 'fall' | 'winter';
 interface EditorialEntry {
   id: string;
   imageKey: string;
+  imageKeys?: string[];
   caption: string;
   order: number;
   createdAt: string;
@@ -142,9 +144,10 @@ const handler: Handler = async (event: HandlerEvent) => {
     const { fields, files } = parseMultipart(event.body || '', boundary);
     
     const imageFile = files.find(f => f.name === 'file');
-    const caption = fields.caption || '';
+    const caption = normalizePastedText(fields.caption || '');
     const slug = fields.slug;
-    const entryId = fields.entryId; // Optional - for replacing existing entry's image
+    const entryId = fields.entryId; // Optional - for replacing or adding to entry
+    const addPhoto = fields.addPhoto === 'true'; // If true with entryId, add photo to entry (don't replace)
     const season = fields.season as Season | undefined;
 
     if (!slug) {
@@ -193,9 +196,36 @@ const handler: Handler = async (event: HandlerEvent) => {
     const entriesData = await store.get(`entries/${slug}`, { type: 'json' });
     const entries: EditorialEntry[] = entriesData || [];
 
-    // Check if this is a replacement or new upload
+    // Add photo to existing entry (append to imageKeys)
+    if (entryId && addPhoto) {
+      const entryIndex = entries.findIndex(e => e.id === entryId);
+      if (entryIndex === -1) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({ error: 'Entry not found' }),
+        };
+      }
+
+      const entry = entries[entryIndex];
+      const newImageKey = `images/${entryId}-${Date.now()}`;
+
+      await store.setWithMetadata(newImageKey, imageData, { contentType: imageContentType });
+
+      const currentKeys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
+      entry.imageKeys = [...currentKeys, newImageKey];
+      // Keep imageKey as primary (first); no change when adding
+
+      await store.setJSON(`entries/${slug}`, entries);
+
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      };
+    }
+
+    // Replace existing entry's primary image (and remove other images for that entry)
     if (entryId) {
-      // Replacing existing entry's image
       const entryIndex = entries.findIndex(e => e.id === entryId);
       if (entryIndex === -1) {
         return {
@@ -205,24 +235,24 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       const existingEntry = entries[entryIndex];
-      
-      // Delete the old image
-      try {
-        await store.delete(existingEntry.imageKey);
-      } catch {
-        // Ignore errors deleting old image
+      const keysToDelete = (existingEntry.imageKeys && existingEntry.imageKeys.length > 0)
+        ? existingEntry.imageKeys
+        : [existingEntry.imageKey];
+
+      for (const key of keysToDelete) {
+        try {
+          await store.delete(key);
+        } catch {
+          // Ignore
+        }
       }
 
-      // Generate new image key (keep same entry ID)
       const newImageKey = `images/${entryId}-${Date.now()}`;
-
-      // Save the optimized image blob with metadata
       await store.setWithMetadata(newImageKey, imageData, { contentType: imageContentType });
 
-      // Update the entry with new image key
       entries[entryIndex].imageKey = newImageKey;
+      entries[entryIndex].imageKeys = [newImageKey];
 
-      // Save updated entries
       await store.setJSON(`entries/${slug}`, entries);
 
       return {
@@ -243,6 +273,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     const newEntry: EditorialEntry = {
       id,
       imageKey,
+      imageKeys: [imageKey],
       caption,
       order: entries.length, // Append at end
       createdAt: new Date().toISOString(),
