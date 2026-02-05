@@ -1163,26 +1163,29 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
           ) : null}
         </div>
 
-        {/* Mobile: Card modal for full caption (scrollable) */}
+        {/* Mobile: Caption — same action-sheet pattern as Shopping List / Shop Links / Tips */}
         {entry.caption && captionExpanded && (
           <div
-            className="md:hidden fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4"
+            className="md:hidden fixed inset-0 z-50 bg-black/50"
             onClick={() => setCaptionExpanded(false)}
           >
             <div
-              className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[75vh] flex flex-col animate-slide-up"
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden animate-slide-up flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between flex-shrink-0 p-4 border-b border-stone-100">
-                <span className="text-xs font-semibold text-stone-500 uppercase tracking-widest">Caption</span>
-                <button
-                  type="button"
-                  onClick={() => setCaptionExpanded(false)}
-                  className="p-2 -mr-2 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 cursor-pointer"
-                  aria-label="Close"
-                >
-                  <X size={20} />
-                </button>
+              <div className="p-4 border-b border-stone-100 flex-shrink-0">
+                <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
+                <div className="flex items-center justify-between">
+                  <h3 className="font-serif text-lg text-stone-900">Caption</h3>
+                  <button
+                    type="button"
+                    onClick={() => setCaptionExpanded(false)}
+                    className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
+                    aria-label="Close"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
               </div>
               <div className="caption-modal-body flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-0">
                 <p className="font-serif text-stone-800 text-base leading-relaxed break-words">{normalizePastedText(entry.caption)}</p>
