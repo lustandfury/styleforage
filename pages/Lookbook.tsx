@@ -808,20 +808,18 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
   const minSwipeDistance = 50;
 
   const goToNext = useCallback(() => {
-    if (currentIndex < filteredEntries.length - 1 && !isTransitioning) {
-      setIsTransitioning(true);
-      setCurrentIndex(currentIndex + 1);
-      setTimeout(() => setIsTransitioning(false), 300);
-    }
+    if (filteredEntries.length === 0 || isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex(currentIndex === filteredEntries.length - 1 ? 0 : currentIndex + 1);
+    setTimeout(() => setIsTransitioning(false), 300);
   }, [currentIndex, filteredEntries.length, isTransitioning]);
 
   const goToPrev = useCallback(() => {
-    if (currentIndex > 0 && !isTransitioning) {
-      setIsTransitioning(true);
-      setCurrentIndex(currentIndex - 1);
-      setTimeout(() => setIsTransitioning(false), 300);
-    }
-  }, [currentIndex, isTransitioning]);
+    if (filteredEntries.length === 0 || isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex(currentIndex === 0 ? filteredEntries.length - 1 : currentIndex - 1);
+    setTimeout(() => setIsTransitioning(false), 300);
+  }, [currentIndex, filteredEntries.length, isTransitioning]);
 
   // Touch handlers: horizontal swipe (left = next, right = prev) on mobile
   const onTouchStart = (e: React.TouchEvent) => {

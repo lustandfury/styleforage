@@ -11,8 +11,11 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@dnd-kit/core@^6.3.1",
+        "npm:@dnd-kit/sortable@10",
+        "npm:@dnd-kit/utilities@^3.2.2",
         "npm:@google/genai@^1.38.0",
-        "npm:@netlify/blobs@^8.1.0",
+        "npm:@netlify/blobs@^8.2.0",
         "npm:@netlify/functions@^5.1.2",
         "npm:@stripe/react-stripe-js@^5.6.0",
         "npm:@stripe/stripe-js@^8.7.0",
@@ -23,6 +26,7 @@
         "npm:date-fns@3.3.1",
         "npm:dotenv@^17.2.3",
         "npm:gsap@^3.14.2",
+        "npm:heic2any@^0.0.4",
         "npm:iconoir-react@^7.11.0",
         "npm:lucide-react@0.344.0",
         "npm:postcss@^8.5.6",
@@ -31,6 +35,7 @@
         "npm:react-router-dom@^6.30.3",
         "npm:react@18.2.0",
         "npm:resend@^6.9.1",
+        "npm:sharp@~0.34.5",
         "npm:stripe@^20.3.0",
         "npm:tailwindcss@^4.1.18",
         "npm:typescript@~5.8.2",

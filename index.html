@@ -61,8 +61,17 @@
     <link rel="icon" type="image/png" href="/images/app-icon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/images/app-icon.png" />
 
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <!-- PWA Manifest - slug set by script when on /lookbook/:slug so Install opens that lookbook -->
+    <link rel="manifest" href="/manifest.json" id="pwamanifest" />
+    <script>
+      (function() {
+        var m = /^\/lookbook\/([^/?#]+)/.exec(window.location.pathname);
+        if (m) {
+          var link = document.getElementById('pwamanifest') || document.querySelector('link[rel="manifest"]');
+          if (link) link.href = '/manifest.json?slug=' + encodeURIComponent(m[1]);
+        }
+      })();
+    </script>
 
     <!-- Sitemap (SEO) -->
     <link rel="sitemap" type="application/xml" href="https://styleforage.com/sitemap.xml" />

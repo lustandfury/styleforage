@@ -15,6 +15,12 @@ const DEFAULT_MANIFEST = {
   ],
 } as const;
 
+/** Get Referer from event (header name is case-insensitive) */
+function getReferer(headers: Record<string, string | undefined>): string | undefined {
+  const key = Object.keys(headers).find((k) => k.toLowerCase() === 'referer');
+  return key ? headers[key] : headers.referer ?? headers.Referer;
+}
+
 /** Extract lookbook slug from Referer path (e.g. .../lookbook/lindsey-coulter -> lindsey-coulter) */
 function slugFromReferer(referer: string | undefined): string | null {
   if (!referer) return null;
@@ -44,7 +50,7 @@ const handler: Handler = async (event: HandlerEvent) => {
   }
 
   const slugFromQuery = event.queryStringParameters?.slug?.trim();
-  const slugFromRef = slugFromReferer(event.headers.referer ?? event.headers.Referer);
+  const slugFromRef = slugFromReferer(getReferer(event.headers as Record<string, string | undefined>));
   const slug = slugFromQuery ?? slugFromRef ?? null;
   const startUrl = slug ? `/lookbook/${encodeURIComponent(slug)}` : '/';
 
