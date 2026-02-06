@@ -10,9 +10,14 @@ interface Lookbook {
 }
 
 /**
- * CMS Auth - Validates a lookbook code and returns the slug
+ * CMS Auth - Validates admin or lookbook codes
  * POST /api/cms-auth
- * Body: { code: string }
+ * Body: { code?: string, passcode?: string, type?: 'admin' }
+ * 
+ * For admin auth: { passcode: string, type: 'admin' }
+ * Returns: { success: true } or error
+ * 
+ * For lookbook login: { code: string }
  * Returns: { slug: string, clientName: string } or error
  */
 const handler: Handler = async (event: HandlerEvent) => {
@@ -26,7 +31,43 @@ const handler: Handler = async (event: HandlerEvent) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const code = body.code?.trim();
+    
+    // Handle admin authentication
+    if (body.type === 'admin') {
+      const passcode = body.passcode?.trim();
+      const envAdminPasscode = process.env.ADMIN_PASSCODE;
+      
+      if (!passcode) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Passcode is required' }),
+        };
+      }
+      
+      if (!envAdminPasscode) {
+        console.error('ADMIN_PASSCODE environment variable not set');
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Server configuration error' }),
+        };
+      }
+      
+      if (passcode === envAdminPasscode) {
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ success: true }),
+        };
+      } else {
+        return {
+          statusCode: 401,
+          body: JSON.stringify({ error: 'Invalid code' }),
+        };
+      }
+    }
+    
+    // Handle lookbook login (code or passcode field)
+    const code = (body.code || body.passcode)?.trim();
 
     if (!code) {
       return {
