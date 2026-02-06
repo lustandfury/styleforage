@@ -19,6 +19,9 @@ export default async function handler(request: Request, context: Context) {
   
   const slug = match[1];
   
+  // Format slug as title (e.g. "lindsey-coulter" -> "Lindsey Coulter")
+  const lookbookTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  
   // Get the original response (index.html via SPA fallback)
   const response = await context.next();
   
@@ -29,17 +32,23 @@ export default async function handler(request: Request, context: Context) {
   }
   
   // Read the HTML body
-  const html = await response.text();
+  let html = await response.text();
   
   // Rewrite the manifest link to include the slug
   // Matches: href="/manifest.json" or href='/manifest.json' (with or without id)
-  const modifiedHtml = html.replace(
+  html = html.replace(
     /(<link[^>]*rel=["']manifest["'][^>]*href=["'])\/manifest\.json(["'][^>]*>)/gi,
     `$1/manifest.json?slug=${encodeURIComponent(slug)}$2`
   );
   
+  // Rewrite the apple-mobile-web-app-title to use the lookbook name
+  html = html.replace(
+    /(<meta[^>]*name=["']apple-mobile-web-app-title["'][^>]*content=["'])[^"']*?(["'][^>]*>)/gi,
+    `$1${lookbookTitle}$2`
+  );
+  
   // Return the modified response with the same headers
-  return new Response(modifiedHtml, {
+  return new Response(html, {
     status: response.status,
     headers: response.headers,
   });

@@ -305,16 +305,49 @@ export const Lookbook: React.FC = () => {
   const passcodeKey = `${PASSCODE_KEY_PREFIX}${slug}`;
 
   // Point manifest at current lookbook so Add to Home Screen opens this lookbook URL
+  // Uses blob URL approach for better iOS compatibility
   useEffect(() => {
     const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    const appleTitle = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');
     if (!link) return;
+    
+    let blobUrl: string | null = null;
+    
     if (slug) {
-      link.href = `/manifest.json?slug=${encodeURIComponent(slug)}`;
+      const title = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const startUrl = `/lookbook/${slug}`;
+      
+      const manifest = {
+        id: `styleforage-lookbook-${slug}`,
+        name: `Lookbook - ${title}`,
+        short_name: title,
+        description: 'Your personalized style lookbook by Roz',
+        start_url: startUrl,
+        scope: startUrl,
+        display: 'standalone',
+        background_color: '#FAF9F7',
+        theme_color: '#1c1917',
+        orientation: 'portrait-primary',
+        icons: [
+          { src: '/images/favicon.png', sizes: '32x32', type: 'image/png' },
+          { src: '/images/app-icon.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' }
+        ]
+      };
+      
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      blobUrl = URL.createObjectURL(blob);
+      link.href = blobUrl;
+      
+      if (appleTitle) appleTitle.content = title;
+      
       return () => {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
         link.href = '/manifest.json';
+        if (appleTitle) appleTitle.content = 'Style Forage';
       };
     } else {
       link.href = '/manifest.json';
+      if (appleTitle) appleTitle.content = 'Style Forage';
     }
   }, [slug]);
 

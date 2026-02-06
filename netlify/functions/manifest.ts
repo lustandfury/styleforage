@@ -1,10 +1,6 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 
-const DEFAULT_MANIFEST = {
-  name: 'Style Forage Lookbook',
-  short_name: 'Style Forage',
-  description: 'Your personalized style lookbook by Roz',
-  start_url: '/',
+const BASE_MANIFEST = {
   display: 'standalone',
   background_color: '#FAF9F7',
   theme_color: '#1c1917',
@@ -52,11 +48,22 @@ const handler: Handler = async (event: HandlerEvent) => {
   const slugFromQuery = event.queryStringParameters?.slug?.trim();
   const slugFromRef = slugFromReferer(getReferer(event.headers as Record<string, string | undefined>));
   const slug = slugFromQuery ?? slugFromRef ?? null;
+
+  // Build manifest with lookbook-specific values if slug is present
   const startUrl = slug ? `/lookbook/${encodeURIComponent(slug)}` : '/';
+  const scope = slug ? `/lookbook/${encodeURIComponent(slug)}` : '/';
+  const id = slug ? `styleforage-lookbook-${slug}` : 'styleforage';
+  const name = slug ? `Lookbook - ${slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : 'Style Forage Lookbook';
+  const shortName = slug ? slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Style Forage';
 
   const manifest = {
-    ...DEFAULT_MANIFEST,
+    ...BASE_MANIFEST,
+    id,
+    name,
+    short_name: shortName,
+    description: 'Your personalized style lookbook by Roz',
     start_url: startUrl,
+    scope,
   };
 
   return {

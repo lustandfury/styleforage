@@ -64,16 +64,47 @@
     <!-- iOS Web App meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Style Forage" />
+    <meta name="apple-mobile-web-app-title" content="Style Forage" id="apple-title" />
 
-    <!-- PWA Manifest - slug set by script when on /lookbook/:slug so Install opens that lookbook -->
+    <!-- PWA Manifest - dynamically created as blob URL for lookbook pages -->
     <link rel="manifest" href="/manifest.json" id="pwamanifest" />
     <script>
       (function() {
-        var m = /^\/lookbook\/([^/?#]+)/.exec(window.location.pathname);
-        if (m) {
-          var link = document.getElementById('pwamanifest') || document.querySelector('link[rel="manifest"]');
-          if (link) link.href = '/manifest.json?slug=' + encodeURIComponent(m[1]);
+        var match = /^\/lookbook\/([^/?#]+)/.exec(window.location.pathname);
+        if (match) {
+          var slug = match[1];
+          var title = slug.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+          var startUrl = '/lookbook/' + slug;
+          
+          // Create dynamic manifest with correct start_url for this lookbook
+          var manifest = {
+            id: 'styleforage-lookbook-' + slug,
+            name: 'Lookbook - ' + title,
+            short_name: title,
+            description: 'Your personalized style lookbook by Roz',
+            start_url: startUrl,
+            scope: startUrl,
+            display: 'standalone',
+            background_color: '#FAF9F7',
+            theme_color: '#1c1917',
+            orientation: 'portrait-primary',
+            icons: [
+              { src: '/images/favicon.png', sizes: '32x32', type: 'image/png' },
+              { src: '/images/app-icon.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' }
+            ]
+          };
+          
+          // Create blob URL for manifest (avoids caching issues)
+          var blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+          var manifestUrl = URL.createObjectURL(blob);
+          
+          // Set manifest link to blob URL
+          var link = document.getElementById('pwamanifest');
+          if (link) link.href = manifestUrl;
+          
+          // Update iOS title meta tag
+          var appleTitle = document.getElementById('apple-title');
+          if (appleTitle) appleTitle.content = title;
         }
       })();
     </script>
