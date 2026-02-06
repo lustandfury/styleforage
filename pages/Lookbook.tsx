@@ -823,26 +823,26 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
     }
   }, [currentIndex, isTransitioning]);
 
-  // Touch handlers
+  // Touch handlers: horizontal swipe (left = next, right = prev) on mobile
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientY);
+    setTouchStart(e.targetTouches[0].clientX);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientY);
+    setTouchEnd(e.targetTouches[0].clientX);
   };
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     
     const distance = touchStart - touchEnd;
-    const isUpSwipe = distance > minSwipeDistance;
-    const isDownSwipe = distance < -minSwipeDistance;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isUpSwipe) {
+    if (isLeftSwipe) {
       goToNext();
-    } else if (isDownSwipe) {
+    } else if (isRightSwipe) {
       goToPrev();
     }
   };
@@ -863,17 +863,17 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [goToNext, goToPrev]);
 
-  // Tap navigation (tap top third = prev, tap bottom third = next)
+  // Tap navigation: left third = prev, right third = next (horizontal, matches swipe)
   const handleTap = (e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const clickY = e.clientY - rect.top;
-    const thirdHeight = rect.height / 3;
+    const clickX = e.clientX - rect.left;
+    const thirdWidth = rect.width / 3;
 
-    if (clickY < thirdHeight) {
+    if (clickX < thirdWidth) {
       goToPrev();
-    } else if (clickY > thirdHeight * 2) {
+    } else if (clickX > thirdWidth * 2) {
       goToNext();
     }
   };
@@ -1259,14 +1259,14 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
 
   return (
     <>
-      {/* Mobile Layout - gallery scrolls; caption always anchored to bottom of screen */}
+      {/* Mobile Layout - horizontal slide (swipe left/right to cycle) */}
       <div
         className={`md:hidden absolute inset-0 transition-all duration-300 ease-out flex flex-col min-h-0 ${
           isActive
-            ? 'opacity-100 scale-100 translate-y-0'
+            ? 'opacity-100 scale-100 translate-x-0'
             : isPrev
-            ? 'opacity-0 scale-95 -translate-y-full'
-            : 'opacity-0 scale-95 translate-y-full'
+            ? 'opacity-0 scale-95 -translate-x-full'
+            : 'opacity-0 scale-95 translate-x-full'
         }`}
       >
         {/* Scrollable gallery only */}
