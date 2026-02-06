@@ -151,6 +151,8 @@ const handler: Handler = async (event: HandlerEvent) => {
     const entryId = fields.entryId; // Optional - for replacing or adding to entry
     const addPhoto = fields.addPhoto === 'true'; // If true with entryId, add photo to entry (don't replace)
     const season = fields.season as Season | undefined;
+    
+    console.log(`[cms-upload] Parsed fields:`, { slug, entryId, addPhoto, hasImage: !!imageFile, title: title?.substring(0, 20) });
 
     if (!slug) {
       return {
@@ -197,11 +199,45 @@ const handler: Handler = async (event: HandlerEvent) => {
     // Read current entries for this lookbook
     const entriesData = await store.get(`entries/${slug}`, { type: 'json' });
     const entries: EditorialEntry[] = entriesData || [];
+    console.log(`[cms-upload] Read ${entries.length} entries for slug ${slug}, entryId: ${entryId || 'none'}, addPhoto: ${addPhoto}`);
 
     // Add photo to existing entry (append to imageKeys)
     if (entryId && addPhoto) {
-      const entryIndex = entries.findIndex(e => e.id === entryId);
+      console.log(`[cms-upload] Adding photo to entry ${entryId}, entries count: ${entries.length}`);
+      console.log(`[cms-upload] Entry IDs in list:`, entries.map(e => e.id));
+      
+      // Find the entry, with retry for eventual consistency
+      let entryIndex = entries.findIndex(e => e.id === entryId);
+      
+      // If not found, wait and retry once (eventual consistency in Netlify Blobs)
       if (entryIndex === -1) {
+        console.log(`[cms-upload] Entry not found on first try, waiting 500ms and retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const retriedData = await store.get(`entries/${slug}`, { type: 'json' });
+        const retriedEntries: EditorialEntry[] = retriedData || [];
+        console.log(`[cms-upload] After retry: ${retriedEntries.length} entries`);
+        
+        entryIndex = retriedEntries.findIndex(e => e.id === entryId);
+        if (entryIndex !== -1) {
+          // Found on retry - use the retried entries
+          const entry = retriedEntries[entryIndex];
+          const newImageKey = `images/${entryId}-${Date.now()}`;
+
+          await store.setWithMetadata(newImageKey, imageData, { contentType: imageContentType });
+
+          const currentKeys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
+          entry.imageKeys = [...currentKeys, newImageKey];
+
+          await store.setJSON(`entries/${slug}`, retriedEntries);
+
+          return {
+            statusCode: 200,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry),
+          };
+        }
+        
+        console.error(`[cms-upload] Entry ${entryId} not found after retry in ${retriedEntries.length} entries for slug ${slug}`);
         return {
           statusCode: 404,
           body: JSON.stringify({ error: 'Entry not found' }),
@@ -286,6 +322,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     // Add to entries and save
     entries.push(newEntry);
     await store.setJSON(`entries/${slug}`, entries);
+    console.log(`[cms-upload] Saved ${entries.length} entries for slug ${slug}, new entry ID: ${id}`);
 
     return {
       statusCode: 200,

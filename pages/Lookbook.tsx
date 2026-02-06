@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, ArrowLeft, Check, Square, CheckSquare, SlidersHorizontal, Link2, Lightbulb, Share, Plus, MoreVertical, Smartphone } from 'lucide-react';
+import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, Check, Square, CheckSquare, SlidersHorizontal, Link2, Lightbulb, Share, Plus, MoreVertical, Smartphone } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { normalizePastedText } from '../utils/normalizeText';
 
@@ -1544,13 +1544,7 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
       <header className="bg-white border-b border-stone-100 flex-shrink-0 z-10">
         <div className="px-4 py-4 flex items-center justify-between max-w-2xl mx-auto">
           <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              className="p-1 text-stone-500 hover:text-sage-600 transition-colors cursor-pointer"
-              aria-label="Back to lookbook"
-            >
-              <ArrowLeft size={20} />
-            </button>
+            <ShoppingBag size={20} className="text-sage-600" />
             <div>
               <h1 className="font-serif text-lg text-stone-900">Shopping List</h1>
               {clientName && (
@@ -1558,11 +1552,19 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 text-stone-400">
-            <ShoppingBag size={18} />
-            <span className="text-sm font-medium">
-              {uncheckedItems.length} of {items.length} remaining
-            </span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-stone-400">
+              <span className="text-sm font-medium">
+                {uncheckedItems.length} of {items.length} remaining
+              </span>
+            </div>
+            <button
+              onClick={onBack}
+              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
           </div>
         </div>
       </header>
@@ -1753,13 +1755,7 @@ const ShoppingLinksView: React.FC<ShoppingLinksViewProps> = ({ links, clientName
       <header className="bg-white border-b border-stone-100 flex-shrink-0 z-10">
         <div className="px-4 py-4 flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              className="p-1 text-stone-500 hover:text-sage-600 transition-colors cursor-pointer"
-              aria-label="Back to lookbook"
-            >
-              <ArrowLeft size={20} />
-            </button>
+            <Link2 size={20} className="text-sage-600" />
             <div>
               <h1 className="font-serif text-lg text-stone-900">Shop Links</h1>
               {clientName && (
@@ -1767,9 +1763,17 @@ const ShoppingLinksView: React.FC<ShoppingLinksViewProps> = ({ links, clientName
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 text-stone-400">
-            <Link2 size={18} />
-            <span className="text-sm font-medium">{links.length} links</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-stone-400">
+              <span className="text-sm font-medium">{links.length} links</span>
+            </div>
+            <button
+              onClick={onBack}
+              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
           </div>
         </div>
       </header>
