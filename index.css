@@ -122,9 +122,15 @@ html, body {
   vertical-align: bottom;
 }
 
-/* Mobile only: 2 images per row (class applied in Lookbook mobile layout) */
-.lookbook-gallery-grid.mobile-two-cols {
-  grid-template-columns: repeat(2, 1fr);
+/* Mobile only: stack images vertically for larger viewing */
+.lookbook-gallery-grid.mobile-stacked {
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
+}
+.lookbook-gallery-grid.mobile-stacked img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 /* Single image: fill full height (and width) of gallery container */

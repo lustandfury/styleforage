@@ -1300,9 +1300,9 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
             : 'opacity-0 scale-95 translate-x-full'
         }`}
       >
-        {/* Scrollable gallery only */}
+        {/* Scrollable gallery - stacks vertically for multiple images */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-stone-900">
-          <div className={`relative w-full flex items-center justify-center ${imageUrls.length === 1 ? 'h-[60vh] min-h-[60vh]' : 'min-h-[30vh]'}`}>
+          <div className={`relative w-full ${imageUrls.length === 1 ? 'h-[60vh] min-h-[60vh] flex items-center justify-center' : ''}`}>
             {imageLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-stone-800 min-h-[50vh]">
                 <div className="h-8 w-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1314,7 +1314,7 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
               </div>
             )}
             {imageUrls.length > 0 && !imageLoading && (
-              <div className={`lookbook-gallery-grid mobile-two-cols w-full p-1 ${imageUrls.length === 1 ? 'single-image h-full min-h-0' : ''}`}>
+              <div className={`lookbook-gallery-grid w-full p-1 ${imageUrls.length === 1 ? 'single-image h-full min-h-0' : 'mobile-stacked'}`}>
                 {imageUrls.map((url, i) => (
                   <img
                     key={i}
