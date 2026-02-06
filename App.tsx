@@ -10,6 +10,7 @@ const Contact = lazy(() => import('./pages/Contact').then(module => ({ default: 
 const BookingPage = lazy(() => import('./pages/BookingPage').then(module => ({ default: module.BookingPage })));
 const Admin = lazy(() => import('./pages/Admin').then(module => ({ default: module.Admin })));
 const Lookbook = lazy(() => import('./pages/Lookbook').then(module => ({ default: module.Lookbook })));
+const LookbookLogin = lazy(() => import('./pages/LookbookLogin').then(module => ({ default: module.LookbookLogin })));
 const AiStylist = lazy(() => import('./components/AiStylist').then(module => ({ default: module.AiStylist })));
 
 /** Set to true to show the AI Stylist chat on non-booking pages */
@@ -43,7 +44,7 @@ const AppLayout = () => {
   const isBookingFlow = location.pathname.startsWith('/book/');
   // Admin and Lookbook pages have their own layouts without main site chrome
   const isAdminPage = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
-  const isLookbookPage = location.pathname.startsWith('/lookbook/');
+  const isLookbookPage = location.pathname === '/lookbook' || location.pathname.startsWith('/lookbook/');
   const isStandalonePage = isBookingFlow || isAdminPage || isLookbookPage;
   // Home page has hero that extends behind the header, so no padding needed
   const isHomePage = location.pathname === '/';
@@ -64,6 +65,7 @@ const AppLayout = () => {
             <Route path="/book/:serviceId" element={<BookingPage />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/:slug" element={<Admin />} />
+            <Route path="/lookbook" element={<LookbookLogin />} />
             <Route path="/lookbook/:slug" element={<Lookbook />} />
           </Routes>
         </Suspense>

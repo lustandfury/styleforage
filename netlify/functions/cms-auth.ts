@@ -1,26 +1,19 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
 
-type Season = 'spring' | 'summer' | 'fall' | 'winter';
-
 interface Lookbook {
   id: string;
   slug: string;
   clientName: string;
-  title?: string;
-  description?: string;
   passcode: string;
-  season?: Season;
   createdAt: string;
 }
 
 /**
- * CMS Auth - Validates passcodes for admin and view access
+ * CMS Auth - Validates a lookbook code and returns the slug
  * POST /api/cms-auth
- * Body: { passcode: string, type: 'admin' | 'view', slug?: string }
- * 
- * For admin: validates against ADMIN_PASSCODE env var
- * For view: validates against the specific lookbook's passcode (requires slug)
+ * Body: { code: string }
+ * Returns: { slug: string, clientName: string } or error
  */
 const handler: Handler = async (event: HandlerEvent) => {
   // Only allow POST requests
@@ -33,121 +26,53 @@ const handler: Handler = async (event: HandlerEvent) => {
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { passcode, type, slug } = body;
+    const code = body.code?.trim();
 
-    if (!passcode || typeof passcode !== 'string') {
+    if (!code) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Passcode is required' }),
+        body: JSON.stringify({ error: 'Code is required' }),
       };
     }
 
-    if (type !== 'admin' && type !== 'view') {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Type must be "admin" or "view"' }),
-      };
+    const store = getStorage('cms-editorial', event);
+
+    // Get all lookbooks
+    const lookbooksData = await store.get('lookbooks', { type: 'json' });
+    const lookbooks: Lookbook[] = lookbooksData || [];
+
+    // Try to find a lookbook by passcode (case-insensitive)
+    let lookbook = lookbooks.find(
+      l => l.passcode.toLowerCase() === code.toLowerCase()
+    );
+
+    // If not found by passcode, try by slug (case-insensitive)
+    if (!lookbook) {
+      lookbook = lookbooks.find(
+        l => l.slug.toLowerCase() === code.toLowerCase()
+      );
     }
 
-    // Admin authentication - uses env var
-    if (type === 'admin') {
-      const adminPasscode = process.env.ADMIN_PASSCODE;
-      
-      if (!adminPasscode) {
-        console.error('ADMIN_PASSCODE is not configured');
-        return {
-          statusCode: 500,
-          body: JSON.stringify({ error: 'Admin access not configured' }),
-        };
-      }
-
-      if (passcode === adminPasscode) {
-        return {
-          statusCode: 200,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ success: true, type: 'admin' }),
-        };
-      }
-
+    if (!lookbook) {
       return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Invalid code' }),
-      };
-    }
-
-    // View authentication - uses lookbook-specific passcode
-    if (type === 'view') {
-      if (!slug || typeof slug !== 'string') {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ error: 'Lookbook slug is required for view access' }),
-        };
-      }
-
-      // Get lookbooks to find the passcode
-      const store = getStorage('cms-editorial', event);
-      const lookbooksData = await store.get('lookbooks', { type: 'json' });
-      const lookbooks: Lookbook[] = lookbooksData || [];
-
-      const lookbook = lookbooks.find(l => l.slug === slug);
-      
-      if (!lookbook) {
-        return {
-          statusCode: 404,
-          body: JSON.stringify({ error: 'Lookbook not found' }),
-        };
-      }
-
-      if (passcode === lookbook.passcode) {
-        // Find all lookbooks with the same passcode (for season switching)
-        const relatedLookbooks = lookbooks
-          .filter(l => l.passcode === lookbook.passcode)
-          .map(l => ({
-            slug: l.slug,
-            clientName: l.clientName,
-            season: l.season,
-          }))
-          .sort((a, b) => {
-            // Sort by season order: spring, summer, fall, winter
-            const seasonOrder: Record<string, number> = { spring: 0, summer: 1, fall: 2, winter: 3 };
-            const aOrder = a.season ? seasonOrder[a.season] ?? 4 : 4;
-            const bOrder = b.season ? seasonOrder[b.season] ?? 4 : 4;
-            return aOrder - bOrder;
-          });
-
-        return {
-          statusCode: 200,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            success: true, 
-            type: 'view',
-            lookbook: {
-              slug: lookbook.slug,
-              clientName: lookbook.clientName,
-              title: lookbook.title,
-              description: lookbook.description,
-              season: lookbook.season,
-            },
-            relatedLookbooks,
-          }),
-        };
-      }
-
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Invalid code' }),
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Invalid code. Please check and try again.' }),
       };
     }
 
     return {
-      statusCode: 401,
-      body: JSON.stringify({ error: 'Invalid code' }),
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: lookbook.slug,
+        clientName: lookbook.clientName,
+      }),
     };
   } catch (error) {
     console.error('Auth error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Authentication failed' }),
+      body: JSON.stringify({ error: 'Something went wrong. Please try again.' }),
     };
   }
 };
