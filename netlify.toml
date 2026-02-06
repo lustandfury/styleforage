@@ -18,3 +18,10 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+# Dynamic PWA manifest so Add to Home Screen from a lookbook uses that lookbook URL
+[[redirects]]
+  from = "/manifest.json"
+  to = "/.netlify/functions/manifest"
+  status = 200
+  force = true

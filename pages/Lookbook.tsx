@@ -304,6 +304,20 @@ export const Lookbook: React.FC = () => {
 
   const passcodeKey = `${PASSCODE_KEY_PREFIX}${slug}`;
 
+  // Point manifest at current lookbook so Add to Home Screen opens this lookbook URL
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if (!link) return;
+    if (slug) {
+      link.href = `/manifest.json?slug=${encodeURIComponent(slug)}`;
+      return () => {
+        link.href = '/manifest.json';
+      };
+    } else {
+      link.href = '/manifest.json';
+    }
+  }, [slug]);
+
   // Check for stored passcode on mount
   useEffect(() => {
     if (!slug) return;
