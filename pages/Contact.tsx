@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Mail, Instagram, Send } from 'lucide-react';
+import { Instagram, Send } from 'lucide-react';
 import { FadeInOnScroll } from '../components/FadeInOnScroll';
 import { Button } from '../components/ui/Button';
 
@@ -53,7 +53,7 @@ export const Contact: React.FC = () => {
             </h1>
             <div className="h-1.5 w-24 bg-sage-500 rounded-full mb-6 md:mb-8" />
             <p className="text-stone-600 text-base md:text-lg leading-relaxed mb-10 md:mb-12">
-              Have a question or ready to book? Send a message below, or reach out by email or Instagram. I’d love to hear from you.
+              Have a question or ready to book? Send a message below, or reach out on Instagram. I’d love to hear from you.
             </p>
 
             <form
@@ -137,7 +137,7 @@ export const Contact: React.FC = () => {
               )}
               {status === 'error' && (
                 <p className="mt-4 text-sm font-medium text-red-600" role="alert">
-                  Something went wrong. Please try again or email hello@styleforage.com directly.
+                  Something went wrong. Please try again.
                 </p>
               )}
               <Button
@@ -151,20 +151,7 @@ export const Contact: React.FC = () => {
               </Button>
             </form>
 
-            <p className="text-stone-500 text-sm mb-6">Or reach out directly:</p>
             <div className="space-y-6 md:space-y-8">
-              <a
-                href="mailto:hello@styleforage.com"
-                className="flex items-center gap-4 p-4 md:p-6 rounded-2xl bg-white border border-stone-100 shadow-sm hover:shadow-md hover:border-sage-200 transition-all group"
-              >
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sage-100 text-sage-700 group-hover:bg-sage-200 transition-colors">
-                  <Mail size={24} aria-hidden />
-                </span>
-                <div>
-                  <span className="block font-medium text-stone-900 mb-0.5">Email</span>
-                  <span className="text-stone-600 text-sm md:text-base">hello@styleforage.com</span>
-                </div>
-              </a>
 
               <a
                 href="https://instagram.com/styleforage"
