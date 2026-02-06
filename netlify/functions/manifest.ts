@@ -15,11 +15,24 @@ const DEFAULT_MANIFEST = {
   ],
 } as const;
 
+/** Extract lookbook slug from Referer path (e.g. .../lookbook/lindsey-coulter -> lindsey-coulter) */
+function slugFromReferer(referer: string | undefined): string | null {
+  if (!referer) return null;
+  try {
+    const path = new URL(referer).pathname;
+    const match = path.match(/^\/lookbook\/([^/?#]+)/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Serves the PWA manifest with an optional lookbook start_url.
- * GET /manifest.json         -> start_url: "/"
- * GET /manifest.json?slug=xx -> start_url: "/lookbook/xx"
- * Used so "Add to Home Screen" from a lookbook page opens that lookbook.
+ * - Query ?slug=xx     -> start_url: "/lookbook/xx"
+ * - Referer from /lookbook/xx -> start_url: "/lookbook/xx" (browser often fetches manifest with page URL as Referer)
+ * - Otherwise          -> start_url: "/"
+ * Used so "Install app" / Add to Home Screen from a lookbook page opens that lookbook.
  */
 const handler: Handler = async (event: HandlerEvent) => {
   if (event.httpMethod !== 'GET') {
@@ -30,7 +43,9 @@ const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
-  const slug = event.queryStringParameters?.slug?.trim();
+  const slugFromQuery = event.queryStringParameters?.slug?.trim();
+  const slugFromRef = slugFromReferer(event.headers.referer ?? event.headers.Referer);
+  const slug = slugFromQuery ?? slugFromRef ?? null;
   const startUrl = slug ? `/lookbook/${encodeURIComponent(slug)}` : '/';
 
   const manifest = {
@@ -42,7 +57,8 @@ const handler: Handler = async (event: HandlerEvent) => {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/manifest+json',
-      'Cache-Control': 'public, max-age=0',
+      'Cache-Control': 'no-store, max-age=0',
+      'Vary': 'Referer',
     },
     body: JSON.stringify(manifest),
   };
