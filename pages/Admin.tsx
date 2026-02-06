@@ -442,10 +442,8 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
   const [newClientName, setNewClientName] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
-  const [newSeason, setNewSeason] = useState<Season>(getCurrentSeason());
   const [isCreating, setIsCreating] = useState(false);
   const [shareLookbook, setShareLookbook] = useState<Lookbook | null>(null);
-  const [selectedSeasonFilter, setSelectedSeasonFilter] = useState<Season | 'all'>('all');
 
   useEffect(() => {
     fetchLookbooks();
@@ -490,8 +488,7 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
         body: JSON.stringify({ 
           clientName: newClientName.trim(), 
           title: newTitle.trim() || undefined,
-          description: newDescription.trim() || undefined,
-          season: newSeason 
+          description: newDescription.trim() || undefined 
         }),
       });
 
@@ -500,7 +497,6 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
         setLookbooks([newLookbook, ...lookbooks]);
         setNewTitle('');
         setNewDescription('');
-        setNewSeason(getCurrentSeason());
         setNewClientName('');
         setShowCreateForm(false);
       } else {
@@ -603,34 +599,13 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
                   placeholder="A curated collection of looks for the new season…"
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
-                  Season
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {SEASON_ORDER.map((season) => (
-                    <button
-                      key={season}
-                      type="button"
-                      onClick={() => setNewSeason(season)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                        newSeason === season
-                          ? 'bg-sage-500 text-white'
-                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                      }`}
-                    >
-                      {SEASON_LABELS[season]}
-                    </button>
-                  ))}
-                </div>
-              </div>
               <div className="flex gap-2">
                 <Button type="submit" variant="primary" size="md" className="rounded-full" disabled={!newClientName.trim() || isCreating}>
                   {isCreating ? 'Creating…' : 'Create Lookbook'}
                 </Button>
                 <button
                   type="button"
-                  onClick={() => { setShowCreateForm(false); setNewClientName(''); setNewTitle(''); setNewDescription(''); setNewSeason(getCurrentSeason()); }}
+                  onClick={() => { setShowCreateForm(false); setNewClientName(''); setNewTitle(''); setNewDescription(''); }}
                   className="px-4 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 transition-colors cursor-pointer"
                 >
                   Cancel
@@ -657,37 +632,11 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
 
         {/* Lookbooks List */}
         <section>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="font-serif text-base md:text-lg text-stone-900 flex items-center gap-2">
               <FolderOpen size={18} className="text-stone-400" />
               Client Lookbooks {lookbooks.length > 0 && <span className="text-stone-400">({lookbooks.length})</span>}
             </h2>
-            {/* Season Filter */}
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => setSelectedSeasonFilter('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                  selectedSeasonFilter === 'all'
-                    ? 'bg-stone-800 text-white'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                }`}
-              >
-                All
-              </button>
-              {SEASON_ORDER.map((season) => (
-                <button
-                  key={season}
-                  onClick={() => setSelectedSeasonFilter(season)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                    selectedSeasonFilter === season
-                      ? 'bg-stone-800 text-white'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                  }`}
-                >
-                  {SEASON_LABELS[season]}
-                </button>
-              ))}
-            </div>
           </div>
 
           {isLoading ? (
@@ -699,9 +648,7 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
             </div>
           ) : (
             <div className="space-y-3">
-              {lookbooks
-                .filter((lookbook) => selectedSeasonFilter === 'all' || lookbook.season === selectedSeasonFilter)
-                .map((lookbook) => (
+              {lookbooks.map((lookbook) => (
                 <div
                   key={lookbook.id}
                   className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm hover:border-sage-200 hover:shadow-md transition-all cursor-pointer"
@@ -710,14 +657,7 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-stone-900 text-base">{lookbook.clientName}</h3>
-                        {lookbook.season && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-sage-50 text-sage-700">
-                            {SEASON_LABELS[lookbook.season]}
-                          </span>
-                        )}
-                      </div>
+                      <h3 className="font-medium text-stone-900 text-base">{lookbook.clientName}</h3>
                       <p className="text-stone-400 text-sm mt-0.5">
                         /lookbook/{lookbook.slug}
                       </p>
