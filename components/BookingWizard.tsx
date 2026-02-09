@@ -117,7 +117,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
               <h4 className="font-serif font-bold text-lg sm:text-xl text-stone-900 mb-3 md:mb-4">{service.title}</h4>
               <p className="text-stone-500 text-sm mb-4 md:mb-6 line-clamp-2">{service.description}</p>
               <span
-                className={`block w-full py-3 px-4 sm:px-6 min-h-[48px] flex items-center justify-center rounded-full font-medium text-sm sm:text-base border-2 border-stone-900 transition-colors duration-300 ${
+                className={`block w-full py-2.5 px-4 sm:px-6 min-h-[44px] flex items-center justify-center rounded-full font-medium text-sm sm:text-base border-2 border-stone-900 transition-colors duration-300 ${
                   isHovered ? 'bg-stone-900 text-white' : 'bg-transparent text-stone-900'
                 }`}
               >
@@ -201,7 +201,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                           )}
                           {saleActive && (
                             <p className="mt-1.5" aria-live="polite">
-                              <span className="inline-flex flex-col gap-1.5 rounded-md bg-sage-100 px-3 py-2 font-medium text-sage-900 ring-1 ring-sage-500/40 text-[10px] sm:text-xs">
+                              <span className="inline-flex flex-col gap-1.5 rounded-md bg-sage-100 px-3 py-1.5 font-medium text-sage-900 ring-1 ring-sage-500/40 text-[10px] sm:text-xs">
                                 <span>{SALE_OFFER_LABEL}</span>
                                 <span className="flex items-center gap-1.5 shrink-0">
                                   <Clock size={12} className="text-sage-600" aria-hidden />
@@ -317,7 +317,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                           )}
                           {saleActive && (
                             <p className="mt-2 md:mt-2.5" aria-live="polite">
-                              <span className="inline-flex flex-col gap-2 rounded-md bg-sage-100 px-4 py-2.5 font-medium text-sage-900 ring-1 ring-sage-500/40 text-xs">
+                              <span className="inline-flex flex-col gap-2 rounded-md bg-sage-100 px-4 py-2 font-medium text-sage-900 ring-1 ring-sage-500/40 text-xs">
                                 <span>{SALE_OFFER_LABEL}</span>
                                 <span className="flex items-center gap-1.5 shrink-0">
                                   <Clock size={12} className="text-sage-600" aria-hidden />
@@ -467,7 +467,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                               aria-label={`${isSelected ? 'Deselect' : 'Select'} ${slot.time}${isDisabled ? ' (unavailable)' : ''}`}
                               aria-pressed={isSelected}
                               className={`
-                                min-h-[44px] py-3 px-3 sm:px-4 rounded-full text-sm font-medium border-2 transition-all touch-manipulation
+                                min-h-[40px] py-2.5 px-3 sm:px-4 rounded-full text-sm font-medium border-2 transition-all touch-manipulation
                                 ${isSelected 
                                   ? 'border-stone-900 bg-white text-stone-900 cursor-pointer' 
                                   : isDisabled
@@ -492,7 +492,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                     {/* Book Button — full width, touch-friendly */}
                     <Button 
                       size="lg"
-                      className="w-full rounded-full py-4 min-h-[48px] touch-manipulation"
+                      className="w-full rounded-full py-3 min-h-[44px] touch-manipulation"
                       disabled={!state.selectedDate || state.selectedTimes.length === 0}
                       onClick={() => setState(s => ({ ...s, step: 'details' }))}
                     >
@@ -520,7 +520,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                     type="text" 
                     required
                     aria-required="true"
-                    className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 text-base sm:text-lg min-h-[48px]"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-3.5 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 text-base sm:text-lg min-h-[44px]"
                     placeholder="Jane Doe"
                     value={state.customerDetails.name}
                     onChange={(e) => setState(s => ({...s, customerDetails: {...s.customerDetails, name: e.target.value}}))}
@@ -534,7 +534,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                       type="email" 
                       required
                       aria-required="true"
-                      className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 min-h-[48px]"
+                      className="w-full px-4 sm:px-6 py-3 sm:py-3.5 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 min-h-[44px]"
                       placeholder="jane@example.com"
                       value={state.customerDetails.email}
                       onChange={(e) => setState(s => ({...s, customerDetails: {...s.customerDetails, email: e.target.value}}))}
@@ -547,7 +547,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                       type="tel" 
                       required
                       aria-required="true"
-                      className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 min-h-[48px]"
+                      className="w-full px-4 sm:px-6 py-3 sm:py-3.5 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 min-h-[44px]"
                       placeholder="(555) 000-0000"
                       value={state.customerDetails.phone}
                       onChange={(e) => setState(s => ({...s, customerDetails: {...s.customerDetails, phone: e.target.value}}))}
@@ -559,7 +559,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                 <textarea 
                     id="customer-notes"
                     rows={4}
-                    className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 resize-none min-h-[100px]"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-3.5 bg-stone-50 text-stone-900 border-2 border-stone-50 rounded-xl md:rounded-2xl focus:bg-white focus:ring-2 focus:ring-sage-500 focus:border-sage-500 focus:outline-none transition-all placeholder:text-stone-300 resize-none min-h-[96px]"
                     placeholder="E.g. I need help dressing for a new career path..."
                     value={state.customerDetails.notes}
                     onChange={(e) => setState(s => ({...s, customerDetails: {...s.customerDetails, notes: e.target.value}}))}

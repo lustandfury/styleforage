@@ -152,6 +152,15 @@ interface LinkPreview {
   favicon?: string;
 }
 
+interface LinkCard {
+  id: string;
+  title: string;
+  description: string;
+  links: { url: string; linkPreview?: LinkPreview }[];
+  order: number;
+  createdAt: string;
+}
+
 type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'footwear' | 'outerwear' | 'uncategorized';
 
 const CATEGORY_LABELS: Record<ShoppingCategory, string> = {
@@ -790,12 +799,26 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [editingTipId, setEditingTipId] = useState<string | null>(null);
   const [editTipText, setEditTipText] = useState('');
 
+  // LinkCards state
+  const [linkCards, setLinkCards] = useState<LinkCard[]>([]);
+  const [isLoadingLinkCards, setIsLoadingLinkCards] = useState(false);
+  const [showAddLinkCard, setShowAddLinkCard] = useState(false);
+  const [newLinkCardTitle, setNewLinkCardTitle] = useState('');
+  const [newLinkCardDescription, setNewLinkCardDescription] = useState('');
+  const [newLinkCardLinks, setNewLinkCardLinks] = useState<{ url: string; linkPreview?: LinkPreview | null }[]>([{ url: '', linkPreview: null }]);
+  const [isAddingLinkCard, setIsAddingLinkCard] = useState(false);
+  const [editingLinkCardId, setEditingLinkCardId] = useState<string | null>(null);
+  const [editLinkCardTitle, setEditLinkCardTitle] = useState('');
+  const [editLinkCardDescription, setEditLinkCardDescription] = useState('');
+  const [editLinkCardLinks, setEditLinkCardLinks] = useState<{ url: string; linkPreview?: LinkPreview | null }[]>([{ url: '', linkPreview: null }]);
+
   useEffect(() => {
     fetchLookbookInfo();
     fetchEntries();
     fetchShoppingItems();
     fetchShoppingLinks();
     fetchTips();
+    fetchLinkCards();
   }, [slug]);
 
   const fetchLookbookInfo = async () => {
@@ -1295,6 +1318,77 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     }
   };
 
+  // LinkCard link management helpers
+  const addNewLinkCardLink = () => {
+    setNewLinkCardLinks(prev => [...prev, { url: '', linkPreview: null }]);
+  };
+
+  const removeNewLinkCardLink = (index: number) => {
+    setNewLinkCardLinks(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateNewLinkCardLink = (index: number, field: 'url', value: string) => {
+    setNewLinkCardLinks(prev => prev.map((link, i) => 
+      i === index ? { ...link, [field]: value } : link
+    ));
+  };
+
+  const fetchLinkCardLinkPreview = async (index: number) => {
+    const url = newLinkCardLinks[index]?.url;
+    if (!url || !url.startsWith('http')) return;
+    
+    try {
+      const res = await fetch(`/.netlify/functions/fetch-link-preview?url=${encodeURIComponent(url)}`, {
+        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+      });
+      if (res.ok) {
+        const preview = await res.json();
+        if (!preview.error) {
+          setNewLinkCardLinks(prev => prev.map((link, i) => 
+            i === index ? { ...link, linkPreview: preview } : link
+          ));
+        }
+      }
+    } catch {
+      // Ignore
+    }
+  };
+
+  const addEditLinkCardLink = () => {
+    setEditLinkCardLinks(prev => [...prev, { url: '', linkPreview: null }]);
+  };
+
+  const removeEditLinkCardLink = (index: number) => {
+    setEditLinkCardLinks(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateEditLinkCardLink = (index: number, field: 'url', value: string) => {
+    setEditLinkCardLinks(prev => prev.map((link, i) => 
+      i === index ? { ...link, [field]: value } : link
+    ));
+  };
+
+  const fetchEditLinkCardLinkPreview = async (index: number) => {
+    const url = editLinkCardLinks[index]?.url;
+    if (!url || !url.startsWith('http')) return;
+    
+    try {
+      const res = await fetch(`/.netlify/functions/fetch-link-preview?url=${encodeURIComponent(url)}`, {
+        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+      });
+      if (res.ok) {
+        const preview = await res.json();
+        if (!preview.error) {
+          setEditLinkCardLinks(prev => prev.map((link, i) => 
+            i === index ? { ...link, linkPreview: preview } : link
+          ));
+        }
+      }
+    } catch {
+      // Ignore
+    }
+  };
+
   const handleUpdateShoppingItem = async (id: string) => {
     setError('');
 
@@ -1469,6 +1563,134 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     } finally {
       setIsLoadingTips(false);
     }
+  };
+
+  // LinkCards functions
+  const fetchLinkCards = async () => {
+    if (!slug) return;
+    setIsLoadingLinkCards(true);
+    try {
+      const res = await fetch(`/.netlify/functions/cms-linkcards?slug=${slug}`, {
+        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLinkCards(data);
+      }
+    } catch {
+      // Ignore - not critical
+    } finally {
+      setIsLoadingLinkCards(false);
+    }
+  };
+
+  const handleAddLinkCard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newLinkCardTitle.trim()) return;
+
+    setIsAddingLinkCard(true);
+    setError('');
+
+    try {
+      const res = await fetch('/.netlify/functions/cms-linkcards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
+        },
+        body: JSON.stringify({
+          slug,
+          title: newLinkCardTitle.trim(),
+          description: newLinkCardDescription.trim(),
+          links: newLinkCardLinks.filter(l => l.url.trim()).map(l => ({ 
+            url: l.url.trim(), 
+            linkPreview: l.linkPreview || undefined 
+          })),
+        }),
+      });
+
+      if (res.ok) {
+        const newLinkCard = await res.json();
+        setLinkCards([...linkCards, newLinkCard]);
+        resetAddLinkCardForm();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to add link card');
+      }
+    } catch {
+      setError('Failed to add link card');
+    } finally {
+      setIsAddingLinkCard(false);
+    }
+  };
+
+  const handleUpdateLinkCard = async (id: string) => {
+    try {
+      const res = await fetch('/.netlify/functions/cms-linkcards', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
+        },
+        body: JSON.stringify({
+          id,
+          slug,
+          title: editLinkCardTitle.trim(),
+          description: editLinkCardDescription.trim(),
+          links: editLinkCardLinks.filter(l => l.url.trim()).map(l => ({ 
+            url: l.url.trim(), 
+            linkPreview: l.linkPreview || undefined 
+          })),
+        }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setLinkCards(linkCards.map(lc => (lc.id === id ? updated : lc)));
+        setEditingLinkCardId(null);
+      } else {
+        setError('Failed to update link card');
+      }
+    } catch {
+      setError('Failed to update link card');
+    }
+  };
+
+  const handleDeleteLinkCard = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this link card?')) return;
+
+    try {
+      const res = await fetch('/.netlify/functions/cms-linkcards', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
+        },
+        body: JSON.stringify({ id, slug }),
+      });
+
+      if (res.ok) {
+        setLinkCards(linkCards.filter(lc => lc.id !== id));
+      } else {
+        setError('Failed to delete link card');
+      }
+    } catch {
+      setError('Failed to delete link card');
+    }
+  };
+
+  const resetAddLinkCardForm = () => {
+    setNewLinkCardTitle('');
+    setNewLinkCardDescription('');
+    setNewLinkCardLinks([{ url: '', linkPreview: null }]);
+    setShowAddLinkCard(false);
+  };
+
+  const startEditingLinkCard = (linkCard: LinkCard) => {
+    setEditingLinkCardId(linkCard.id);
+    setEditLinkCardTitle(linkCard.title);
+    setEditLinkCardDescription(linkCard.description);
+    setEditLinkCardLinks(linkCard.links.length > 0 ? linkCard.links.map(l => ({ ...l, linkPreview: l.linkPreview || null })) : [{ url: '', linkPreview: null }]);
   };
 
   const handleAddTip = async (e: React.FormEvent) => {
@@ -1873,7 +2095,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           >
             <span className="flex items-center gap-2">
               <Link2 size={16} />
-              Links {shoppingLinks.length > 0 && `(${shoppingLinks.length})`}
+              Links {linkCards.length > 0 && `(${linkCards.length})`}
             </span>
           </button>
         </div>
@@ -1901,9 +2123,9 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         )}
         {activeTab === 'links' && (
           <button
-            onClick={() => setShowAddLink(true)}
+            onClick={() => setShowAddLinkCard(true)}
             className="md:hidden fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
-            aria-label="Add shopping link"
+            aria-label="Add link card"
           >
             <Plus size={28} />
           </button>
@@ -2266,178 +2488,272 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         {/* LINKS TAB */}
         {activeTab === 'links' && (
           <>
-            {/* Mobile: Add Link Modal */}
-            {showAddLink && (
+            {/* Mobile: Add LinkCard Modal */}
+            {showAddLinkCard && (
               <div className="md:hidden fixed inset-0 z-30 bg-black/50 flex items-end">
                 <div className="bg-white w-full rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto animate-slide-up">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-serif text-lg text-stone-900">Add Shopping Link</h2>
+                    <h2 className="font-serif text-lg text-stone-900">Add Link Card</h2>
                     <button
-                      onClick={resetAddLinkForm}
+                      onClick={resetAddLinkCardForm}
                       className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
                       aria-label="Close"
                     >
                       <X size={24} />
                     </button>
                   </div>
-                  <form onSubmit={handleAddShoppingLink} className="space-y-4">
+                  <form onSubmit={handleAddLinkCard} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">URL</label>
-                      <input
-                        type="url"
-                        value={newLinkUrl}
-                        onChange={(e) => setNewLinkUrl(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500"
-                        placeholder="https://..."
-                        required
-                      />
-                      {isFetchingLinkPreview && (
-                        <p className="text-xs text-stone-400 mt-1">Fetching preview...</p>
-                      )}
-                    </div>
-                    {newLinkPreview?.image && (
-                      <div className="rounded-xl overflow-hidden bg-stone-100">
-                        <img src={newLinkPreview.image} alt="Preview" className="w-full h-40 object-cover" />
-                      </div>
-                    )}
-                    <div>
-                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Title (optional)</label>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Title</label>
                       <input
                         type="text"
-                        value={newLinkTitle}
-                        onChange={(e) => setNewLinkTitle(e.target.value)}
+                        value={newLinkCardTitle}
+                        onChange={(e) => setNewLinkCardTitle(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500"
-                        placeholder="Product name..."
+                        placeholder="e.g., Summer Essentials"
+                        required
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Description (optional)</label>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Description</label>
                       <textarea
-                        value={newLinkDescription}
-                        onChange={(e) => setNewLinkDescription(e.target.value)}
-                        rows={2}
+                        value={newLinkCardDescription}
+                        onChange={(e) => setNewLinkCardDescription(e.target.value)}
+                        rows={3}
                         className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500 resize-none"
-                        placeholder="Brief description..."
+                        placeholder="Add a description for this link collection..."
+                        required
                       />
                     </div>
-                    <Button type="submit" variant="primary" size="lg" className="w-full rounded-full" disabled={!newLinkUrl.trim() || isAddingLink}>
-                      {isAddingLink ? 'Adding...' : 'Add Link'}
+                    
+                    {/* Links */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Links</label>
+                        <button
+                          type="button"
+                          onClick={addNewLinkCardLink}
+                          className="text-xs text-sage-600 hover:text-sage-700 font-medium cursor-pointer"
+                        >
+                          + Add Link
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        {newLinkCardLinks.map((link, index) => (
+                          <div key={index} className="space-y-2 p-3 border border-stone-200 rounded-xl">
+                            <div className="flex gap-2">
+                              <input
+                                type="url"
+                                value={link.url}
+                                onChange={(e) => updateNewLinkCardLink(index, 'url', e.target.value)}
+                                onBlur={() => fetchLinkCardLinkPreview(index)}
+                                className="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
+                                placeholder="https://..."
+                              />
+                              {newLinkCardLinks.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeNewLinkCardLink(index)}
+                                  className="p-2 rounded-full text-stone-400 hover:text-red-600 cursor-pointer"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
+                            </div>
+                            {link.linkPreview?.image && (
+                              <div className="rounded-lg overflow-hidden bg-stone-100">
+                                <img src={link.linkPreview.image} alt="Preview" className="w-full h-20 object-cover" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <Button type="submit" variant="primary" size="lg" className="w-full rounded-full" disabled={!newLinkCardTitle.trim() || isAddingLinkCard}>
+                      {isAddingLinkCard ? 'Adding...' : 'Add Link Card'}
                     </Button>
                   </form>
                 </div>
               </div>
             )}
 
-            {/* Desktop: Add Link Form */}
+            {/* Desktop: Add LinkCard Form */}
             <section className="hidden md:block bg-white p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
               <h2 className="font-serif text-lg text-stone-900 mb-4 flex items-center gap-2">
                 <Link2 size={20} className="text-sage-600" />
-                Add Shopping Link
+                Add Link Card
               </h2>
-              <form onSubmit={handleAddShoppingLink} className="space-y-4">
+              <form onSubmit={handleAddLinkCard} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">URL</label>
+                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Title</label>
                   <input
-                    type="url"
-                    value={newLinkUrl}
-                    onChange={(e) => setNewLinkUrl(e.target.value)}
+                    type="text"
+                    value={newLinkCardTitle}
+                    onChange={(e) => setNewLinkCardTitle(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500"
-                    placeholder="https://..."
+                    placeholder="e.g., Summer Essentials"
                     required
                   />
-                  {isFetchingLinkPreview && (
-                    <p className="text-xs text-stone-400 mt-1">Fetching preview...</p>
-                  )}
                 </div>
-                {newLinkPreview?.image && (
-                  <div className="rounded-xl overflow-hidden bg-stone-100 max-w-sm">
-                    <img src={newLinkPreview.image} alt="Preview" className="w-full h-40 object-cover" />
+                <div>
+                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Description</label>
+                  <textarea
+                    value={newLinkCardDescription}
+                    onChange={(e) => setNewLinkCardDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500 resize-none"
+                    placeholder="Add a description for this link collection..."
+                    required
+                  />
+                </div>
+                
+                {/* Links */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Links</label>
+                    <button
+                      type="button"
+                      onClick={addNewLinkCardLink}
+                      className="text-xs text-sage-600 hover:text-sage-700 font-medium cursor-pointer"
+                    >
+                      + Add Link
+                    </button>
                   </div>
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Title (optional)</label>
-                    <input
-                      type="text"
-                      value={newLinkTitle}
-                      onChange={(e) => setNewLinkTitle(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500"
-                      placeholder="Product name..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Description (optional)</label>
-                    <input
-                      type="text"
-                      value={newLinkDescription}
-                      onChange={(e) => setNewLinkDescription(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500"
-                      placeholder="Brief description..."
-                    />
+                  <div className="space-y-3">
+                    {newLinkCardLinks.map((link, index) => (
+                      <div key={index} className="space-y-2 p-3 border border-stone-200 rounded-xl">
+                        <div className="flex gap-2">
+                          <input
+                            type="url"
+                            value={link.url}
+                            onChange={(e) => updateNewLinkCardLink(index, 'url', e.target.value)}
+                            onBlur={() => fetchLinkCardLinkPreview(index)}
+                            className="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
+                            placeholder="https://..."
+                          />
+                          {newLinkCardLinks.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeNewLinkCardLink(index)}
+                              className="p-2 rounded-full text-stone-400 hover:text-red-600 cursor-pointer"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                        {link.linkPreview?.image && (
+                          <div className="rounded-lg overflow-hidden bg-stone-100 max-w-xs">
+                            <img src={link.linkPreview.image} alt="Preview" className="w-full h-20 object-cover" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <Button type="submit" variant="primary" size="lg" className="rounded-full" disabled={!newLinkUrl.trim() || isAddingLink}>
-                  {isAddingLink ? 'Adding...' : 'Add Link'}
+                
+                <Button type="submit" variant="primary" size="lg" className="rounded-full" disabled={!newLinkCardTitle.trim() || isAddingLinkCard}>
+                  {isAddingLinkCard ? 'Adding...' : 'Add Link Card'}
                 </Button>
               </form>
             </section>
 
-            {/* Links List */}
+            {/* LinkCards List */}
             <section>
               <h2 className="font-serif text-base md:text-lg text-stone-900 mb-3 md:mb-4">
-                Shopping Links {shoppingLinks.length > 0 && <span className="text-stone-400">({shoppingLinks.length})</span>}
+                Link Cards {linkCards.length > 0 && <span className="text-stone-400">({linkCards.length})</span>}
               </h2>
 
               <div className="pr-1">
-                {isLoadingLinks ? (
+                {isLoadingLinkCards ? (
                   <div className="text-center py-12 text-stone-500">Loading…</div>
-                ) : shoppingLinks.length === 0 ? (
+                ) : linkCards.length === 0 ? (
                   <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
                     <Link2 size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="text-sm md:text-base">No links yet. Add product links for your client.</p>
+                    <p className="text-sm md:text-base">No link cards yet. Create curated collections of links for your client.</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {shoppingLinks.map((link) => {
-                    const displayTitle = link.title || link.linkPreview?.title || 'Untitled';
-                    const displaySiteName = link.linkPreview?.siteName || (() => {
-                      try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
-                    })();
-
-                    return (
-                      <div 
-                        key={link.id} 
-                        className={`bg-white rounded-xl border border-stone-100 shadow-sm p-3 md:p-4 transition-opacity ${
-                          link.checked ? 'opacity-60' : ''
-                        }`}
-                      >
-                        {editingLinkId === link.id ? (
-                          <div className="space-y-3">
-                            <input
-                              type="url"
-                              value={editLinkUrl}
-                              onChange={(e) => setEditLinkUrl(e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
-                              placeholder="URL"
-                            />
-                            <input
-                              type="text"
-                              value={editLinkTitle}
-                              onChange={(e) => setEditLinkTitle(e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
-                              placeholder="Title"
-                            />
+                  <div className="space-y-4">
+                    {linkCards.map((linkCard) => (
+                      <div key={linkCard.id} className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+                        {editingLinkCardId === linkCard.id ? (
+                          <div className="p-4 md:p-6 space-y-4">
+                            <div>
+                              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Title</label>
+                              <input
+                                type="text"
+                                value={editLinkCardTitle}
+                                onChange={(e) => setEditLinkCardTitle(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
+                                placeholder="Title"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Description</label>
+                              <textarea
+                                value={editLinkCardDescription}
+                                onChange={(e) => setEditLinkCardDescription(e.target.value)}
+                                rows={3}
+                                className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500 resize-none"
+                                placeholder="Description"
+                              />
+                            </div>
+                            
+                            {/* Edit Links */}
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Links</label>
+                                <button
+                                  type="button"
+                                  onClick={addEditLinkCardLink}
+                                  className="text-xs text-sage-600 hover:text-sage-700 font-medium cursor-pointer"
+                                >
+                                  + Add Link
+                                </button>
+                              </div>
+                              <div className="space-y-2">
+                                {editLinkCardLinks.map((link, index) => (
+                                  <div key={index} className="space-y-2 p-3 border border-stone-200 rounded-xl">
+                                    <div className="flex gap-2">
+                                      <input
+                                        type="url"
+                                        value={link.url}
+                                        onChange={(e) => updateEditLinkCardLink(index, 'url', e.target.value)}
+                                        onBlur={() => fetchEditLinkCardLinkPreview(index)}
+                                        className="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
+                                        placeholder="https://..."
+                                      />
+                                      {editLinkCardLinks.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => removeEditLinkCardLink(index)}
+                                          className="p-2 rounded-full text-stone-400 hover:text-red-600 cursor-pointer"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      )}
+                                    </div>
+                                    {link.linkPreview?.image && (
+                                      <div className="rounded-lg overflow-hidden bg-stone-100 max-w-xs">
+                                        <img src={link.linkPreview.image} alt="Preview" className="w-full h-20 object-cover" />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
                             <div className="flex gap-2">
                               <button
-                                onClick={() => handleUpdateShoppingLink(link.id)}
-                                className="flex items-center gap-1 px-3 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 cursor-pointer"
+                                onClick={() => handleUpdateLinkCard(linkCard.id)}
+                                className="flex items-center gap-1 px-4 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 cursor-pointer"
                               >
                                 <Save size={14} />
                                 Save
                               </button>
                               <button
-                                onClick={() => setEditingLinkId(null)}
-                                className="flex items-center gap-1 px-3 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 cursor-pointer"
+                                onClick={() => setEditingLinkCardId(null)}
+                                className="flex items-center gap-1 px-4 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 cursor-pointer"
                               >
                                 <X size={14} />
                                 Cancel
@@ -2445,58 +2761,67 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-3">
-                            {/* Checkbox */}
-                            <button
-                              onClick={() => handleToggleLinkChecked(link.id, !link.checked)}
-                              className="flex-shrink-0 cursor-pointer"
-                              aria-label={link.checked ? 'Mark as not purchased' : 'Mark as purchased'}
-                            >
-                              {link.checked ? (
-                                <CheckSquare size={22} className="text-sage-500" />
-                              ) : (
-                                <Square size={22} className="text-stone-300 hover:text-stone-400" />
-                              )}
-                            </button>
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                              <a
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`font-medium hover:text-sage-600 transition-colors ${
-                                  link.checked ? 'text-stone-500 line-through' : 'text-stone-900'
-                                }`}
-                              >
-                                {displayTitle}
-                              </a>
-                              <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
-                                <ExternalLink size={10} />
-                                {displaySiteName}
-                              </p>
+                          <div className="p-4 md:p-6">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex-1 pr-4">
+                                <h3 className="font-serif text-lg md:text-xl text-stone-900 mb-2">{linkCard.title}</h3>
+                                <p className="text-stone-600 text-sm leading-relaxed">{linkCard.description}</p>
+                              </div>
+                              <div className="flex gap-2 flex-shrink-0">
+                                <button
+                                  onClick={() => startEditingLinkCard(linkCard)}
+                                  className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
+                                  title="Edit"
+                                >
+                                  <Edit3 size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteLinkCard(linkCard.id)}
+                                  className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
                             </div>
-                            {/* Actions */}
-                            <div className="flex gap-1 flex-shrink-0">
-                              <button
-                                onClick={() => startEditLink(link)}
-                                className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
-                                title="Edit"
-                              >
-                                <Edit3 size={16} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteShoppingLink(link.id)}
-                                className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                                title="Delete"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                            
+                            {linkCard.links.length > 0 && (
+                              <div className="space-y-3">
+                                {linkCard.links.map((link, index) => (
+                                  <div key={index} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors">
+                                    {link.linkPreview?.image ? (
+                                      <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-stone-200">
+                                        <img src={link.linkPreview.image} alt="" className="w-full h-full object-cover" />
+                                      </div>
+                                    ) : (
+                                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-stone-200 flex items-center justify-center">
+                                        <ExternalLink size={20} className="text-stone-400" />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <a
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-medium text-stone-900 hover:text-sage-600 transition-colors truncate block"
+                                      >
+                                        {link.linkPreview?.title || 'Untitled Link'}
+                                      </a>
+                                      <p className="text-xs text-stone-500 truncate">
+                                        {link.linkPreview?.siteName || (() => {
+                                          try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
+                                        })()}
+                                      </p>
+                                    </div>
+                                    <ExternalLink size={16} className="flex-shrink-0 text-stone-400" />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    );
-                  })}
+                    ))}
                   </div>
                 )}
               </div>

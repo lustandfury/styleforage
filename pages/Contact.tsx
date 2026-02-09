@@ -125,7 +125,7 @@ export const Contact: React.FC = () => {
                     rows={5}
                     value={formData.message}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent resize-y min-h-[120px]"
+                    className="w-full px-4 py-2.5 rounded-lg border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent resize-y min-h-[120px]"
                     placeholder="How can I help?"
                   />
                 </div>

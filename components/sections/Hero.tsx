@@ -2,8 +2,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '../ui/Button';
 
 // Hero (top of page) – word animation
-const HEADING_LINE1 = 'Effortless style for every';
-const HEADING_LINE2 = 'body & budget';
+const HEADING_LINE1 = 'Effortless style for';
+const HEADING_LINE2 = 'work & play';
 const LINE1_WORDS = HEADING_LINE1.split(' ');
 const WORD_REVEAL_DURATION = 0.6;
 const WORD_STAGGER = 0.08;
@@ -125,7 +125,7 @@ export const Hero: React.FC = () => {
       <div className="relative z-10 flex flex-col items-start justify-center px-4 md:px-12 lg:px-20 w-full">
         <div className="text-left max-w-[90%]">
           <div ref={textBlurTopRef} className={`hero-rest-in transition-none ${revealDone ? 'hero-rest-visible' : ''}`}>
-            <div className="inline-block px-4 py-1.5 mb-4 md:mb-6 rounded-full backdrop-blur-sm border border-stone-900/10 text-stone-900 text-xs font-bold uppercase tracking-[0.2em]">
+            <div className="inline-block px-4 py-1 mb-4 md:mb-6 rounded-full backdrop-blur-sm border border-stone-900/10 text-stone-900 text-xs font-bold uppercase tracking-[0.2em]">
               Personal Styling & Wardrobe Curation
             </div>
           </div>

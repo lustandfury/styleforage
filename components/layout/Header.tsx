@@ -196,9 +196,9 @@ export const Header: React.FC = () => {
             >
               <Link
                 to="/"
-                className="font-serif text-xl md:text-2xl font-semibold tracking-tight text-stone-900 hover:text-stone-700 transition-colors cursor-pointer truncate"
+                className="font-serif text-xl md:text-3xl font-normal tracking-widest text-stone-900 hover:text-stone-700 transition-colors cursor-pointer truncate"
               >
-                Style Forage
+                STYLE FORAGE 
               </Link>
             </span>
           </div>
@@ -207,7 +207,7 @@ export const Header: React.FC = () => {
           <div className="min-w-0 w-0 overflow-hidden md:w-auto md:overflow-visible md:flex justify-self-center">
             <nav className="hidden md:flex justify-self-center min-w-0" aria-label="Main navigation">
               <div
-                className={`nav-pill relative inline-flex items-baseline w-full max-w-3xl gap-0 px-3 py-2 rounded-full flex-nowrap transition-all duration-300 ease-out ${
+                className={`nav-pill relative inline-flex items-center w-full max-w-3xl gap-0 px-3 py-1.5 rounded-full flex-nowrap transition-all duration-300 ease-out ${
                   isScrolledDown ? 'nav-pill-glass' : 'nav-pill-flat'
                 }`}
               >
@@ -223,9 +223,9 @@ export const Header: React.FC = () => {
               >
                 <Link
                   to="/"
-                  className="nav-link-item relative px-5 py-2.5 text-xl font-semibold rounded-full cursor-pointer text-stone-900 hover:text-stone-700 font-serif tracking-tight whitespace-nowrap inline-block leading-none"
+                  className="nav-link-item relative px-5 py-2 text-lg font-normal tracking-widest rounded-full cursor-pointer text-stone-900 hover:text-stone-700 font-serif tracking-tight whitespace-nowrap inline-block leading-none"
                 >
-                  Style Forage
+                  STYLE FORAGE
                 </Link>
               </span>
               {/* Nav items: centered in the pill; sliding background moves to hovered/active item */}
@@ -258,7 +258,7 @@ export const Header: React.FC = () => {
                       >
                         <Link
                           to={item.path}
-                          className={`nav-link-item relative px-4 py-2 text-sm font-medium rounded-full cursor-pointer block ${
+                          className={`nav-link-item relative px-4 py-1.5 text-sm font-medium rounded-full cursor-pointer block ${
                             isActive
                               ? 'nav-link-item--active text-stone-900'
                               : 'text-stone-600 hover:text-stone-800'
@@ -280,7 +280,7 @@ export const Header: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => scrollToAnchor(item.id)}
-                        className={`nav-link-item relative px-5 py-2.5 text-sm font-medium rounded-full cursor-pointer ${
+                        className={`nav-link-item relative px-5 py-2 text-sm font-medium rounded-full cursor-pointer ${
                           isActive
                             ? 'nav-link-item--active text-stone-900'
                             : 'text-stone-600 hover:text-stone-800'
@@ -305,7 +305,7 @@ export const Header: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => scrollToAnchor('services')}
-                  className="nav-link-item relative px-5 py-2.5 text-sm font-medium rounded-full cursor-pointer bg-stone-900 text-white hover:bg-sage-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-transparent transition-colors whitespace-nowrap inline-block"
+                  className="nav-link-item relative px-5 py-2 text-sm font-medium rounded-full cursor-pointer bg-stone-900 text-white hover:bg-sage-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-transparent transition-colors whitespace-nowrap inline-block"
                 >
                   Book Now
                 </button>
@@ -318,7 +318,7 @@ export const Header: React.FC = () => {
             {/* Mobile: menu button (top right) */}
             <button
               type="button"
-              className="md:hidden px-3 py-2 rounded-full text-stone-700 hover:bg-stone-200/80 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 cursor-pointer transition-colors duration-200 touch-manipulation"
+              className="md:hidden px-3 py-1.5 rounded-full text-stone-700 hover:bg-stone-200/80 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 cursor-pointer transition-colors duration-200 touch-manipulation"
               style={
                 showPillBg
                   ? { backgroundColor: `rgba(255,255,255,${pillBgOpacity * 0.95})` }
@@ -386,7 +386,7 @@ export const Header: React.FC = () => {
                   key={item.id}
                   type="button"
                   onClick={() => handleNavAction(item)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors cursor-pointer touch-manipulation ${
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-colors cursor-pointer touch-manipulation ${
                     isActive
                       ? 'bg-sage-50 text-sage-900'
                       : 'text-stone-700 hover:bg-stone-100 active:bg-stone-100'

@@ -14,7 +14,7 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props 
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-sm font-medium transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed";
+  const baseStyles = "inline-flex items-center justify-center rounded-full font-medium transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed";
   
   const variants = {
     primary: "bg-stone-900 text-white hover:bg-sage-500",
@@ -25,9 +25,9 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const sizes = {
-    sm: "h-9 px-3 text-sm",
-    md: "h-10 px-4 py-2",
-    lg: "h-12 px-8 text-lg",
+    sm: "h-8 px-3 text-sm",
+    md: "h-9 px-4 py-2",
+    lg: "h-10 px-8 text-lg",
   };
 
   const width = fullWidth ? "w-full" : "";

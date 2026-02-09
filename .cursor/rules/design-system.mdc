@@ -163,6 +163,163 @@ All button-like and clickable elements must show the pointer cursor on hover so 
 - **Micro-animations**: Subtle `hover:-translate-y-2` on cards and `animate-fade-in` on page loads to provide a premium, reactive feel.
 - **Imagery**: High-quality, editorial fashion photography with generous whitespace.
 
+## Admin Card Design Best Practices
+
+### 1. Card Structure & Layout
+Admin cards should follow a consistent structure with content on the left and actions on the right.
+
+**Layout Pattern:**
+```tsx
+<div className="p-4 md:p-6">
+  <div className="flex items-start justify-between mb-4">
+    {/* Content Section */}
+    <div className="flex-1 pr-4">
+      <h3 className="font-serif text-lg md:text-xl text-stone-900 mb-2">
+        {title}
+      </h3>
+      <p className="text-stone-600 text-sm leading-relaxed">
+        {description}
+      </p>
+    </div>
+    
+    {/* Actions Section */}
+    <div className="flex gap-2 flex-shrink-0">
+      <button className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer">
+        <Edit3 size={16} />
+      </button>
+      <button className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer">
+        <Trash2 size={16} />
+      </button>
+    </div>
+  </div>
+  
+  {/* Additional Content */}
+  {children}
+</div>
+```
+
+### 2. Action Button Guidelines
+
+**Edit Button:**
+- Icon: `Edit3` size 16
+- Colors: `text-stone-400 hover:text-sage-600 hover:bg-sage-50`
+- Purpose: Modify existing content
+- Position: Right side, first button
+
+**Delete Button:**
+- Icon: `Trash2` size 16  
+- Colors: `text-stone-400 hover:text-red-600 hover:bg-red-50`
+- Purpose: Remove content permanently
+- Position: Right side, second button
+
+**Button States:**
+```tsx
+// Edit button
+className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
+title="Edit"
+
+// Delete button  
+className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+title="Delete"
+```
+
+### 3. Content Organization
+
+**Primary Content (Left):**
+- Use `flex-1 pr-4` to take available space with right padding
+- Title: `font-serif text-lg md:text-xl text-stone-900 mb-2`
+- Description: `text-stone-600 text-sm leading-relaxed`
+- Maintain visual hierarchy with proper spacing
+
+**Actions (Right):**
+- Use `flex gap-2 flex-shrink-0` for consistent spacing
+- Buttons are `flex-shrink-0` to prevent compression
+- Vertical alignment: `items-start` to align with content top
+
+### 4. Card Container
+
+**Base Card:**
+```tsx
+<div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+  {/* Card content */}
+</div>
+```
+
+**Hover Effects:**
+- Container: `hover:border-sage-200 hover:shadow-md transition-all`
+- Actions: Individual hover states as defined above
+
+### 5. Responsive Design
+
+**Mobile (<md):**
+- Padding: `p-4`
+- Title: `text-lg`
+- Actions: Standard size (16px icons)
+
+**Desktop (≥md):**
+- Padding: `p-6` 
+- Title: `text-xl`
+- Actions: Standard size (16px icons)
+
+### 6. Examples
+
+**LinkCard Admin View:**
+```tsx
+<div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+  <div className="p-4 md:p-6">
+    <div className="flex items-start justify-between mb-4">
+      <div className="flex-1 pr-4">
+        <h3 className="font-serif text-lg md:text-xl text-stone-900 mb-2">
+          {linkCard.title}
+        </h3>
+        <p className="text-stone-600 text-sm leading-relaxed">
+          {linkCard.description}
+        </p>
+      </div>
+      <div className="flex gap-2 flex-shrink-0">
+        <button
+          onClick={() => startEditingLinkCard(linkCard)}
+          className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
+          title="Edit"
+        >
+          <Edit3 size={16} />
+        </button>
+        <button
+          onClick={() => handleDeleteLinkCard(linkCard.id)}
+          className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+          title="Delete"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+    </div>
+    
+    {/* Links content */}
+    {linkCard.links.length > 0 && (
+      <div className="space-y-3">
+        {/* Link items */}
+      </div>
+    )}
+  </div>
+</div>
+```
+
+### 7. Accessibility Considerations
+
+- **ARIA Labels:** Always include `title` attribute on action buttons
+- **Keyboard Navigation:** Ensure buttons are focusable and have visible focus states
+- **Color Contrast:** Maintain WCAG AA compliance with specified colors
+- **Touch Targets:** Minimum 44px touch targets (current 32px with padding meets this)
+
+### 8. Consistency Rules
+
+1. **Always place actions on the right side** of the card content
+2. **Use consistent spacing**: `gap-2` between action buttons
+3. **Maintain visual hierarchy**: Content left, actions right
+4. **Use consistent colors**: Sage for edit, red for delete
+5. **Add proper hover states** for all interactive elements
+6. **Include semantic titles** for screen readers
+
 ## Tone of Voice
 
 - **Encouraging**: We don't judge closets; we curate confidence.

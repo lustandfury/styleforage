@@ -117,7 +117,7 @@ export const Footer: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="Your email"
-                    className="w-full px-3 py-2 text-sm bg-stone-800 border border-stone-700 rounded-lg text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent"
+                    className="w-full px-3 py-1.5 text-sm bg-stone-800 border border-stone-700 rounded-lg text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -130,7 +130,7 @@ export const Footer: React.FC = () => {
                     required
                     placeholder="Message"
                     rows={2}
-                    className="w-full px-3 py-2 text-sm bg-stone-800 border border-stone-700 rounded-lg text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent resize-none"
+                    className="w-full px-3 py-1.5 text-sm bg-stone-800 border border-stone-700 rounded-lg text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent resize-none"
                   />
                 </div>
                 {status === 'success' && (
@@ -142,7 +142,7 @@ export const Footer: React.FC = () => {
                 <button
                   type="submit"
                   disabled={status === 'submitting'}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border-2 border-sage-500 text-sage-400 bg-transparent hover:bg-sage-500/10 hover:text-sage-300 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-stone-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded-lg border-2 border-sage-500 text-sage-400 bg-transparent hover:bg-sage-500/10 hover:text-sage-300 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-stone-900 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   {status === 'submitting' ? 'Sending…' : <><Send size={14} aria-hidden />Send</>}
                 </button>
