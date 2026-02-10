@@ -358,7 +358,7 @@ export const Header: React.FC = () => {
 
       {/* Mobile menu: overlay + panel (only visible when open) */}
       <div
-        className="fixed inset-0 z-30 md:hidden"
+        className="fixed inset-0 z-50 md:hidden"
         aria-hidden={!isMobileMenuOpen}
         style={{ pointerEvents: isMobileMenuOpen ? undefined : 'none' }}
       >
