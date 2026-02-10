@@ -940,7 +940,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         const data = await res.json();
         if (!entryId) {
           entryId = data.id;
-          setEntries((prev) => [...prev, data]);
         }
       }
 
@@ -1083,7 +1082,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           'Content-Type': 'application/json',
           'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
         },
-        body: JSON.stringify({ slug, id, caption: editCaption, season: editSeason || null }),
+        body: JSON.stringify({ slug, id, title: editTitle || null, caption: editCaption, season: editSeason || null }),
       });
 
       if (res.ok) {
@@ -1227,8 +1226,9 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
       });
 
       if (res.ok) {
+        const newItem = await res.json();
+        setShoppingItems([...shoppingItems, newItem]);
         resetAddItemForm();
-        await fetchShoppingItems();
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to add item');
@@ -2489,9 +2489,12 @@ const EntryImageThumb: React.FC<{
         if (res.ok && !revoked) {
           const blob = await res.blob();
           setImageUrl(URL.createObjectURL(blob));
+        } else if (res.status === 404) {
+          // Image key exists in entry but file is missing from storage - silently show fallback
+          if (!revoked) setLoading(false);
         }
       } catch {
-        // ignore
+        // Network error - ignore
       } finally {
         if (!revoked) setLoading(false);
       }

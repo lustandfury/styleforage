@@ -76,7 +76,11 @@ const handler: Handler = async (event: HandlerEvent) => {
 
     // Update fields
     if (title !== undefined) {
-      entries[entryIndex].title = typeof title === 'string' ? title.trim() : '';
+      if (title === null || title === '') {
+        delete entries[entryIndex].title;
+      } else if (typeof title === 'string') {
+        entries[entryIndex].title = title.trim();
+      }
     }
     if (caption !== undefined) {
       entries[entryIndex].caption = normalizePastedText(caption);
