@@ -14,6 +14,7 @@ export type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'footwear' |
 
 export interface ShoppingItemLink {
   url: string;
+  description?: string;
   linkPreview?: LinkPreview;
 }
 
@@ -181,7 +182,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       if (linksBody !== undefined && Array.isArray(linksBody)) {
         const linksArray: ShoppingItemLink[] = linksBody
           .filter((l: { url?: string }) => l && typeof l.url === 'string' && l.url.trim())
-          .map((l: { url: string; linkPreview?: LinkPreview }) => ({ url: l.url.trim(), linkPreview: l.linkPreview }));
+          .map((l: { url: string; description?: string; linkPreview?: LinkPreview }) => ({ url: l.url.trim(), description: l.description?.trim() || undefined, linkPreview: l.linkPreview }));
         items[itemIndex].links = linksArray.length > 0 ? linksArray : undefined;
         const first = linksArray[0];
         items[itemIndex].link = first?.url;
@@ -230,7 +231,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       const linksArray: ShoppingItemLink[] = Array.isArray(linksBody) && linksBody.length > 0
         ? linksBody
             .filter((l: { url?: string }) => l && typeof l.url === 'string' && l.url.trim())
-            .map((l: { url: string; linkPreview?: LinkPreview }) => ({ url: l.url.trim(), linkPreview: l.linkPreview }))
+            .map((l: { url: string; description?: string; linkPreview?: LinkPreview }) => ({ url: l.url.trim(), description: l.description?.trim() || undefined, linkPreview: l.linkPreview }))
         : link && typeof link === 'string' && link.trim()
           ? [{ url: link.trim(), linkPreview: linkPreview || undefined }]
           : [];
