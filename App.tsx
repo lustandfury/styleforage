@@ -58,18 +58,20 @@ const AppLayout = () => {
         className={`flex-1 min-h-[70vh] ${!isStandalonePage && !isHomePage ? 'pt-20' : ''} ${!isStandalonePage ? 'pb-0' : ''}`}
         tabIndex={-1}
       >
-        <Suspense fallback={<div className="min-h-[50vh]" aria-hidden="true" />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/book/:serviceId" element={<BookingPage />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/:slug" element={<Admin />} />
-            <Route path="/admin/:slug/:tab" element={<Admin />} />
-            <Route path="/lookbook" element={<LookbookLogin />} />
-            <Route path="/lookbook/:slug" element={<Lookbook />} />
-          </Routes>
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<div className="min-h-[50vh]" aria-hidden="true" />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/book/:serviceId" element={<BookingPage />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/:slug" element={<Admin />} />
+              <Route path="/admin/:slug/:tab" element={<Admin />} />
+              <Route path="/lookbook" element={<LookbookLogin />} />
+              <Route path="/lookbook/:slug" element={<Lookbook />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </main>
       {!isStandalonePage && <Footer />}
       {SHOW_AI_CHAT && !isStandalonePage && (

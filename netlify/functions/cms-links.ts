@@ -1,5 +1,6 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
+import { generateId, isAdminValid, isViewValid } from './lib/auth';
 
 export interface LinkPreview {
   url: string;
@@ -19,49 +20,6 @@ export interface ShoppingLink {
   checked: boolean;
   order: number;
   createdAt: string;
-}
-
-interface Lookbook {
-  id: string;
-  slug: string;
-  clientName: string;
-  passcode: string;
-  createdAt: string;
-}
-
-/**
- * Generate a simple UUID v4
- */
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-/**
- * Validate admin passcode
- */
-function isAdminValid(event: HandlerEvent): boolean {
-  const adminPasscode = event.headers['x-admin-passcode'];
-  const envAdminPasscode = process.env.ADMIN_PASSCODE;
-  return !!(adminPasscode && envAdminPasscode && adminPasscode === envAdminPasscode);
-}
-
-/**
- * Validate view passcode for a specific lookbook
- */
-async function isViewValid(event: HandlerEvent, slug: string): Promise<boolean> {
-  const viewPasscode = event.headers['x-view-passcode'];
-  if (!viewPasscode) return false;
-
-  const store = getStorage('cms-editorial', event);
-  const lookbooksData = await store.get('lookbooks', { type: 'json' });
-  const lookbooks: Lookbook[] = (lookbooksData as Lookbook[]) || [];
-  const lookbook = lookbooks.find(l => l.slug === slug);
-
-  return !!(lookbook && viewPasscode === lookbook.passcode);
 }
 
 /**
@@ -98,7 +56,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       const linksData = await store.get(`links/${slug}`, { type: 'json' });
-      const links: ShoppingLink[] = (linksData as ShoppingLink[]) || [];
+      const links: ShoppingLink[] = Array.isArray(linksData) ? linksData as ShoppingLink[] : [];
 
       // Sort by order
       links.sort((a, b) => a.order - b.order);
@@ -133,9 +91,9 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      // Read current links
+      // Read current links to validate existence
       const linksData = await store.get(`links/${slug}`, { type: 'json' });
-      const links: ShoppingLink[] = (linksData as ShoppingLink[]) || [];
+      const links: ShoppingLink[] = Array.isArray(linksData) ? linksData as ShoppingLink[] : [];
 
       // Find the link
       const linkIndex = links.findIndex(l => l.id === id);
@@ -146,35 +104,51 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      // Viewers can only update checked status
       if (!isAdmin) {
-        if (checked !== undefined) {
-          links[linkIndex].checked = checked;
+        // Viewer: only checked — build updated link and re-read before write
+        const updatedLink: ShoppingLink = { ...links[linkIndex] };
+        if (checked !== undefined) updatedLink.checked = checked;
+
+        const latestData = await store.get(`links/${slug}`, { type: 'json' });
+        const latest: ShoppingLink[] = Array.isArray(latestData) ? latestData as ShoppingLink[] : [];
+        const latestIndex = latest.findIndex(l => l.id === id);
+        if (latestIndex === -1) {
+          return { statusCode: 404, body: JSON.stringify({ error: 'Link not found' }) };
         }
-        await store.setJSON(`links/${slug}`, links);
+        latest[latestIndex] = updatedLink;
+        await store.setJSON(`links/${slug}`, latest);
         return {
           statusCode: 200,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(links[linkIndex]),
+          body: JSON.stringify(updatedLink),
         };
       }
 
-      // Admin can update all fields
+      // Admin: build desired state for this link
       const { url, title, description, linkPreview, order } = body;
+      const updatedLink: ShoppingLink = { ...links[linkIndex] };
 
-      if (url !== undefined) links[linkIndex].url = url.trim();
-      if (title !== undefined) links[linkIndex].title = title?.trim() || undefined;
-      if (description !== undefined) links[linkIndex].description = description?.trim() || undefined;
-      if (linkPreview !== undefined) links[linkIndex].linkPreview = linkPreview || undefined;
-      if (checked !== undefined) links[linkIndex].checked = checked;
-      if (order !== undefined && typeof order === 'number') links[linkIndex].order = order;
+      if (url !== undefined) updatedLink.url = url.trim();
+      if (title !== undefined) updatedLink.title = title?.trim() || undefined;
+      if (description !== undefined) updatedLink.description = description?.trim() || undefined;
+      if (linkPreview !== undefined) updatedLink.linkPreview = linkPreview || undefined;
+      if (checked !== undefined) updatedLink.checked = checked;
+      if (order !== undefined && typeof order === 'number') updatedLink.order = order;
 
-      await store.setJSON(`links/${slug}`, links);
+      // Re-read latest before write to avoid overwriting concurrent changes
+      const latestData = await store.get(`links/${slug}`, { type: 'json' });
+      const latest: ShoppingLink[] = Array.isArray(latestData) ? latestData as ShoppingLink[] : [];
+      const latestIndex = latest.findIndex(l => l.id === id);
+      if (latestIndex === -1) {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Link not found' }) };
+      }
+      latest[latestIndex] = updatedLink;
+      await store.setJSON(`links/${slug}`, latest);
 
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(links[linkIndex]),
+        body: JSON.stringify(updatedLink),
       };
     }
 
@@ -198,9 +172,9 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      // Read current links
+      // Read current links for order calculation
       const linksData = await store.get(`links/${slug}`, { type: 'json' });
-      const links: ShoppingLink[] = (linksData as ShoppingLink[]) || [];
+      const links: ShoppingLink[] = Array.isArray(linksData) ? linksData as ShoppingLink[] : [];
 
       // Create new link
       const newLink: ShoppingLink = {
@@ -214,8 +188,14 @@ const handler: Handler = async (event: HandlerEvent) => {
         createdAt: new Date().toISOString(),
       };
 
-      links.push(newLink);
-      await store.setJSON(`links/${slug}`, links);
+      // Re-read before write to avoid losing concurrent adds
+      const latestData = await store.get(`links/${slug}`, { type: 'json' });
+      const latest: ShoppingLink[] = Array.isArray(latestData) ? latestData as ShoppingLink[] : [];
+      const merged = latest.some(l => l.id === newLink.id) ? latest : [...latest, newLink];
+      if (merged.length !== latest.length) {
+        merged[merged.length - 1].order = merged.length - 1;
+      }
+      await store.setJSON(`links/${slug}`, merged);
 
       return {
         statusCode: 200,
@@ -235,28 +215,19 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      // Read current links
-      const linksData = await store.get(`links/${slug}`, { type: 'json' });
-      const links: ShoppingLink[] = (linksData as ShoppingLink[]) || [];
-
-      // Find the link
-      const linkIndex = links.findIndex(l => l.id === id);
-      if (linkIndex === -1) {
+      // Re-read latest data immediately before write to avoid overwriting concurrent changes
+      const latestData = await store.get(`links/${slug}`, { type: 'json' });
+      const latest: ShoppingLink[] = Array.isArray(latestData) ? latestData as ShoppingLink[] : [];
+      const filtered = latest.filter(l => l.id !== id);
+      if (filtered.length === latest.length) {
         return {
           statusCode: 404,
           body: JSON.stringify({ error: 'Link not found' }),
         };
       }
 
-      // Remove the link
-      links.splice(linkIndex, 1);
-
-      // Reorder remaining links
-      links.forEach((link, i) => {
-        link.order = i;
-      });
-
-      await store.setJSON(`links/${slug}`, links);
+      filtered.forEach((link, i) => { link.order = i; });
+      await store.setJSON(`links/${slug}`, filtered);
 
       return {
         statusCode: 200,

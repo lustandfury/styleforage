@@ -1001,7 +1001,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
       });
 
       if (res.ok) {
-        setEntries(entries.filter((e) => e.id !== id));
+        setEntries(prev => prev.filter((e) => e.id !== id));
       } else {
         setError('Failed to delete entry');
       }
@@ -1101,6 +1101,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
           })
         )
       );
+      await fetchEntries();
     } catch {
       setError('Failed to reorder');
       await fetchEntries();
@@ -1120,7 +1121,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const updated = await res.json();
-        setEntries(entries.map((e) => (e.id === id ? updated : e)));
+        setEntries(prev => prev.map((e) => (e.id === id ? updated : e)));
         cancelEdit();
       } else {
         setError('Failed to update entry');
@@ -1153,7 +1154,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const updated = await res.json();
-        setEntries(entries.map((e) => (e.id === entryId ? updated : e)));
+        setEntries(prev => prev.map((e) => (e.id === entryId ? updated : e)));
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to replace photo');
@@ -1187,7 +1188,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const updated = await res.json();
-        setEntries(entries.map((e) => (e.id === entryId ? updated : e)));
+        setEntries(prev => prev.map((e) => (e.id === entryId ? updated : e)));
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to add photo');
@@ -1260,7 +1261,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const newItem = await res.json();
-        setShoppingItems([...shoppingItems, newItem]);
+        setShoppingItems(prev => [...prev, newItem]);
         resetAddItemForm();
       } else {
         const data = await res.json();
@@ -1363,7 +1364,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const updated = await res.json();
-        setShoppingItems(shoppingItems.map((i) => (i.id === id ? updated : i)));
+        setShoppingItems(prev => prev.map((i) => (i.id === id ? updated : i)));
         setEditingItemId(null);
         setEditItemCategory('uncategorized');
       } else {
@@ -1384,7 +1385,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
       });
 
       if (res.ok) {
-        setShoppingItems(shoppingItems.filter((i) => i.id !== id));
+        setShoppingItems(prev => prev.filter((i) => i.id !== id));
       } else {
         setError('Failed to delete item');
       }
@@ -1469,6 +1470,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
           })
         )
       );
+      await fetchShoppingItems();
     } catch {
       setError('Failed to reorder');
       await fetchShoppingItems();
@@ -1531,7 +1533,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const newTip = await res.json();
-        setTips([...tips, newTip]);
+        setTips(prev => [...prev, newTip]);
         setNewTipText('');
         setShowAddTip(false);
       } else {
@@ -1558,7 +1560,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const updated = await res.json();
-        setTips(tips.map((t) => (t.id === id ? updated : t)));
+        setTips(prev => prev.map((t) => (t.id === id ? updated : t)));
         setEditingTipId(null);
       } else {
         setError('Failed to update tip');
@@ -1578,7 +1580,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
       });
 
       if (res.ok) {
-        setTips(tips.filter((t) => t.id !== id));
+        setTips(prev => prev.filter((t) => t.id !== id));
       } else {
         setError('Failed to delete tip');
       }
@@ -1615,7 +1617,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const newLink = await res.json();
-        setShoppingLinks([...shoppingLinks, newLink]);
+        setShoppingLinks(prev => [...prev, newLink]);
         resetAddLinkForm();
       } else {
         const data = await res.json();
@@ -1656,7 +1658,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (res.ok) {
         const updated = await res.json();
-        setShoppingLinks(shoppingLinks.map((l) => (l.id === id ? updated : l)));
+        setShoppingLinks(prev => prev.map((l) => (l.id === id ? updated : l)));
         setEditingLinkId(null);
         setEditLinkPreview(null);
       } else {
@@ -1677,7 +1679,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
       });
 
       if (res.ok) {
-        setShoppingLinks(shoppingLinks.filter((l) => l.id !== id));
+        setShoppingLinks(prev => prev.filter((l) => l.id !== id));
       } else {
         setError('Failed to delete link');
       }
@@ -1688,7 +1690,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
   const handleToggleLinkChecked = async (id: string, checked: boolean) => {
     // Optimistic update
-    setShoppingLinks(shoppingLinks.map((l) => (l.id === id ? { ...l, checked } : l)));
+    setShoppingLinks(prev => prev.map((l) => (l.id === id ? { ...l, checked } : l)));
 
     try {
       const res = await fetch('/.netlify/functions/cms-links', {
@@ -1702,11 +1704,11 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
       if (!res.ok) {
         // Revert on error
-        setShoppingLinks(shoppingLinks.map((l) => (l.id === id ? { ...l, checked: !checked } : l)));
+        setShoppingLinks(prev => prev.map((l) => (l.id === id ? { ...l, checked: !checked } : l)));
       }
     } catch {
       // Revert on error
-      setShoppingLinks(shoppingLinks.map((l) => (l.id === id ? { ...l, checked: !checked } : l)));
+      setShoppingLinks(prev => prev.map((l) => (l.id === id ? { ...l, checked: !checked } : l)));
     }
   };
 

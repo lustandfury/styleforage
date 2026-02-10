@@ -1,5 +1,6 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
+import { isAdminValid } from './lib/auth';
 
 interface EditorialEntry {
   id: string;
@@ -28,10 +29,7 @@ const handler: Handler = async (event: HandlerEvent) => {
 
   try {
     // Validate admin passcode
-    const adminPasscode = event.headers['x-admin-passcode'];
-    const envAdminPasscode = process.env.ADMIN_PASSCODE;
-
-    if (!adminPasscode || !envAdminPasscode || adminPasscode !== envAdminPasscode) {
+    if (!isAdminValid(event)) {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),
@@ -61,7 +59,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     
     // Read current entries for this lookbook
     const entriesData = await store.get(`entries/${slug}`, { type: 'json' });
-    const entries: EditorialEntry[] = (entriesData as EditorialEntry[]) || [];
+    const entries: EditorialEntry[] = Array.isArray(entriesData) ? entriesData as EditorialEntry[] : [];
 
     // Find the entry
     const entryIndex = entries.findIndex(e => e.id === id);

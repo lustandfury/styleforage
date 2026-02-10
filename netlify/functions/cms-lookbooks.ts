@@ -1,5 +1,6 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
+import { generateId, isAdminValid } from './lib/auth';
 
 export type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
@@ -12,17 +13,6 @@ export interface Lookbook {
   passcode: string;
   season?: Season;
   createdAt: string;
-}
-
-/**
- * Generate a simple UUID v4
- */
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 /**
@@ -43,15 +33,6 @@ function slugify(name: string): string {
     .replace(/\s+/g, '-') // Replace spaces with hyphens
     .replace(/-+/g, '-') // Replace multiple hyphens with single
     .substring(0, 50); // Limit length
-}
-
-/**
- * Validate admin passcode
- */
-function isAdminValid(event: HandlerEvent): boolean {
-  const adminPasscode = event.headers['x-admin-passcode'];
-  const envAdminPasscode = process.env.ADMIN_PASSCODE;
-  return !!(adminPasscode && envAdminPasscode && adminPasscode === envAdminPasscode);
 }
 
 /**

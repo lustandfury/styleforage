@@ -1,46 +1,13 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
 import { normalizePastedText } from './lib/text';
+import { generateId, isAdminValid, isViewValid } from './lib/auth';
 
 export interface Tip {
   id: string;
   text: string;
   order: number;
   createdAt: string;
-}
-
-interface Lookbook {
-  id: string;
-  slug: string;
-  clientName: string;
-  passcode: string;
-  createdAt: string;
-}
-
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-function isAdminValid(event: HandlerEvent): boolean {
-  const adminPasscode = event.headers['x-admin-passcode'];
-  const envAdminPasscode = process.env.ADMIN_PASSCODE;
-  return !!(adminPasscode && envAdminPasscode && adminPasscode === envAdminPasscode);
-}
-
-async function isViewValid(event: HandlerEvent, slug: string): Promise<boolean> {
-  const viewPasscode = event.headers['x-view-passcode'];
-  if (!viewPasscode) return false;
-
-  const store = getStorage('cms-editorial', event);
-  const lookbooksData = await store.get('lookbooks', { type: 'json' });
-  const lookbooks: Lookbook[] = (lookbooksData as Lookbook[]) || [];
-  const lookbook = lookbooks.find(l => l.slug === slug);
-
-  return !!(lookbook && viewPasscode === lookbook.passcode);
 }
 
 /**
@@ -76,7 +43,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       const tipsData = await store.get(`tips/${slug}`, { type: 'json' });
-      const tips: Tip[] = (tipsData as Tip[]) || [];
+      const tips: Tip[] = Array.isArray(tipsData) ? tipsData as Tip[] : [];
       tips.sort((a, b) => a.order - b.order);
 
       return {
@@ -105,7 +72,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       const tipsData = await store.get(`tips/${slug}`, { type: 'json' });
-      const tips: Tip[] = (tipsData as Tip[]) || [];
+      const tips: Tip[] = Array.isArray(tipsData) ? tipsData as Tip[] : [];
 
       const newTip: Tip = {
         id: generateId(),
@@ -114,9 +81,15 @@ const handler: Handler = async (event: HandlerEvent) => {
         createdAt: new Date().toISOString(),
       };
 
-      tips.push(newTip);
+      // Re-read before write to avoid losing concurrent adds
+      const latestData = await store.get(`tips/${slug}`, { type: 'json' });
+      const latest: Tip[] = Array.isArray(latestData) ? latestData as Tip[] : [];
+      const merged = latest.some(t => t.id === newTip.id) ? latest : [...latest, newTip];
+      if (merged.length !== latest.length) {
+        merged[merged.length - 1].order = merged.length - 1;
+      }
       try {
-        await store.setJSON(`tips/${slug}`, tips);
+        await store.setJSON(`tips/${slug}`, merged);
       } catch (writeError) {
         console.error('cms-tips: failed to save tips after add', writeError);
         return {
@@ -144,7 +117,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       const tipsData = await store.get(`tips/${slug}`, { type: 'json' });
-      const tips: Tip[] = (tipsData as Tip[]) || [];
+      const tips: Tip[] = Array.isArray(tipsData) ? tipsData as Tip[] : [];
       const tipIndex = tips.findIndex(t => t.id === id);
 
       if (tipIndex === -1) {
@@ -154,11 +127,22 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      if (text !== undefined) tips[tipIndex].text = normalizePastedText(String(text).trim());
-      if (order !== undefined && typeof order === 'number') tips[tipIndex].order = order;
+      // Build desired state for this tip
+      const updatedTip: Tip = { ...tips[tipIndex] };
+      if (text !== undefined) updatedTip.text = normalizePastedText(String(text).trim());
+      if (order !== undefined && typeof order === 'number') updatedTip.order = order;
+
+      // Re-read latest before write to avoid overwriting concurrent changes
+      const latestData = await store.get(`tips/${slug}`, { type: 'json' });
+      const latest: Tip[] = Array.isArray(latestData) ? latestData as Tip[] : [];
+      const latestIndex = latest.findIndex(t => t.id === id);
+      if (latestIndex === -1) {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Tip not found' }) };
+      }
+      latest[latestIndex] = updatedTip;
 
       try {
-        await store.setJSON(`tips/${slug}`, tips);
+        await store.setJSON(`tips/${slug}`, latest);
       } catch (writeError) {
         console.error('cms-tips: failed to save tips after update', writeError);
         return {
@@ -170,7 +154,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tips[tipIndex]),
+        body: JSON.stringify(updatedTip),
       };
     }
 
@@ -184,21 +168,20 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      const tipsData = await store.get(`tips/${slug}`, { type: 'json' });
-      const tips: Tip[] = (tipsData as Tip[]) || [];
-      const tipIndex = tips.findIndex(t => t.id === id);
-
-      if (tipIndex === -1) {
+      // Re-read latest data immediately before write to avoid overwriting concurrent changes
+      const latestData = await store.get(`tips/${slug}`, { type: 'json' });
+      const latest: Tip[] = Array.isArray(latestData) ? latestData as Tip[] : [];
+      const filtered = latest.filter(t => t.id !== id);
+      if (filtered.length === latest.length) {
         return {
           statusCode: 404,
           body: JSON.stringify({ error: 'Tip not found' }),
         };
       }
 
-      tips.splice(tipIndex, 1);
-      tips.forEach((t, i) => { t.order = i; });
+      filtered.forEach((t, i) => { t.order = i; });
       try {
-        await store.setJSON(`tips/${slug}`, tips);
+        await store.setJSON(`tips/${slug}`, filtered);
       } catch (writeError) {
         console.error('cms-tips: failed to save tips after delete', writeError);
         return {

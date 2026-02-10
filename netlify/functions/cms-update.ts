@@ -1,6 +1,7 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
 import { normalizePastedText } from './lib/text';
+import { isAdminValid } from './lib/auth';
 
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
@@ -31,10 +32,7 @@ const handler: Handler = async (event: HandlerEvent) => {
 
   try {
     // Validate admin passcode
-    const adminPasscode = event.headers['x-admin-passcode'];
-    const envAdminPasscode = process.env.ADMIN_PASSCODE;
-
-    if (!adminPasscode || !envAdminPasscode || adminPasscode !== envAdminPasscode) {
+    if (!isAdminValid(event)) {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),
@@ -60,10 +58,10 @@ const handler: Handler = async (event: HandlerEvent) => {
 
     // Get the editorial store
     const store = getStorage('cms-editorial', event);
-    
-    // Read current entries for this lookbook
+
+    // Read current entries to validate existence
     const entriesData = await store.get(`entries/${slug}`, { type: 'json' });
-    const entries: EditorialEntry[] = entriesData || [];
+    const entries: EditorialEntry[] = Array.isArray(entriesData) ? entriesData as EditorialEntry[] : [];
 
     // Find the entry
     const entryIndex = entries.findIndex(e => e.id === id);
@@ -74,35 +72,43 @@ const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    // Update fields
+    // Build the desired state for this entry
+    const updatedEntry: EditorialEntry = { ...entries[entryIndex] };
     if (title !== undefined) {
       if (title === null || title === '') {
-        delete entries[entryIndex].title;
+        delete updatedEntry.title;
       } else if (typeof title === 'string') {
-        entries[entryIndex].title = title.trim();
+        updatedEntry.title = title.trim();
       }
     }
     if (caption !== undefined) {
-      entries[entryIndex].caption = normalizePastedText(caption);
+      updatedEntry.caption = normalizePastedText(caption);
     }
     if (order !== undefined && typeof order === 'number') {
-      entries[entryIndex].order = order;
+      updatedEntry.order = order;
     }
     if (season !== undefined) {
       if (season === null || season === '') {
-        delete entries[entryIndex].season;
+        delete updatedEntry.season;
       } else {
-        entries[entryIndex].season = season as Season;
+        updatedEntry.season = season as Season;
       }
     }
 
-    // Save updated entries
-    await store.setJSON(`entries/${slug}`, entries);
+    // Re-read latest before write to avoid overwriting concurrent changes to other entries
+    const latestData = await store.get(`entries/${slug}`, { type: 'json' });
+    const latest: EditorialEntry[] = Array.isArray(latestData) ? latestData as EditorialEntry[] : [];
+    const latestIndex = latest.findIndex(e => e.id === id);
+    if (latestIndex === -1) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Entry not found' }) };
+    }
+    latest[latestIndex] = updatedEntry;
+    await store.setJSON(`entries/${slug}`, latest);
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entries[entryIndex]),
+      body: JSON.stringify(updatedEntry),
     };
   } catch (error) {
     console.error('Update error:', error);

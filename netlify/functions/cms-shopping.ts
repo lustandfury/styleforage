@@ -1,5 +1,6 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 import { getStorage } from './lib/storage';
+import { generateId, isAdminValid, isViewValid } from './lib/auth';
 
 export interface LinkPreview {
   url: string;
@@ -31,49 +32,6 @@ export interface ShoppingItem {
   checked: boolean;
   order: number;
   createdAt: string;
-}
-
-interface Lookbook {
-  id: string;
-  slug: string;
-  clientName: string;
-  passcode: string;
-  createdAt: string;
-}
-
-/**
- * Generate a simple UUID v4
- */
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-/**
- * Validate admin passcode
- */
-function isAdminValid(event: HandlerEvent): boolean {
-  const adminPasscode = event.headers['x-admin-passcode'];
-  const envAdminPasscode = process.env.ADMIN_PASSCODE;
-  return !!(adminPasscode && envAdminPasscode && adminPasscode === envAdminPasscode);
-}
-
-/**
- * Validate view passcode for a specific lookbook
- */
-async function isViewValid(event: HandlerEvent, slug: string): Promise<boolean> {
-  const viewPasscode = event.headers['x-view-passcode'];
-  if (!viewPasscode) return false;
-
-  const store = getStorage('cms-editorial', event);
-  const lookbooksData = await store.get('lookbooks', { type: 'json' });
-  const lookbooks: Lookbook[] = (lookbooksData as Lookbook[]) || [];
-  const lookbook = lookbooks.find(l => l.slug === slug);
-
-  return !!(lookbook && viewPasscode === lookbook.passcode);
 }
 
 /**
@@ -110,7 +68,7 @@ const handler: Handler = async (event: HandlerEvent) => {
       }
 
       const itemsData = await store.get(`shopping/${slug}`, { type: 'json' });
-      const items: ShoppingItem[] = (itemsData as ShoppingItem[]) || [];
+      const items: ShoppingItem[] = Array.isArray(itemsData) ? itemsData as ShoppingItem[] : [];
 
       // Sort by order
       items.sort((a, b) => a.order - b.order);
@@ -145,9 +103,9 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      // Read current items
+      // Read current items to validate existence
       const itemsData = await store.get(`shopping/${slug}`, { type: 'json' });
-      const items: ShoppingItem[] = (itemsData as ShoppingItem[]) || [];
+      const items: ShoppingItem[] = Array.isArray(itemsData) ? itemsData as ShoppingItem[] : [];
 
       // Find the item
       const itemIndex = items.findIndex(i => i.id === id);
@@ -158,49 +116,65 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      // Viewers can only update checked status
       if (!isAdmin) {
-        if (checked !== undefined) {
-          items[itemIndex].checked = checked;
+        // Viewer: only checked — build updated item and re-read before write
+        const updatedItem: ShoppingItem = { ...items[itemIndex] };
+        if (checked !== undefined) updatedItem.checked = checked;
+
+        const latestData = await store.get(`shopping/${slug}`, { type: 'json' });
+        const latest: ShoppingItem[] = Array.isArray(latestData) ? latestData as ShoppingItem[] : [];
+        const latestIndex = latest.findIndex(i => i.id === id);
+        if (latestIndex === -1) {
+          return { statusCode: 404, body: JSON.stringify({ error: 'Item not found' }) };
         }
-        await store.setJSON(`shopping/${slug}`, items);
+        latest[latestIndex] = updatedItem;
+        await store.setJSON(`shopping/${slug}`, latest);
         return {
           statusCode: 200,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(items[itemIndex]),
+          body: JSON.stringify(updatedItem),
         };
       }
 
-      // Admin can update all fields
+      // Admin: build the desired state for this item from current values
       const { name, description, link, price, linkPreview, category, order, links: linksBody } = body;
+      const updatedItem: ShoppingItem = { ...items[itemIndex] };
 
-      if (name !== undefined) items[itemIndex].name = name.trim();
-      if (description !== undefined) items[itemIndex].description = description?.trim() || undefined;
-      if (link !== undefined) items[itemIndex].link = link?.trim() || undefined;
-      if (price !== undefined) items[itemIndex].price = price?.trim() || undefined;
-      if (linkPreview !== undefined) items[itemIndex].linkPreview = linkPreview || undefined;
+      if (name !== undefined) updatedItem.name = name.trim();
+      if (description !== undefined) updatedItem.description = description?.trim() || undefined;
+      if (link !== undefined) updatedItem.link = link?.trim() || undefined;
+      if (price !== undefined) updatedItem.price = price?.trim() || undefined;
+      if (linkPreview !== undefined) updatedItem.linkPreview = linkPreview || undefined;
       if (linksBody !== undefined && Array.isArray(linksBody)) {
         const linksArray: ShoppingItemLink[] = linksBody
           .filter((l: { url?: string }) => l && typeof l.url === 'string' && l.url.trim())
           .map((l: { url: string; description?: string; linkPreview?: LinkPreview }) => ({ url: l.url.trim(), description: l.description?.trim() || undefined, linkPreview: l.linkPreview }));
-        items[itemIndex].links = linksArray.length > 0 ? linksArray : undefined;
+        updatedItem.links = linksArray.length > 0 ? linksArray : undefined;
         const first = linksArray[0];
-        items[itemIndex].link = first?.url;
-        items[itemIndex].linkPreview = first?.linkPreview;
+        updatedItem.link = first?.url;
+        updatedItem.linkPreview = first?.linkPreview;
       }
       if (category !== undefined) {
         const validCategories: ShoppingCategory[] = ['tops', 'bottoms', 'accessories', 'footwear', 'outerwear', 'uncategorized'];
-        items[itemIndex].category = validCategories.includes(category) ? category : 'uncategorized';
+        updatedItem.category = validCategories.includes(category) ? category : 'uncategorized';
       }
-      if (checked !== undefined) items[itemIndex].checked = checked;
-      if (order !== undefined && typeof order === 'number') items[itemIndex].order = order;
+      if (checked !== undefined) updatedItem.checked = checked;
+      if (order !== undefined && typeof order === 'number') updatedItem.order = order;
 
-      await store.setJSON(`shopping/${slug}`, items);
+      // Re-read latest before write to avoid overwriting concurrent changes to other items
+      const latestData = await store.get(`shopping/${slug}`, { type: 'json' });
+      const latest: ShoppingItem[] = Array.isArray(latestData) ? latestData as ShoppingItem[] : [];
+      const latestIndex = latest.findIndex(i => i.id === id);
+      if (latestIndex === -1) {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Item not found' }) };
+      }
+      latest[latestIndex] = updatedItem;
+      await store.setJSON(`shopping/${slug}`, latest);
 
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(items[itemIndex]),
+        body: JSON.stringify(updatedItem),
       };
     }
 
@@ -240,7 +214,7 @@ const handler: Handler = async (event: HandlerEvent) => {
 
       // Read current items
       const itemsData = await store.get(`shopping/${slug}`, { type: 'json' });
-      const items: ShoppingItem[] = (itemsData as ShoppingItem[]) || [];
+      const items: ShoppingItem[] = Array.isArray(itemsData) ? itemsData as ShoppingItem[] : [];
 
       // Create new item
       const newItem: ShoppingItem = {
@@ -261,7 +235,7 @@ const handler: Handler = async (event: HandlerEvent) => {
 
       // Re-read before write to avoid losing items when multiple adds happen in quick succession
       const latestData = await store.get(`shopping/${slug}`, { type: 'json' });
-      const latest: ShoppingItem[] = (latestData as ShoppingItem[]) || [];
+      const latest: ShoppingItem[] = Array.isArray(latestData) ? latestData as ShoppingItem[] : [];
       const merged = latest.some((i) => i.id === newItem.id) ? latest : [...latest, newItem];
       if (merged.length !== latest.length) {
         merged[merged.length - 1].order = merged.length - 1;
@@ -295,28 +269,20 @@ const handler: Handler = async (event: HandlerEvent) => {
         };
       }
 
-      // Read current items
-      const itemsData = await store.get(`shopping/${slug}`, { type: 'json' });
-      const items: ShoppingItem[] = (itemsData as ShoppingItem[]) || [];
+      // Re-read latest data immediately before write to avoid overwriting concurrent changes
+      const latestData = await store.get(`shopping/${slug}`, { type: 'json' });
+      const latest: ShoppingItem[] = Array.isArray(latestData) ? latestData as ShoppingItem[] : [];
 
-      // Find the item
-      const itemIndex = items.findIndex(i => i.id === id);
-      if (itemIndex === -1) {
+      const filtered = latest.filter(i => i.id !== id);
+      if (filtered.length === latest.length) {
         return {
           statusCode: 404,
           body: JSON.stringify({ error: 'Item not found' }),
         };
       }
 
-      // Remove the item
-      items.splice(itemIndex, 1);
-
-      // Reorder remaining items
-      items.forEach((item, i) => {
-        item.order = i;
-      });
-
-      await store.setJSON(`shopping/${slug}`, items);
+      filtered.forEach((item, i) => { item.order = i; });
+      await store.setJSON(`shopping/${slug}`, filtered);
 
       return {
         statusCode: 200,

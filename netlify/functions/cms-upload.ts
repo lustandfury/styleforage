@@ -2,6 +2,7 @@ import type { Handler, HandlerEvent } from '@netlify/functions';
 import sharp from 'sharp';
 import { getStorage } from './lib/storage';
 import { normalizePastedText } from './lib/text';
+import { generateId, isAdminValid } from './lib/auth';
 
 /** Max length of the longest side after resize (keeps aspect ratio). */
 const MAX_IMAGE_DIMENSION = 2400;
@@ -38,17 +39,6 @@ interface EditorialEntry {
   order: number;
   createdAt: string;
   season?: Season;
-}
-
-/**
- * Generate a simple UUID v4
- */
-function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
 }
 
 /**
@@ -120,10 +110,7 @@ const handler: Handler = async (event: HandlerEvent) => {
 
   try {
     // Validate admin passcode
-    const adminPasscode = event.headers['x-admin-passcode'];
-    const envAdminPasscode = process.env.ADMIN_PASSCODE;
-
-    if (!adminPasscode || !envAdminPasscode || adminPasscode !== envAdminPasscode) {
+    if (!isAdminValid(event)) {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' }),

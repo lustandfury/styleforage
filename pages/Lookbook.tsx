@@ -1578,7 +1578,8 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
                   )}
                   <span className="truncate max-w-[150px]">
                     {item.linkPreview?.siteName || (() => {
-                      try { return new URL(item.link!).hostname; } catch { return 'Shop'; }
+                      if (!item.link) return 'Shop';
+                      try { return new URL(item.link).hostname; } catch { return 'Shop'; }
                     })()}
                   </span>
                 </div>
