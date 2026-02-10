@@ -1012,6 +1012,12 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     const idx = sortedEntries.findIndex((e) => e.id === entry.id);
     if (idx <= 0) return;
     const prev = sortedEntries[idx - 1];
+    // Optimistic update
+    setEntries((current) => current.map((e) => {
+      if (e.id === entry.id) return { ...e, order: prev.order };
+      if (e.id === prev.id) return { ...e, order: entry.order };
+      return e;
+    }));
     try {
       await Promise.all([
         fetch('/.netlify/functions/cms-update', {
@@ -1025,15 +1031,21 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           body: JSON.stringify({ slug, id: prev.id, order: entry.order }),
         }),
       ]);
-      await fetchEntries();
     } catch {
       setError('Failed to reorder');
+      await fetchEntries();
     }
   };
   const moveEntryDown = async (entry: EditorialEntry) => {
     const idx = sortedEntries.findIndex((e) => e.id === entry.id);
     if (idx < 0 || idx >= sortedEntries.length - 1) return;
     const next = sortedEntries[idx + 1];
+    // Optimistic update
+    setEntries((current) => current.map((e) => {
+      if (e.id === entry.id) return { ...e, order: next.order };
+      if (e.id === next.id) return { ...e, order: entry.order };
+      return e;
+    }));
     try {
       await Promise.all([
         fetch('/.netlify/functions/cms-update', {
@@ -1047,14 +1059,13 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           body: JSON.stringify({ slug, id: next.id, order: entry.order }),
         }),
       ]);
-      await fetchEntries();
     } catch {
       setError('Failed to reorder');
+      await fetchEntries();
     }
   };
 
   const handleEntryReorder = async (orderedIds: string[]) => {
-    const scrollY = window.scrollY;
     try {
       await Promise.all(
         orderedIds.map((id, order) =>
@@ -1065,12 +1076,9 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           })
         )
       );
-      await fetchEntries();
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => window.scrollTo(0, scrollY));
-      });
     } catch {
       setError('Failed to reorder');
+      await fetchEntries();
     }
   };
 
@@ -1426,7 +1434,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   };
 
   const handleShoppingReorder = async (orderedIds: string[]) => {
-    const scrollY = window.scrollY;
     try {
       await Promise.all(
         orderedIds.map((id, order) =>
@@ -1437,12 +1444,9 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           })
         )
       );
-      await fetchShoppingItems();
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => window.scrollTo(0, scrollY));
-      });
     } catch {
       setError('Failed to reorder');
+      await fetchShoppingItems();
     }
   };
 
@@ -2002,6 +2006,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                     const reordered = [...sortedEntries];
                     const [removed] = reordered.splice(oldIndex, 1);
                     reordered.splice(newIndex, 0, removed);
+                    setEntries(reordered.map((e, i) => ({ ...e, order: i })));
                     handleEntryReorder(reordered.map((e) => e.id));
                   }}
                 >
@@ -2148,6 +2153,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                       const reordered = [...sortedShoppingItems];
                       const [removed] = reordered.splice(oldIndex, 1);
                       reordered.splice(newIndex, 0, removed);
+                      setShoppingItems(reordered.map((i, idx) => ({ ...i, order: idx })));
                       handleShoppingReorder(reordered.map((i) => i.id));
                     }}
                   >
