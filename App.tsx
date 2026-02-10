@@ -65,6 +65,7 @@ const AppLayout = () => {
             <Route path="/book/:serviceId" element={<BookingPage />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/:slug" element={<Admin />} />
+            <Route path="/admin/:slug/:tab" element={<Admin />} />
             <Route path="/lookbook" element={<LookbookLogin />} />
             <Route path="/lookbook/:slug" element={<Lookbook />} />
           </Routes>

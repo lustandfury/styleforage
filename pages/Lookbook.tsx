@@ -84,9 +84,10 @@ const AddToHomeScreenCTA: React.FC = () => {
 
   return (
     <div className="mt-6 bg-sage-50 rounded-2xl border border-sage-100 overflow-hidden">
-      <button
+      <Button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between text-left cursor-pointer hover:bg-sage-100/50 transition-colors"
+        variant="ghost"
+        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-sage-100/50 h-auto"
       >
         <div className="flex items-center gap-3">
           {instructions.icon}
@@ -96,7 +97,7 @@ const AddToHomeScreenCTA: React.FC = () => {
           size={18}
           className={`text-stone-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
         />
-      </button>
+      </Button>
       
       {isExpanded && (
         <div className="px-4 pb-4 pt-1">
@@ -245,14 +246,16 @@ const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, title, child
           <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
           <div className="flex items-center justify-between">
             <h3 className="font-serif text-lg text-stone-900">{title}</h3>
-            <button
+            <Button
               type="button"
               onClick={startClose}
-              className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
+              variant="ghost"
+              size="icon"
+              className="-mr-2"
               aria-label="Close"
             >
               <X size={24} />
-            </button>
+            </Button>
           </div>
         </div>
         <div
@@ -584,9 +587,9 @@ export const Lookbook: React.FC = () => {
       <div className="min-h-screen bg-stone-900 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error}</p>
-          <button onClick={fetchEntries} className="text-white hover:underline cursor-pointer">
+          <Button onClick={fetchEntries} variant="light" size="md">
             Try again
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -681,12 +684,13 @@ export const Lookbook: React.FC = () => {
           <div className="h-full flex flex-col max-w-2xl mx-auto">
             <div className="p-6 border-b border-stone-100 flex-shrink-0 flex items-center justify-between">
               <h2 className="font-serif text-xl text-stone-900">Tips</h2>
-              <button
+              <Button
                 onClick={() => setShowTips(false)}
-                className="p-2 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 cursor-pointer"
+                variant="ghost"
+                size="icon"
               >
                 <X size={24} />
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               {tips.length === 0 ? (
@@ -766,13 +770,15 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({ imageUrls, initialIndex, 
       onTouchEnd={(e) => { e.stopPropagation(); onTouchEnd(e); }}
     >
       {/* Close button */}
-      <button
+      <Button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors cursor-pointer safe-top"
+        variant="ghost"
+        size="icon"
+        className="absolute top-4 right-4 z-10 bg-white/10 text-white hover:bg-white/20 safe-top"
         aria-label="Close lightbox"
       >
         <X size={24} />
-      </button>
+      </Button>
 
       {/* Image counter */}
       {hasMultiple && (
@@ -784,20 +790,24 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({ imageUrls, initialIndex, 
       {/* Prev/Next arrows (desktop only) */}
       {hasMultiple && (
         <>
-          <button
+          <Button
             onClick={(e) => { e.stopPropagation(); goPrev(); }}
-            className="hidden md:flex absolute left-4 z-10 p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors cursor-pointer"
+            variant="ghost"
+            size="icon"
+            className="hidden md:flex absolute left-4 z-10 p-3 bg-white/10 text-white hover:bg-white/20 h-auto w-auto"
             aria-label="Previous image"
           >
             <ChevronLeft size={24} />
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={(e) => { e.stopPropagation(); goNext(); }}
-            className="hidden md:flex absolute right-4 z-10 p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors cursor-pointer"
+            variant="ghost"
+            size="icon"
+            className="hidden md:flex absolute right-4 z-10 p-3 bg-white/10 text-white hover:bg-white/20 h-auto w-auto"
             aria-label="Next image"
           >
             <ChevronRight size={24} />
-          </button>
+          </Button>
         </>
       )}
 
@@ -999,54 +1009,54 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
             </div>
           )}
           {shoppingItemsCount > 0 && (
-            <button
+            <Button
               onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
-              className="flex items-center gap-2 px-4 py-2 border border-stone-300 text-stone-700 bg-transparent rounded-full text-sm font-medium hover:bg-stone-50 transition-colors cursor-pointer"
+              variant="outline"
+              size="md"
+              className="gap-2"
             >
               <ShoppingBag size={16} />
               Shopping List
               <span className="rounded-full bg-stone-300 px-2 py-0.5 text-xs font-medium text-stone-600">
                 {shoppingItemsCount}
               </span>
-            </button>
+            </Button>
           )}
           {tipsCount > 0 && (
-            <button
+            <Button
               onClick={(e) => { e.stopPropagation(); onShowTips(); }}
-              className="flex items-center gap-2 px-4 py-2 border border-stone-300 text-stone-700 bg-transparent rounded-full text-sm font-medium hover:bg-stone-50 transition-colors cursor-pointer"
+              variant="outline"
+              size="md"
+              className="gap-2"
             >
               <Lightbulb size={16} />
               Tips
               <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
                 {tipsCount}
               </span>
-            </button>
+            </Button>
           )}
           {/* Season filter for entries */}
           {hasSeasonedEntries && (
             <div className="flex gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1" onClick={(e) => e.stopPropagation()}>
-              <button
+              <Button
                 onClick={() => setSelectedSeason('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                  selectedSeason === 'all'
-                    ? 'bg-sage-500 text-white'
-                    : 'text-stone-600 hover:bg-stone-100'
-                }`}
+                variant={selectedSeason === 'all' ? 'chip-selected' : 'chip'}
+                size="sm"
+                className="px-3 py-1.5 text-xs h-auto"
               >
                 All
-              </button>
+              </Button>
               {SEASON_ORDER.map((season) => (
-                <button
+                <Button
                   key={season}
                   onClick={() => setSelectedSeason(season)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                    selectedSeason === season
-                      ? 'bg-sage-500 text-white'
-                      : 'text-stone-600 hover:bg-stone-100'
-                  }`}
+                  variant={selectedSeason === season ? 'chip-selected' : 'chip'}
+                  size="sm"
+                  className="px-3 py-1.5 text-xs h-auto"
                 >
                   {SEASON_LABELS[season]}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -1056,67 +1066,73 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
       {/* Mobile: Top buttons - z-[60] so they stay above Read more ActionSheet (z-50) */}
       <div className="md:hidden absolute top-12 right-4 z-[60] flex flex-col items-end gap-2">
         {shoppingItemsCount > 0 && (
-          <button
+          <Button
             onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
-            className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors cursor-pointer"
+            variant="ghost"
+            size="icon"
+            className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
             aria-label="View shopping list"
           >
             <ShoppingBag size={24} />
-          </button>
+          </Button>
         )}
         {tipsCount > 0 && (
-          <button
+          <Button
             onClick={(e) => { e.stopPropagation(); onShowTips(); }}
-            className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors cursor-pointer"
+            variant="ghost"
+            size="icon"
+            className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
             aria-label="View tips"
           >
             <Lightbulb size={24} />
-          </button>
+          </Button>
         )}
         {/* Season filter button */}
         {hasSeasonedEntries && (
-          <button
+          <Button
             onClick={(e) => { e.stopPropagation(); setShowSeasonMenu(true); }}
-            className={`p-2 backdrop-blur-sm rounded-full transition-colors cursor-pointer ${
-              selectedSeason !== 'all'
-                ? 'bg-sage-500 text-white'
-                : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
+            variant={selectedSeason !== 'all' ? 'primary' : 'ghost'}
+            size="icon"
+            className={selectedSeason !== 'all' ? '' : 'bg-white/20 text-white hover:bg-white/30'}
             aria-label="Filter by season"
           >
             <SlidersHorizontal size={24} />
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Desktop: Side navigation arrows */}
       <div className="hidden md:flex absolute inset-y-0 left-0 z-20 items-center px-4">
-        <button
+        <Button
           onClick={(e) => { e.stopPropagation(); goToPrev(); }}
           disabled={currentIndex === 0}
-          className={`p-3 rounded-full bg-white shadow-lg transition-all cursor-pointer ${
+          variant="light"
+          size="icon"
+          className={`p-3 shadow-lg h-auto w-auto ${
             currentIndex === 0
-              ? 'opacity-30 cursor-not-allowed'
+              ? 'opacity-30'
               : 'opacity-80 hover:opacity-100 hover:scale-105'
           }`}
           aria-label="Previous"
         >
           <ChevronUp size={24} className="text-stone-700 -rotate-90" />
-        </button>
+        </Button>
       </div>
       <div className="hidden md:flex absolute inset-y-0 right-0 z-20 items-center px-4">
-        <button
+        <Button
           onClick={(e) => { e.stopPropagation(); goToNext(); }}
           disabled={currentIndex === filteredEntries.length - 1}
-          className={`p-3 rounded-full bg-white shadow-lg transition-all cursor-pointer ${
+          variant="light"
+          size="icon"
+          className={`p-3 shadow-lg h-auto w-auto ${
             currentIndex === filteredEntries.length - 1
-              ? 'opacity-30 cursor-not-allowed'
+              ? 'opacity-30'
               : 'opacity-80 hover:opacity-100 hover:scale-105'
           }`}
           aria-label="Next"
         >
           <ChevronDown size={24} className="-rotate-90 text-stone-700" />
-        </button>
+        </Button>
       </div>
 
       {/* Story slides */}
@@ -1124,12 +1140,14 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
         {filteredEntries.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center p-8">
             <p className="text-stone-500 text-lg mb-2">No outfits for this season</p>
-            <button
+            <Button
               onClick={() => setSelectedSeason('all')}
-              className="text-sage-600 hover:text-sage-700 font-medium cursor-pointer"
+              variant="ghost"
+              size="md"
+              className="text-sage-600 hover:text-sage-700"
             >
               View all outfits
-            </button>
+            </Button>
           </div>
         ) : (
           filteredEntries.map((entry, index) => (
@@ -1189,28 +1207,26 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
         title="Filter by Season"
       >
         <div className="space-y-2">
-          <button
+          <Button
             onClick={() => { setSelectedSeason('all'); setShowSeasonMenu(false); }}
-            className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors cursor-pointer ${
-              selectedSeason === 'all'
-                ? 'bg-sage-500 text-white'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-            }`}
+            variant={selectedSeason === 'all' ? 'chip-selected' : 'chip'}
+            size="lg"
+            fullWidth
+            className="justify-start px-4 py-3"
           >
             All Seasons
-          </button>
+          </Button>
           {SEASON_ORDER.map((season) => (
-            <button
+            <Button
               key={season}
               onClick={() => { setSelectedSeason(season); setShowSeasonMenu(false); }}
-              className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors cursor-pointer ${
-                selectedSeason === season
-                  ? 'bg-sage-500 text-white'
-                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-              }`}
+              variant={selectedSeason === season ? 'chip-selected' : 'chip'}
+              size="lg"
+              fullWidth
+              className="justify-start px-4 py-3"
             >
               {SEASON_LABELS[season]}
-            </button>
+            </Button>
           ))}
         </div>
       </ActionSheet>
@@ -1335,13 +1351,15 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
               <div className="font-sans text-sm text-white/95 leading-relaxed drop-shadow-lg max-h-16 overflow-hidden whitespace-pre-wrap">
                 {entry.caption ? <p>{normalizePastedText(entry.caption)}</p> : null}
               </div>
-              <button
+              <Button
                 type="button"
                 onClick={() => setCaptionExpanded(true)}
-                className="mt-2 self-end text-xs font-medium text-white/90 hover:text-white underline underline-offset-2 cursor-pointer"
+                variant="ghost"
+                size="sm"
+                className="mt-2 self-end text-xs font-medium text-white/90 hover:text-white underline underline-offset-2 h-auto p-0"
               >
                 Read more
-              </button>
+              </Button>
             </div>
           ) : null}
         </div>
@@ -1467,15 +1485,17 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
       <div className="p-4">
         {/* Checkbox and name row */}
         <div className="flex items-start gap-3">
-          <button
+          <Button
             onClick={() => onToggleChecked(item.id, !item.checked)}
-            className={`mt-1 flex-shrink-0 cursor-pointer transition-colors ${
+            variant="ghost"
+            size="icon"
+            className={`mt-1 flex-shrink-0 h-auto w-auto p-0 ${
               item.checked ? 'text-sage-500' : 'text-stone-300 hover:text-sage-500'
             }`}
             aria-label={item.checked ? 'Mark as not purchased' : 'Mark as purchased'}
           >
             {item.checked ? <CheckSquare size={24} /> : <Square size={24} />}
-          </button>
+          </Button>
           <div className="flex-1 min-w-0">
             {/* Item name */}
             <h3 className={`font-medium text-lg ${item.checked ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
@@ -1610,13 +1630,14 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
                 {uncheckedItems.length} of {items.length} remaining
               </span>
             </div>
-            <button
+            <Button
               onClick={onBack}
-              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors cursor-pointer"
+              variant="ghost"
+              size="icon"
               aria-label="Close"
             >
               <X size={20} />
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -1667,12 +1688,14 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
 
         {/* Back button */}
         <div className="mt-8 text-center">
-          <button
+          <Button
             onClick={onBack}
-            className="text-sage-600 hover:text-sage-700 text-sm font-medium cursor-pointer"
+            variant="ghost"
+            size="md"
+            className="text-sage-600 hover:text-sage-700"
           >
             ← Back to Lookbook
-          </button>
+          </Button>
         </div>
       </main>
     </div>
@@ -1710,14 +1733,16 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
 
       <div className="p-3">
         <div className="flex items-start gap-3">
-          <button
+          <Button
             onClick={() => onToggleChecked(item.id, !item.checked)}
-            className={`mt-0.5 flex-shrink-0 cursor-pointer transition-colors ${
+            variant="ghost"
+            size="icon"
+            className={`mt-0.5 flex-shrink-0 h-auto w-auto p-0 ${
               item.checked ? 'text-sage-500' : 'text-stone-300 hover:text-sage-500'
             }`}
           >
             {item.checked ? <CheckSquare size={20} /> : <Square size={20} />}
-          </button>
+          </Button>
           <div className="flex-1 min-w-0">
             <h4 className={`font-medium text-sm ${item.checked ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
               {item.name}

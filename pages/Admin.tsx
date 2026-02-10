@@ -233,14 +233,15 @@ function ShareLookbookModal({ clientName, passcode, slug, onClose }: ShareLookbo
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-serif text-lg text-stone-900">Share with your client</h3>
-          <button
+          <Button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 cursor-pointer"
+            variant="ghost"
+            size="icon"
             aria-label="Close"
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
         <p className="text-sm text-stone-500 mb-4">
           Send your client the link and code below so they can view their lookbook.
@@ -255,14 +256,16 @@ function ShareLookbookModal({ clientName, passcode, slug, onClose }: ShareLookbo
                 value={url}
                 className="flex-1 px-3 py-2 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => copy(url, 'url')}
-                className="flex-shrink-0 px-3 py-2 rounded-xl bg-sage-100 text-sage-700 hover:bg-sage-200 font-medium text-sm cursor-pointer flex items-center gap-1.5"
+                variant="secondary"
+                size="sm"
+                className="flex-shrink-0 gap-1.5"
               >
                 {copied === 'url' ? <Check size={16} /> : <Copy size={16} />}
                 {copied === 'url' ? 'Copied' : 'Copy'}
-              </button>
+              </Button>
             </div>
           </div>
           <div>
@@ -274,33 +277,40 @@ function ShareLookbookModal({ clientName, passcode, slug, onClose }: ShareLookbo
                 value={passcode}
                 className="flex-1 px-3 py-2 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm font-mono"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => copy(passcode, 'code')}
-                className="flex-shrink-0 px-3 py-2 rounded-xl bg-sage-100 text-sage-700 hover:bg-sage-200 font-medium text-sm cursor-pointer flex items-center gap-1.5"
+                variant="secondary"
+                size="sm"
+                className="flex-shrink-0 gap-1.5"
               >
                 {copied === 'code' ? <Check size={16} /> : <Copy size={16} />}
                 {copied === 'code' ? 'Copied' : 'Copy'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <button
+          <Button
             type="button"
             onClick={() => copy(message, 'message')}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-sage-500 text-white font-medium hover:bg-sage-600 cursor-pointer"
+            variant="primary"
+            size="lg"
+            fullWidth
+            className="gap-2"
           >
             {copied === 'message' ? <Check size={18} /> : <Share2 size={18} />}
             {copied === 'message' ? 'Copied!' : 'Copy message (link + password)'}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={onClose}
-            className="w-full px-4 py-2 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50 cursor-pointer text-sm"
+            variant="outline"
+            size="md"
+            fullWidth
           >
             Done
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -308,7 +318,7 @@ function ShareLookbookModal({ clientName, passcode, slug, onClose }: ShareLookbo
 }
 
 export const Admin: React.FC = () => {
-  const { slug } = useParams<{ slug?: string }>();
+  const { slug, tab } = useParams<{ slug?: string; tab?: string }>();
   const navigate = useNavigate();
   
   const [passcode, setPasscode] = useState('');
@@ -421,7 +431,7 @@ export const Admin: React.FC = () => {
 
   // Show lookbook editor if slug is provided, otherwise show lookbook list
   if (slug) {
-    return <LookbookEditor slug={slug} />;
+    return <LookbookEditor slug={slug} initialTab={tab} />;
   }
 
   return <LookbookList onLogout={handleLogout} />;
@@ -540,13 +550,15 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
             </Link>
             <h1 className="font-serif text-lg md:text-xl text-stone-900">Lookbook Admin</h1>
           </div>
-          <button
+          <Button
             onClick={onLogout}
-            className="flex items-center gap-1.5 md:gap-2 text-sm text-stone-500 hover:text-red-600 transition-colors cursor-pointer p-1"
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 md:gap-2 text-stone-500 hover:text-red-600 hover:bg-red-50"
           >
             <LogOut size={16} />
             <span className="hidden sm:inline">Log out</span>
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -615,13 +627,15 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
             </form>
           </div>
         ) : (
-          <button
+          <Button
             onClick={() => setShowCreateForm(true)}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 mb-6 rounded-full bg-sage-500 text-white font-medium hover:bg-sage-600 transition-colors cursor-pointer shadow-sm"
+            variant="primary"
+            size="lg"
+            className="w-full md:w-auto gap-2 mb-6 shadow-sm"
           >
             <Plus size={20} />
             New Client Lookbook
-          </button>
+          </Button>
         )}
 
         {/* Error */}
@@ -658,52 +672,60 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-stone-900 text-base">{lookbook.clientName}</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-medium text-stone-900 text-base">{lookbook.clientName}</h3>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(lookbook.passcode);
+                              setCopiedLookbookId(lookbook.slug);
+                              setTimeout(() => setCopiedLookbookId(null), 2000);
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-xs font-mono bg-stone-100 hover:bg-sage-100 text-stone-500 px-2.5 py-1"
+                            title="Click to copy code"
+                          >
+                            {copiedLookbookId === lookbook.slug ? <Check size={12} className="text-sage-600" /> : <Copy size={12} className="text-stone-400" />}
+                            {copiedLookbookId === lookbook.slug ? 'Copied!' : lookbook.passcode}
+                          </Button>
+                        </div>
+                      </div>
                       <p className="text-stone-400 text-sm mt-0.5">
                         /lookbook/{lookbook.slug}
                       </p>
-                      <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(lookbook.passcode);
-                            setCopiedLookbookId(lookbook.slug);
-                            setTimeout(() => setCopiedLookbookId(null), 2000);
-                          }}
-                          className="inline-flex items-center gap-1.5 text-sm font-mono bg-stone-100 hover:bg-sage-100 text-stone-600 px-3 py-1 rounded-full transition-colors cursor-pointer"
-                          title="Click to copy code"
-                        >
-                          {copiedLookbookId === lookbook.slug ? <Check size={14} className="text-sage-600" /> : <Copy size={14} className="text-stone-400" />}
-                          {copiedLookbookId === lookbook.slug ? 'Copied!' : lookbook.passcode}
-                        </button>
-                      </div>
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                      <button
+                      <Button
                         onClick={() => setShareLookbook(lookbook)}
-                        className="p-2.5 rounded-full bg-sage-100 text-sage-600 hover:bg-sage-200 transition-colors cursor-pointer"
+                        variant="secondary"
+                        size="icon"
                         aria-label="Share with client"
                         title="Share with client"
                       >
                         <Share2 size={18} />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => window.open(`/lookbook/${lookbook.slug}`, '_blank')}
-                        className="p-2.5 rounded-full bg-stone-100 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer"
+                        variant="icon"
+                        size="icon"
                         aria-label="Preview lookbook"
                         title="Preview lookbook"
                       >
                         <Eye size={18} />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleDelete(lookbook.slug, lookbook.clientName)}
-                        className="p-2.5 rounded-full bg-stone-100 text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        variant="icon-danger"
+                        size="icon"
                         aria-label="Delete lookbook"
+                        title="Delete lookbook"
                       >
                         <Trash2 size={18} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -717,15 +739,18 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
 };
 
 // Lookbook Editor Component
+type TabId = 'looks' | 'shopping' | 'tips';
+
 interface LookbookEditorProps {
   slug: string;
+  initialTab?: string;
 }
 
-const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
+const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => {
   const navigate = useNavigate();
-  
-  // Tab state
-  const [activeTab, setActiveTab] = useState<'looks' | 'shopping' | 'tips'>('looks');
+
+  const VALID_TABS: TabId[] = ['looks', 'shopping', 'tips'];
+  const activeTab: TabId = VALID_TABS.includes(initialTab as TabId) ? (initialTab as TabId) : 'looks';
   
   // CMS state
   const [entries, setEntries] = useState<EditorialEntry[]>([]);
@@ -1778,64 +1803,73 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
       <header className="bg-white border-b border-stone-100 sticky top-0 z-10">
         <div className="px-4 py-3 md:py-4 flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center gap-3 md:gap-4">
-            <button
+            <Button
               onClick={() => navigate('/admin')}
-              className="text-stone-500 hover:text-sage-600 transition-colors p-1 cursor-pointer"
+              variant="ghost"
+              size="icon"
               aria-label="Back to lookbooks"
             >
               <ArrowLeft size={20} />
-            </button>
+            </Button>
             <div>
-              <h1 className="font-serif text-lg md:text-xl text-stone-900">
-                {lookbookInfo?.clientName || 'Lookbook'}
-              </h1>
-              {lookbookInfo && (
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <button
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-serif text-lg md:text-xl text-stone-900">
+                  {lookbookInfo?.clientName || 'Lookbook'}
+                </h1>
+                {lookbookInfo && (
+                  <Button
                     type="button"
                     onClick={() => {
                       navigator.clipboard.writeText(lookbookInfo.passcode);
                       setCopiedPasscode(true);
                       setTimeout(() => setCopiedPasscode(false), 2000);
                     }}
-                    className="inline-flex items-center gap-1.5 text-sm font-mono bg-stone-100 hover:bg-sage-100 text-stone-600 px-3 py-1 rounded-full transition-colors cursor-pointer"
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-xs font-mono bg-stone-100 hover:bg-sage-100 text-stone-500 px-2.5 py-1"
                     title="Click to copy"
                   >
-                    {copiedPasscode ? <Check size={14} className="text-sage-600" /> : <Copy size={14} className="text-stone-400" />}
+                    {copiedPasscode ? <Check size={12} className="text-sage-600" /> : <Copy size={12} className="text-stone-400" />}
                     {copiedPasscode ? 'Copied!' : lookbookInfo.passcode}
-                  </button>
-                  {!/^\d{4}$/.test(lookbookInfo.passcode) && (
-                    <button
-                      type="button"
-                      onClick={handleResetPasscode}
-                      disabled={isResettingPasscode}
-                      className="text-sage-600 hover:text-sage-700 text-xs font-medium disabled:opacity-50 cursor-pointer"
-                    >
-                      {isResettingPasscode ? 'Resetting…' : 'Reset to 4-digit code'}
-                    </button>
-                  )}
-                </div>
+                  </Button>
+                )}
+              </div>
+              {lookbookInfo && !/^\d{4}$/.test(lookbookInfo.passcode) && (
+                <Button
+                  type="button"
+                  onClick={handleResetPasscode}
+                  disabled={isResettingPasscode}
+                  variant="ghost"
+                  size="sm"
+                  className="text-sage-600 hover:text-sage-700 text-xs font-medium mt-0.5"
+                >
+                  {isResettingPasscode ? 'Resetting…' : 'Reset to 4-digit code'}
+                </Button>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
               onClick={() => setShowShareModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 transition-colors cursor-pointer"
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
               title="Share with client"
               aria-label="Share with client"
             >
               <Share2 size={16} />
               <span className="hidden sm:inline">Share</span>
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => window.open(`/lookbook/${slug}`, '_blank')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sage-50 text-sage-600 text-sm font-medium hover:bg-sage-100 transition-colors cursor-pointer"
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
               title="Preview lookbook"
             >
               <Eye size={16} />
               <span className="hidden sm:inline">Preview</span>
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -1852,9 +1886,10 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
       {/* Tabs */}
       <div className="bg-white border-b border-stone-100">
         <div className="px-4 max-w-4xl mx-auto flex gap-1">
-          <button
-            onClick={() => setActiveTab('looks')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+          <Link
+            to={`/admin/${slug}/looks`}
+            replace
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'looks'
                 ? 'border-sage-500 text-sage-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700'
@@ -1862,12 +1897,16 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           >
             <span className="flex items-center gap-2">
               <ImageIcon size={16} />
-              Looks {entries.length > 0 && `(${entries.length})`}
+              Looks
+              {entries.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-md text-xs font-medium bg-stone-100 text-stone-400">{entries.length}</span>
+              )}
             </span>
-          </button>
-          <button
-            onClick={() => setActiveTab('shopping')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+          </Link>
+          <Link
+            to={`/admin/${slug}/shopping`}
+            replace
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'shopping'
                 ? 'border-sage-500 text-sage-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700'
@@ -1875,12 +1914,16 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           >
             <span className="flex items-center gap-2">
               <ShoppingBag size={16} />
-              Shopping List {shoppingItems.length > 0 && `(${shoppingItems.length})`}
+              Shopping List
+              {shoppingItems.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-md text-xs font-medium bg-stone-100 text-stone-400">{shoppingItems.length}</span>
+              )}
             </span>
-          </button>
-          <button
-            onClick={() => setActiveTab('tips')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+          </Link>
+          <Link
+            to={`/admin/${slug}/tips`}
+            replace
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'tips'
                 ? 'border-sage-500 text-sage-600'
                 : 'border-transparent text-stone-500 hover:text-stone-700'
@@ -1888,9 +1931,12 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           >
             <span className="flex items-center gap-2">
               <Lightbulb size={16} />
-              Tips {tips.length > 0 && `(${tips.length})`}
+              Tips
+              {tips.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-md text-xs font-medium bg-stone-100 text-stone-400">{tips.length}</span>
+              )}
             </span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -1912,40 +1958,38 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                   Lookbook Entries {entries.length > 0 && <span className="text-stone-400">({entries.length})</span>}
                 </h2>
                 {!showUploadForm && (
-                  <button
+                  <Button
                     onClick={() => setShowUploadForm(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
+                    variant="primary"
+                    size="md"
+                    className="gap-1.5"
                   >
                     <Plus size={16} />
                     Add Outfit
-                  </button>
+                  </Button>
                 )}
               </div>
               {/* Season Filter for entries */}
               {entries.some(e => e.season) && (
                 <div className="flex flex-wrap gap-1.5 mb-3 md:mb-4">
-                  <button
+                  <Button
                     onClick={() => setSelectedEntrySeason('all')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                      selectedEntrySeason === 'all'
-                        ? 'bg-stone-800 text-white'
-                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                    }`}
+                    variant={selectedEntrySeason === 'all' ? 'chip-selected' : 'chip'}
+                    size="sm"
+                    className="text-xs"
                   >
                     All
-                  </button>
+                  </Button>
                   {SEASON_ORDER.map((season) => (
-                    <button
+                    <Button
                       key={season}
                       onClick={() => setSelectedEntrySeason(season)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                        selectedEntrySeason === season
-                          ? 'bg-stone-800 text-white'
-                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                      }`}
+                      variant={selectedEntrySeason === season ? 'chip-selected' : 'chip'}
+                      size="sm"
+                      className="text-xs"
                     >
                       {SEASON_LABELS[season]}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -1955,13 +1999,14 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                   <div className="bg-white p-3 md:p-4 rounded-2xl border border-sage-200 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-serif text-base text-stone-900">New Outfit</h3>
-                      <button
+                      <Button
                         onClick={resetUploadForm}
-                        className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer"
+                        variant="ghost"
+                        size="icon"
                         aria-label="Cancel"
                       >
                         <X size={18} />
-                      </button>
+                      </Button>
                     </div>
                     <UploadForm
                       fileInputRef={fileInputRef}
@@ -2090,13 +2135,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                   Shopping Items {shoppingItems.length > 0 && <span className="text-stone-400">({shoppingItems.length})</span>}
                 </h2>
                 {!showAddItem && (
-                  <button
+                  <Button
                     onClick={() => setShowAddItem(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
+                    variant="primary"
+                    size="md"
+                    className="gap-1.5"
                   >
                     <Plus size={16} />
                     Add Item
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -2105,13 +2152,14 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                   <div className="bg-white p-3 md:p-4 rounded-2xl border border-sage-200 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-serif text-base text-stone-900">New Item</h3>
-                      <button
+                      <Button
                         onClick={resetAddItemForm}
-                        className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer"
+                        variant="ghost"
+                        size="icon"
                         aria-label="Cancel"
                       >
                         <X size={18} />
-                      </button>
+                      </Button>
                     </div>
                     <ShoppingItemForm
                       name={newItemName}
@@ -2213,13 +2261,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 Tips {tips.length > 0 && <span className="text-stone-400">({tips.length})</span>}
               </h2>
               {!showAddTip && (
-                <button
+                <Button
                   onClick={() => setShowAddTip(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
+                  variant="primary"
+                  size="md"
+                  className="gap-1.5"
                 >
                   <Plus size={16} />
                   Add Tip
-                </button>
+                </Button>
               )}
             </div>
 
@@ -2228,13 +2278,14 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 <div className="bg-white rounded-xl border border-sage-200 shadow-sm p-3 md:p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-serif text-base text-stone-900">New Tip</h3>
-                    <button
+                    <Button
                       onClick={() => { setNewTipText(''); setShowAddTip(false); }}
-                      className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer"
+                      variant="ghost"
+                      size="icon"
                       aria-label="Cancel"
                     >
                       <X size={18} />
-                    </button>
+                    </Button>
                   </div>
                   <form onSubmit={handleAddTip} className="space-y-3">
                     <textarea
@@ -2299,20 +2350,22 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                       <>
                         <p className="flex-1 text-stone-700 text-sm md:text-base leading-relaxed">{normalizePastedText(tip.text)}</p>
                         <div className="flex gap-1 flex-shrink-0">
-                          <button
+                          <Button
                             onClick={() => startEditTip(tip)}
-                            className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
+                            variant="icon"
+                            size="icon"
                             title="Edit"
                           >
                             <Edit3 size={16} />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handleDeleteTip(tip.id)}
-                            className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                            variant="icon-danger"
+                            size="icon"
                             title="Delete"
                           >
                             <Trash2 size={16} />
-                          </button>
+                          </Button>
                         </div>
                       </>
                     )}
@@ -2388,24 +2441,28 @@ const UploadForm: React.FC<UploadFormProps> = ({
                 {uploadFiles.length} photos selected. Title and description apply to the whole set.
               </p>
             )}
-            <button
+            <Button
               type="button"
               onClick={onClearFile}
-              className="absolute -top-2 -right-2 h-7 w-7 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 cursor-pointer shadow-md"
+              variant="primary"
+              size="icon"
+              className="absolute -top-2 -right-2 h-7 w-7 bg-red-500 hover:bg-red-600 shadow-md"
               aria-label="Remove photos"
             >
               <X size={16} />
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
+          <Button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-xl border-2 border-dashed border-stone-200 text-stone-500 hover:border-sage-400 hover:text-sage-600 transition-colors cursor-pointer"
+            variant="outline"
+            size="lg"
+            className="w-full md:w-auto gap-2 border-dashed border-2 border-stone-200 hover:border-sage-400"
           >
             <ImageIcon size={20} />
             <span>Choose photo(s)</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -2446,18 +2503,16 @@ const UploadForm: React.FC<UploadFormProps> = ({
         </label>
         <div className="flex flex-wrap gap-2">
           {SEASON_ORDER.map((season) => (
-            <button
+            <Button
               key={season}
               type="button"
               onClick={() => onSeasonChange(uploadSeason === season ? '' : season)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                uploadSeason === season
-                  ? 'bg-sage-500 text-white'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-              }`}
+              variant={uploadSeason === season ? 'chip-selected' : 'chip'}
+              size="sm"
+              className="text-sm"
             >
               {SEASON_LABELS[season]}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -2535,22 +2590,26 @@ const EntryImageThumb: React.FC<{
       )}
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-1">
         {onReplace && (
-          <button
+          <Button
             onClick={onReplace}
-            className="p-1.5 rounded-full bg-white/90 text-stone-700 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            variant="light"
+            size="icon"
+            className="p-1.5 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label="Replace photo"
           >
             <Camera size={14} />
-          </button>
+          </Button>
         )}
         {onDelete && (
-          <button
+          <Button
             onClick={onDelete}
-            className="p-1.5 rounded-full bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            variant="primary"
+            size="icon"
+            className="p-1.5 h-7 w-7 bg-red-500/90 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label="Remove photo"
           >
             <X size={14} />
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -2675,11 +2734,12 @@ const EntryCard: React.FC<EntryCardProps> = ({
                 isReplacing={isReplacing && key === entry.imageKey}
               />
             ))}
-            <button
+            <Button
               type="button"
               onClick={handleAddClick}
               disabled={isAdding}
-              className="aspect-square rounded-lg border-2 border-dashed border-stone-200 flex items-center justify-center text-stone-400 hover:border-sage-400 hover:text-sage-600 transition-colors cursor-pointer disabled:opacity-50"
+              variant="outline"
+              className="aspect-square rounded-lg border-2 border-dashed border-stone-200 hover:border-sage-400 hover:text-sage-600 h-auto w-auto"
               aria-label="Add photo"
             >
               {isAdding ? (
@@ -2687,7 +2747,7 @@ const EntryCard: React.FC<EntryCardProps> = ({
               ) : (
                 <Plus size={24} />
               )}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -2716,18 +2776,16 @@ const EntryCard: React.FC<EntryCardProps> = ({
               {/* Season selector */}
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {SEASON_ORDER.map((season) => (
-                  <button
+                  <Button
                     key={season}
                     type="button"
                     onClick={() => onEditSeasonChange(editSeason === season ? '' : season)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                      editSeason === season
-                        ? 'bg-sage-500 text-white'
-                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                    }`}
+                    variant={editSeason === season ? 'chip-selected' : 'chip'}
+                    size="sm"
+                    className="text-xs"
                   >
                     {SEASON_LABELS[season]}
-                  </button>
+                  </Button>
                 ))}
               </div>
               <div className="flex gap-2 mt-3">
@@ -2773,52 +2831,62 @@ const EntryCard: React.FC<EntryCardProps> = ({
                     </span>
                   ) : (
                     <>
-                      <button
+                      <Button
                         type="button"
                         onClick={onMoveUp}
                         disabled={!canMoveUp}
-                        className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        variant="icon"
+                        size="icon"
+                        className="bg-stone-50 rounded-lg"
                         aria-label="Move up"
                       >
                         <ChevronUp size={18} />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         onClick={onMoveDown}
                         disabled={!canMoveDown}
-                        className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        variant="icon"
+                        size="icon"
+                        className="bg-stone-50 rounded-lg"
                         aria-label="Move down"
                       >
                         <ChevronDown size={18} />
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>
-                <button
+                <Button
                   onClick={handleReplaceClick}
                   disabled={isReplacing}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-50"
+                  variant="icon"
+                  size="icon"
+                  className="flex-1 sm:flex-none gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent h-auto sm:h-9"
                   aria-label="Replace photo"
                 >
                   <Camera size={18} />
                   <span className="text-sm sm:hidden">Photo</span>
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={onStartEdit}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer"
+                  variant="icon"
+                  size="icon"
+                  className="flex-1 sm:flex-none gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent h-auto sm:h-9"
                   aria-label="Edit caption"
                 >
                   <Edit3 size={18} />
                   <span className="text-sm sm:hidden">Edit</span>
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={onDelete}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                  variant="icon-danger"
+                  size="icon"
+                  className="flex-1 sm:flex-none gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent h-auto sm:h-9"
                   aria-label="Delete entry"
                 >
                   <Trash2 size={18} />
                   <span className="text-sm sm:hidden">Delete</span>
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -2907,18 +2975,16 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
           </label>
           <div className="flex flex-wrap gap-2">
             {CATEGORY_ORDER.map((cat) => (
-              <button
+              <Button
                 key={cat}
                 type="button"
                 onClick={() => onCategoryChange(cat)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                  category === cat
-                    ? 'bg-sage-500 text-white'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                }`}
+                variant={category === cat ? 'chip-selected' : 'chip'}
+                size="sm"
+                className="text-sm"
               >
                 {CATEGORY_LABELS[cat]}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -2957,13 +3023,15 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
 
         {/* Toggle for optional fields */}
         {!showOptional && !hasAnyLink && (
-          <button
+          <Button
             type="button"
             onClick={() => setShowOptional(true)}
-            className="text-sage-600 text-sm hover:text-sage-700 cursor-pointer"
+            variant="ghost"
+            size="sm"
+            className="text-sage-600 hover:text-sage-700"
           >
             + Add product link
-          </button>
+          </Button>
         )}
 
         {/* Optional fields */}
@@ -2987,14 +3055,16 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
                     />
                     <div className="flex gap-2">
                     {links.length > 1 && (
-                      <button
+                      <Button
                         type="button"
                         onClick={() => onRemoveLink(index)}
-                        className="p-2 h-11 rounded-xl bg-stone-100 text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        variant="icon-danger"
+                        size="icon"
+                        className="h-11 w-11 rounded-xl bg-stone-100"
                         aria-label="Remove link"
                       >
                         <X size={18} />
-                      </button>
+                      </Button>
                     )}
                   </div>
                   </div>
@@ -3022,14 +3092,17 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
                   )}
                 </div>
               ))}
-              <button
+              <Button
                 type="button"
                 onClick={onAddLink}
-                className="w-full py-3 px-4 bg-stone-50 border-2 border-dashed border-stone-300 rounded-xl text-sage-600 text-sm font-medium hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                variant="outline"
+                size="lg"
+                fullWidth
+                className="gap-2 border-dashed border-2 border-stone-300 hover:border-stone-400 text-sage-600"
               >
                 <Plus size={16} />
                 Add another link
-              </button>
+              </Button>
             </div>
 
           </>
@@ -3122,7 +3195,7 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
           onFetchPreview={onEditFetchPreview}
           onAddLink={onEditAddLink}
           onRemoveLink={onEditRemoveLink}
-          onSubmit={onSave}
+          onSubmit={(e) => { e.preventDefault(); onSave(); }}
           isSubmitting={false}
           submitLabel="Save Changes"
           onCancel={onCancelEdit}
@@ -3248,43 +3321,51 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
                 </span>
               ) : (
                 <>
-                  <button
+                  <Button
                     type="button"
                     onClick={onMoveUp}
                     disabled={!canMoveUp}
-                    className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    variant="icon"
+                    size="icon"
+                    className="bg-stone-50 rounded-lg"
                     aria-label="Move up"
                   >
                     <ChevronUp size={18} />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={onMoveDown}
                     disabled={!canMoveDown}
-                    className="p-2 rounded-lg bg-stone-50 text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    variant="icon"
+                    size="icon"
+                    className="bg-stone-50 rounded-lg"
                     aria-label="Move down"
                   >
                     <ChevronDown size={18} />
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
-            <button
+            <Button
               onClick={onStartEdit}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent text-stone-500 hover:text-sage-600 hover:bg-sage-50 transition-colors cursor-pointer"
+              variant="icon"
+              size="icon"
+              className="flex-1 sm:flex-none gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent h-auto sm:h-9"
               aria-label="Edit item"
             >
               <Edit3 size={18} />
               <span className="text-sm sm:hidden">Edit</span>
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={onDelete}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+              variant="icon-danger"
+              size="icon"
+              className="flex-1 sm:flex-none gap-1.5 px-3 py-2 sm:p-2 rounded-xl sm:rounded-lg bg-stone-50 sm:bg-transparent h-auto sm:h-9"
               aria-label="Delete item"
             >
               <Trash2 size={18} />
               <span className="text-sm sm:hidden">Delete</span>
-            </button>
+            </Button>
           </div>
         </div>
       )}

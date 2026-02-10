@@ -54,9 +54,73 @@ We use a "Serif for Soul, Sans for Clarity" approach.
 - **Borders**: Soft borders using `border-stone-100` to define space without harsh lines.
 
 ### 3. Buttons
-- **Primary**: Dark stone with white text. High contrast for CTA.
-- **Secondary/Outline**: Sage accents or transparent backgrounds for secondary actions.
-- **Cursor**: All interactive buttons and clickable elements must use `cursor-pointer` so the pointer changes on hover. Disabled buttons must use `cursor-not-allowed` (and typically `disabled:pointer-events-none`). Apply this to native `<button>`, elements with `role="button"`, and any element that triggers an action on click.
+
+**IMPORTANT: Always use the `Button` component from `@/components/ui/Button.tsx` for all buttons.** Do not create custom `<button>` elements with inline styles. This ensures consistent styling, accessibility, and maintainability.
+
+```tsx
+import { Button } from '../components/ui/Button';
+```
+
+**Available Variants:**
+
+| Variant | Usage | Description |
+| :--- | :--- | :--- |
+| `primary` | CTAs, main actions | Dark background, white text. High contrast. |
+| `secondary` | Secondary actions | Sage background for less prominent actions. |
+| `outline` | Tertiary actions | Bordered, transparent background. |
+| `ghost` | Cancel buttons, subtle actions | Text only with subtle hover effect. |
+| `light` | On dark backgrounds | White background, dark text. |
+| `icon` | Edit, preview, settings | Icon-only button with sage hover. |
+| `icon-danger` | Delete actions | Icon-only button with red hover. |
+| `chip` | Unselected filter/category | Stone background for selection chips. |
+| `chip-selected` | Selected filter/category | Sage background for selected chips. |
+
+**Available Sizes:**
+
+| Size | Usage |
+| :--- | :--- |
+| `sm` | Compact UI areas |
+| `md` | Default for most buttons |
+| `lg` | Prominent CTAs |
+| `icon` | Icon-only buttons (square, use with `icon` or `icon-danger` variant) |
+
+**Examples:**
+
+```tsx
+// Primary action button
+<Button variant="primary" size="md">Save Changes</Button>
+
+// Cancel button (ghost style)
+<Button variant="ghost" size="md">Cancel</Button>
+
+// Icon button for editing
+<Button variant="icon" size="icon" title="Edit">
+  <Edit3 size={16} />
+</Button>
+
+// Icon button for deleting
+<Button variant="icon-danger" size="icon" title="Delete">
+  <Trash2 size={16} />
+</Button>
+
+// Full-width submit button
+<Button variant="primary" size="lg" fullWidth>Submit</Button>
+
+// Selection chip (category, season, filter)
+<Button
+  variant={isSelected ? 'chip-selected' : 'chip'}
+  size="sm"
+  onClick={() => setSelected(!isSelected)}
+>
+  Category Name
+</Button>
+```
+
+**Rules:**
+1. **Never use raw `<button>` elements** - always use the `Button` component.
+2. **Always include `title` or `aria-label`** for icon-only buttons.
+3. **Use appropriate variants** - `ghost` for cancel, `icon-danger` for delete.
+4. **Cursor handling is automatic** - the component includes `cursor-pointer` and `disabled:cursor-not-allowed`.
 
 ### 4. Action sheet (bottom sheet) modal
 
@@ -82,6 +146,9 @@ Use a single pattern for slide-up modals that reveal lists or detail content (e.
 
 **Example (Caption):**
 ```tsx
+import { Button } from '../components/ui/Button';
+import { X } from 'lucide-react';
+
 {isOpen && (
   <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
     <div
@@ -92,9 +159,9 @@ Use a single pattern for slide-up modals that reveal lists or detail content (e.
         <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-4" />
         <div className="flex items-center justify-between">
           <h3 className="font-serif text-lg text-stone-900">Title</h3>
-          <button onClick={onClose} className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer" aria-label="Close">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close" className="-mr-2">
             <X size={24} />
-          </button>
+          </Button>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4">{/* content */}</div>
@@ -170,6 +237,9 @@ Admin cards should follow a consistent structure with content on the left and ac
 
 **Layout Pattern:**
 ```tsx
+import { Button } from '../components/ui/Button';
+import { Edit3, Trash2 } from 'lucide-react';
+
 <div className="p-4 md:p-6">
   <div className="flex items-start justify-between mb-4">
     {/* Content Section */}
@@ -184,12 +254,12 @@ Admin cards should follow a consistent structure with content on the left and ac
     
     {/* Actions Section */}
     <div className="flex gap-2 flex-shrink-0">
-      <button className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer">
+      <Button variant="icon" size="icon" title="Edit">
         <Edit3 size={16} />
-      </button>
-      <button className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer">
+      </Button>
+      <Button variant="icon-danger" size="icon" title="Delete">
         <Trash2 size={16} />
-      </button>
+      </Button>
     </div>
   </div>
   
@@ -200,27 +270,36 @@ Admin cards should follow a consistent structure with content on the left and ac
 
 ### 2. Action Button Guidelines
 
+**Always use the `Button` component for action buttons:**
+
 **Edit Button:**
+- Variant: `icon`
+- Size: `icon`
 - Icon: `Edit3` size 16
-- Colors: `text-stone-400 hover:text-sage-600 hover:bg-sage-50`
 - Purpose: Modify existing content
 - Position: Right side, first button
 
 **Delete Button:**
+- Variant: `icon-danger`
+- Size: `icon`
 - Icon: `Trash2` size 16  
-- Colors: `text-stone-400 hover:text-red-600 hover:bg-red-50`
 - Purpose: Remove content permanently
 - Position: Right side, second button
 
-**Button States:**
+**Button Examples:**
 ```tsx
+import { Button } from '../components/ui/Button';
+import { Edit3, Trash2 } from 'lucide-react';
+
 // Edit button
-className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
-title="Edit"
+<Button variant="icon" size="icon" title="Edit" onClick={handleEdit}>
+  <Edit3 size={16} />
+</Button>
 
 // Delete button  
-className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-title="Delete"
+<Button variant="icon-danger" size="icon" title="Delete" onClick={handleDelete}>
+  <Trash2 size={16} />
+</Button>
 ```
 
 ### 3. Content Organization
@@ -265,6 +344,9 @@ title="Delete"
 
 **LinkCard Admin View:**
 ```tsx
+import { Button } from '../components/ui/Button';
+import { Edit3, Trash2 } from 'lucide-react';
+
 <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
   <div className="p-4 md:p-6">
     <div className="flex items-start justify-between mb-4">
@@ -277,20 +359,22 @@ title="Delete"
         </p>
       </div>
       <div className="flex gap-2 flex-shrink-0">
-        <button
+        <Button
+          variant="icon"
+          size="icon"
           onClick={() => startEditingLinkCard(linkCard)}
-          className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
           title="Edit"
         >
           <Edit3 size={16} />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="icon-danger"
+          size="icon"
           onClick={() => handleDeleteLinkCard(linkCard.id)}
-          className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
           title="Delete"
         >
           <Trash2 size={16} />
-        </button>
+        </Button>
       </div>
     </div>
     
