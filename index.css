@@ -329,6 +329,15 @@ html, body {
   animation: slideDown 0.3s ease-in forwards;
 }
 
+/* Lightbox fade-in animation */
+@keyframes lightboxFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-lightbox-fade-in {
+  animation: lightboxFadeIn 0.2s ease-out;
+}
+
 /* Safe area for notched devices (Lookbook story view) */
 .safe-top {
   padding-top: max(12px, env(safe-area-inset-top));

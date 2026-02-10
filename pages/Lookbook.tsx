@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, Check, Square, CheckSquare, SlidersHorizontal, Lightbulb, Share, Plus, MoreVertical, Smartphone } from 'lucide-react';
+import { Lock, Image as ImageIcon, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, Check, Square, CheckSquare, SlidersHorizontal, Lightbulb, Share, Plus, MoreVertical, Smartphone } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { normalizePastedText } from '../utils/normalizeText';
 
@@ -232,8 +232,8 @@ const ActionSheet: React.FC<ActionSheetProps> = ({ isOpen, onClose, title, child
 
   return (
     <div
-      className={`md:hidden fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 ${isExiting ? 'opacity-0 pointer-events-none' : ''}`}
-      onClick={startClose}
+      className={`md:hidden fixed inset-0 z-[65] bg-black/50 transition-opacity duration-300 ${isExiting ? 'opacity-0 pointer-events-none' : ''}`}
+      onClick={(e) => { e.stopPropagation(); startClose(); }}
     >
       <div
         className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col ${isExiting ? 'animate-slide-down' : 'animate-slide-up'}`}
@@ -714,6 +714,106 @@ export const Lookbook: React.FC = () => {
   );
 };
 
+// Fullscreen image lightbox with swipe/arrow navigation
+interface ImageLightboxProps {
+  imageUrls: string[];
+  initialIndex: number;
+  onClose: () => void;
+}
+
+const ImageLightbox: React.FC<ImageLightboxProps> = ({ imageUrls, initialIndex, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const touchStartX = useRef<number | null>(null);
+  const hasMultiple = imageUrls.length > 1;
+
+  const goNext = useCallback(() => {
+    if (hasMultiple) setCurrentIndex((i) => (i + 1) % imageUrls.length);
+  }, [hasMultiple, imageUrls.length]);
+
+  const goPrev = useCallback(() => {
+    if (hasMultiple) setCurrentIndex((i) => (i - 1 + imageUrls.length) % imageUrls.length);
+  }, [hasMultiple, imageUrls.length]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowLeft') goPrev();
+      else if (e.key === 'ArrowRight') goNext();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose, goNext, goPrev]);
+
+  // Swipe navigation
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (diff > 50) goNext();
+    else if (diff < -50) goPrev();
+    touchStartX.current = null;
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] bg-black animate-lightbox-fade-in flex items-center justify-center"
+      onClick={(e) => { e.stopPropagation(); onClose(); }}
+      onTouchStart={(e) => { e.stopPropagation(); onTouchStart(e); }}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => { e.stopPropagation(); onTouchEnd(e); }}
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors cursor-pointer safe-top"
+        aria-label="Close lightbox"
+      >
+        <X size={24} />
+      </button>
+
+      {/* Image counter */}
+      {hasMultiple && (
+        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-10 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm font-medium safe-top">
+          {currentIndex + 1} / {imageUrls.length}
+        </div>
+      )}
+
+      {/* Prev/Next arrows (desktop only) */}
+      {hasMultiple && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); goPrev(); }}
+            className="hidden md:flex absolute left-4 z-10 p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors cursor-pointer"
+            aria-label="Previous image"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); goNext(); }}
+            className="hidden md:flex absolute right-4 z-10 p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors cursor-pointer"
+            aria-label="Next image"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </>
+      )}
+
+      {/* Image */}
+      <img
+        src={imageUrls[currentIndex]}
+        alt={`Image ${currentIndex + 1} of ${imageUrls.length}`}
+        className="max-h-full max-w-full object-contain select-none"
+        style={{ touchAction: 'pinch-zoom' }}
+        onClick={(e) => e.stopPropagation()}
+        draggable={false}
+      />
+    </div>
+  );
+};
+
 // Instagram Story-style viewer
 interface StoryViewProps {
   entries: EditorialEntry[];
@@ -1083,45 +1183,37 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
       )}
 
       {/* Mobile: Season filter bottom sheet modal */}
-      {showSeasonMenu && (
-        <div 
-          className="md:hidden fixed inset-0 z-50 bg-black/50"
-          onClick={() => setShowSeasonMenu(false)}
-        >
-          <div 
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 pb-10 animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
+      <ActionSheet
+        isOpen={showSeasonMenu}
+        onClose={() => setShowSeasonMenu(false)}
+        title="Filter by Season"
+      >
+        <div className="space-y-2">
+          <button
+            onClick={() => { setSelectedSeason('all'); setShowSeasonMenu(false); }}
+            className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors cursor-pointer ${
+              selectedSeason === 'all'
+                ? 'bg-sage-500 text-white'
+                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+            }`}
           >
-            <div className="w-12 h-1 bg-stone-300 rounded-full mx-auto mb-6" />
-            <h3 className="font-serif text-lg text-stone-900 mb-4 text-center">Filter by Season</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => { setSelectedSeason('all'); setShowSeasonMenu(false); }}
-                className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors cursor-pointer ${
-                  selectedSeason === 'all'
-                    ? 'bg-sage-500 text-white'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                All Seasons
-              </button>
-              {SEASON_ORDER.map((season) => (
-                <button
-                  key={season}
-                  onClick={() => { setSelectedSeason(season); setShowSeasonMenu(false); }}
-                  className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors cursor-pointer ${
-                    selectedSeason === season
-                      ? 'bg-sage-500 text-white'
-                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                  }`}
-                >
-                  {SEASON_LABELS[season]}
-                </button>
-              ))}
-            </div>
-          </div>
+            All Seasons
+          </button>
+          {SEASON_ORDER.map((season) => (
+            <button
+              key={season}
+              onClick={() => { setSelectedSeason(season); setShowSeasonMenu(false); }}
+              className={`w-full px-4 py-3 rounded-xl text-base font-medium transition-colors cursor-pointer ${
+                selectedSeason === season
+                  ? 'bg-sage-500 text-white'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              {SEASON_LABELS[season]}
+            </button>
+          ))}
         </div>
-      )}
+      </ActionSheet>
     </div>
   );
 };
@@ -1143,6 +1235,7 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const urlsRef = useRef<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const headers = { 'X-View-Passcode': passcode };
@@ -1297,7 +1390,8 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
                     key={i}
                     src={url}
                     alt={entry.caption ? `${entry.caption} ${i + 1}` : 'Curated outfit'}
-                    className="bg-stone-900"
+                    className="bg-stone-900 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
                   />
                 ))}
               </div>
@@ -1326,6 +1420,15 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
           </div>
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          imageUrls={imageUrls}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </>
   );
 };
