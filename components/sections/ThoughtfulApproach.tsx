@@ -122,11 +122,10 @@ export const ThoughtfulApproach: React.FC = () => {
           if (entry.isIntersecting && !hasAnimated.current) {
             hasAnimated.current = true;
             
-            // Wait for fade-in to complete before drawing icons
-            // FadeInOnScroll delays (100ms, 250ms, 400ms) + CSS delay (500ms) + CSS duration (500ms)
-            if (icon1Ref.current) animateIconDraw(icon1Ref.current, 1.1);  // 100ms + 1000ms
-            if (icon2Ref.current) animateIconDraw(icon2Ref.current, 1.25); // 250ms + 1000ms
-            if (icon3Ref.current) animateIconDraw(icon3Ref.current, 1.4);  // 400ms + 1000ms
+            // Draw icons as soon as the section is in view
+            if (icon1Ref.current) animateIconDraw(icon1Ref.current, 0);
+            if (icon2Ref.current) animateIconDraw(icon2Ref.current, 0);
+            if (icon3Ref.current) animateIconDraw(icon3Ref.current, 0);
           }
         });
       },
@@ -153,7 +152,7 @@ export const ThoughtfulApproach: React.FC = () => {
           so we can shop intentionally and build a wardrobe that feels cohesive, wearable, and truly theirs.
         </p>
         <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto mt-8 md:mt-12">
-          <FadeInOnScroll delay={100}>
+          <FadeInOnScroll>
             <div 
               className="group p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left cursor-pointer hover:shadow-lg"
               onClick={() => scrollToService('closet-edit')}
@@ -174,7 +173,7 @@ export const ThoughtfulApproach: React.FC = () => {
               </div>
             </div>
           </FadeInOnScroll>
-          <FadeInOnScroll delay={250}>
+          <FadeInOnScroll>
             <div 
               className="group p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left cursor-pointer hover:shadow-lg"
               onClick={() => scrollToService('full-style-reset')}
@@ -195,7 +194,7 @@ export const ThoughtfulApproach: React.FC = () => {
               </div>
             </div>
           </FadeInOnScroll>
-          <FadeInOnScroll delay={400}>
+          <FadeInOnScroll>
             <div 
               className="group p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left cursor-pointer hover:shadow-lg"
               onClick={() => scrollToService('style-refresh')}

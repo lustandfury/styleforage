@@ -37,7 +37,7 @@ html, body {
 .scroll-fade-in {
   opacity: 0;
   transform: translateY(80px);
-  transition: opacity 0.5s ease-out 0.25s, transform 0.5s ease-out 0.5s;
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 .scroll-fade-in.is-visible {
   opacity: 1;
