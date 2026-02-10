@@ -179,9 +179,8 @@ interface ShoppingItem {
   name: string;
   description?: string;
   link?: string;
-  price?: string;
   linkPreview?: LinkPreview;
-  links?: { url: string; linkPreview?: LinkPreview }[];
+  links?: { url: string; description?: string; linkPreview?: LinkPreview }[];
   category: ShoppingCategory;
   checked: boolean;
   order: number;
@@ -759,19 +758,17 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemDescription, setNewItemDescription] = useState('');
-  const [newItemLinks, setNewItemLinks] = useState<{ url: string; linkPreview: LinkPreview | null }[]>([{ url: '', linkPreview: null }]);
-  const [newItemPrice, setNewItemPrice] = useState('');
+  const [newItemLinks, setNewItemLinks] = useState<{ url: string; description: string; linkPreview: LinkPreview | null }[]>([{ url: '', description: '', linkPreview: null }]);
   const [newItemCategory, setNewItemCategory] = useState<ShoppingCategory>('uncategorized');
   const [isFetchingPreviewIndex, setIsFetchingPreviewIndex] = useState<number | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editItemName, setEditItemName] = useState('');
   const [editItemDescription, setEditItemDescription] = useState('');
-  const [editItemLink, setEditItemLink] = useState('');
-  const [editItemPrice, setEditItemPrice] = useState('');
+  const [editItemLinks, setEditItemLinks] = useState<{ url: string; description: string; linkPreview: LinkPreview | null }[]>([{ url: '', description: '', linkPreview: null }]);
   const [editItemCategory, setEditItemCategory] = useState<ShoppingCategory>('uncategorized');
-  const [editItemLinkPreview, setEditItemLinkPreview] = useState<LinkPreview | null>(null);
   const [isFetchingEditPreview, setIsFetchingEditPreview] = useState(false);
+  const [isFetchingEditPreviewIndex, setIsFetchingEditPreviewIndex] = useState<number | null>(null);
 
   // Shopping links state
   const [shoppingLinks, setShoppingLinks] = useState<ShoppingLink[]>([]);
@@ -1233,8 +1230,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           slug,
           name: newItemName,
           description: newItemDescription,
-          links: newItemLinks.filter((l) => l.url.trim()).map((l) => ({ url: l.url.trim(), linkPreview: l.linkPreview || undefined })),
-          price: newItemPrice,
+          links: newItemLinks.filter((l) => l.url.trim()).map((l) => ({ url: l.url.trim(), description: l.description.trim(), linkPreview: l.linkPreview || undefined })),
           category: newItemCategory,
         }),
       });
@@ -1256,19 +1252,18 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const resetAddItemForm = () => {
     setNewItemName('');
     setNewItemDescription('');
-    setNewItemLinks([{ url: '', linkPreview: null }]);
-    setNewItemPrice('');
+    setNewItemLinks([{ url: '', description: '', linkPreview: null }]);
     setNewItemCategory('uncategorized');
     setShowAddItem(false);
   };
 
-  const fetchLinkPreview = async (url: string, isEdit = false) => {
+  const fetchLinkPreview = async (url: string, isEdit = false, index = 0) => {
     if (!url || !url.startsWith('http')) return;
 
     if (isEdit) {
-      setIsFetchingEditPreview(true);
+      setIsFetchingEditPreviewIndex(index);
     } else {
-      setIsFetchingPreviewIndex(0);
+      setIsFetchingPreviewIndex(index);
     }
 
     try {
@@ -1280,10 +1275,10 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         const preview = await res.json();
         if (!preview.error) {
           if (isEdit) {
-            setEditItemLinkPreview(preview);
+            setEditItemLinks((prev) => prev.map((l, i) => (i === index ? { ...l, linkPreview: preview } : l)));
             if (!editItemName && preview.title) setEditItemName(preview.title);
           } else {
-            setNewItemLinks((prev) => prev.map((l, i) => (i === 0 ? { ...l, linkPreview: preview } : l)));
+            setNewItemLinks((prev) => prev.map((l, i) => (i === index ? { ...l, linkPreview: preview } : l)));
             if (!newItemName && preview.title) setNewItemName(preview.title);
           }
         }
@@ -1291,8 +1286,11 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     } catch {
       // Ignore
     } finally {
-      if (isEdit) setIsFetchingEditPreview(false);
-      else setIsFetchingPreviewIndex(null);
+      if (isEdit) {
+        setIsFetchingEditPreviewIndex(null);
+      } else {
+        setIsFetchingPreviewIndex(null);
+      }
     }
   };
 
@@ -1404,9 +1402,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
           id,
           name: editItemName,
           description: editItemDescription,
-          link: editItemLink,
-          price: editItemPrice,
-          linkPreview: editItemLinkPreview,
+          links: editItemLinks.filter((l) => l.url.trim()).map((l) => ({ url: l.url.trim(), description: l.description.trim(), linkPreview: l.linkPreview || undefined })),
           category: editItemCategory,
         }),
       });
@@ -1415,7 +1411,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         const updated = await res.json();
         setShoppingItems(shoppingItems.map((i) => (i.id === id ? updated : i)));
         setEditingItemId(null);
-        setEditItemLinkPreview(null);
         setEditItemCategory('uncategorized');
       } else {
         setError('Failed to update item');
@@ -1448,10 +1443,11 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     setEditingItemId(item.id);
     setEditItemName(item.name);
     setEditItemDescription(item.description || '');
-    setEditItemLink(item.link || '');
-    setEditItemPrice(item.price || '');
+    setEditItemLinks(item.links && item.links.length > 0 
+      ? item.links.map(l => ({ url: l.url, description: l.description || '', linkPreview: l.linkPreview || null }))
+      : [{ url: item.link || '', description: '', linkPreview: item.linkPreview || null }]
+    );
     setEditItemCategory(item.category || 'uncategorized');
-    setEditItemLinkPreview(item.linkPreview || null);
   };
 
   const categoryOrderIndex = (c: ShoppingCategory) => {
@@ -2365,16 +2361,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                     name={newItemName}
                     description={newItemDescription}
                     links={newItemLinks}
-                    price={newItemPrice}
                     category={newItemCategory}
                     isFetchingPreviewIndex={isFetchingPreviewIndex}
                     onNameChange={setNewItemName}
                     onDescriptionChange={setNewItemDescription}
                     onLinkChange={(i, url) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, url } : l)))}
-                    onPriceChange={setNewItemPrice}
+                    onLinkDescriptionChange={(i, description) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, description } : l)))}
                     onCategoryChange={setNewItemCategory}
                     onFetchPreview={fetchLinkPreviewForIndex}
-                    onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', linkPreview: null }])}
+                    onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', description: '', linkPreview: null }])}
                     onRemoveLink={(i) => setNewItemLinks((prev) => prev.filter((_, j) => j !== i))}
                     onSubmit={handleAddShoppingItem}
                     isSubmitting={isAddingItem}
@@ -2393,16 +2388,15 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 name={newItemName}
                 description={newItemDescription}
                 links={newItemLinks}
-                price={newItemPrice}
                 category={newItemCategory}
                 isFetchingPreviewIndex={isFetchingPreviewIndex}
                 onNameChange={setNewItemName}
                 onDescriptionChange={setNewItemDescription}
                 onLinkChange={(i, url) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, url } : l)))}
-                onPriceChange={setNewItemPrice}
+                onLinkDescriptionChange={(i, description) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, description } : l)))}
                 onCategoryChange={setNewItemCategory}
                 onFetchPreview={fetchLinkPreviewForIndex}
-                onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', linkPreview: null }])}
+                onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', description: '', linkPreview: null }])}
                 onRemoveLink={(i) => setNewItemLinks((prev) => prev.filter((_, j) => j !== i))}
                 onSubmit={handleAddShoppingItem}
                 isSubmitting={isAddingItem}
@@ -2458,14 +2452,17 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                                 isEditing={editingItemId === item.id}
                                 editName={editItemName}
                                 editDescription={editItemDescription}
-                                editLink={editItemLink}
-                                editPrice={editItemPrice}
+                                editLinks={editItemLinks}
                                 editCategory={editItemCategory}
                                 onEditNameChange={setEditItemName}
                                 onEditDescriptionChange={setEditItemDescription}
-                                onEditLinkChange={setEditItemLink}
-                                onEditPriceChange={setEditItemPrice}
+                                onEditLinkChange={(index, url) => setEditItemLinks((prev) => prev.map((l, j) => (j === index ? { ...l, url } : l)))}
+                                onEditLinkDescriptionChange={(index, description) => setEditItemLinks((prev) => prev.map((l, j) => (j === index ? { ...l, description } : l)))}
                                 onEditCategoryChange={setEditItemCategory}
+                                onEditAddLink={() => setEditItemLinks((prev) => [...prev, { url: '', description: '', linkPreview: null }])}
+                                onEditRemoveLink={(index) => setEditItemLinks((prev) => prev.filter((_, j) => j !== index))}
+                                onEditFetchPreview={(index) => fetchLinkPreview(editItemLinks[index]?.url || '', true, index)}
+                                isFetchingEditPreviewIndex={isFetchingEditPreviewIndex}
                                 onStartEdit={() => startEditItem(item)}
                                 onCancelEdit={() => setEditingItemId(null)}
                                 onSave={() => handleUpdateShoppingItem(item.id)}
@@ -3461,18 +3458,17 @@ const SortableEntryCard: React.FC<EntryCardProps> = (props) => {
 };
 
 // Shopping Item Form Component
-type ShoppingItemLinkRow = { url: string; linkPreview: LinkPreview | null };
+type ShoppingItemLinkRow = { url: string; description: string; linkPreview: LinkPreview | null };
 interface ShoppingItemFormProps {
   name: string;
   description: string;
   links: ShoppingItemLinkRow[];
-  price: string;
   category: ShoppingCategory;
   isFetchingPreviewIndex: number | null;
   onNameChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onLinkChange: (index: number, url: string) => void;
-  onPriceChange: (value: string) => void;
+  onLinkDescriptionChange: (index: number, description: string) => void;
   onCategoryChange: (value: ShoppingCategory) => void;
   onFetchPreview: (index: number) => void;
   onAddLink: () => void;
@@ -3486,13 +3482,12 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
   name,
   description,
   links,
-  price,
   category,
   isFetchingPreviewIndex,
   onNameChange,
   onDescriptionChange,
   onLinkChange,
-  onPriceChange,
+  onLinkDescriptionChange,
   onCategoryChange,
   onFetchPreview,
   onAddLink,
@@ -3548,27 +3543,27 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
         </div>
 
         {/* Toggle for optional fields */}
-        {!showOptional && !hasAnyLink && !price && !description && (
+        {!showOptional && !hasAnyLink && !description && (
           <button
             type="button"
             onClick={() => setShowOptional(true)}
             className="text-sage-600 text-sm hover:text-sage-700 cursor-pointer"
           >
-            + Add link, price, or notes
+            + Add link or notes
           </button>
         )}
 
         {/* Optional fields */}
-        {(showOptional || hasAnyLink || price || description) && (
+        {(showOptional || hasAnyLink || description) && (
           <>
             {/* Product links (multiple) - auto-fetch preview on blur */}
-            <div>
-              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
+            <div className="space-y-4">
+              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-3">
                 Product Link(s) <span className="font-normal text-stone-400">(optional)</span>
               </label>
               {links.map((linkRow, index) => (
-                <div key={index} className="mb-3">
-                  <div className="flex gap-2">
+                <div key={index} className="space-y-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <input
                       type="url"
                       value={linkRow.url}
@@ -3577,14 +3572,7 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
                       className="flex-1 h-11 px-4 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-base"
                       placeholder="https://..."
                     />
-                    <button
-                      type="button"
-                      onClick={() => onFetchPreview(index)}
-                      disabled={!linkRow.url || !linkRow.url.startsWith('http') || isFetchingPreviewIndex !== null}
-                      className="px-4 h-11 rounded-xl bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer whitespace-nowrap"
-                    >
-                      {isFetchingPreviewIndex === index ? 'Loading…' : 'Fetch'}
-                    </button>
+                    <div className="flex gap-2">
                     {links.length > 1 && (
                       <button
                         type="button"
@@ -3596,8 +3584,18 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
                       </button>
                     )}
                   </div>
+                  </div>
+                  
+                  {/* Link description */}
+                  <input
+                    type="text"
+                    value={linkRow.description}
+                    onChange={(e) => onLinkDescriptionChange(index, e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-base"
+                    placeholder="Link description (optional)"
+                  />
                   {linkRow.linkPreview && (
-                    <div className="mt-2 p-3 bg-stone-50 rounded-xl border border-stone-200 flex gap-3">
+                    <div className="mt-3 p-3 bg-white rounded-xl border border-stone-200 flex gap-3">
                       {linkRow.linkPreview.image && (
                         <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-stone-200">
                           <img src={linkRow.linkPreview.image} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
@@ -3614,28 +3612,12 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
               <button
                 type="button"
                 onClick={onAddLink}
-                className="text-sage-600 text-sm hover:text-sage-700 cursor-pointer flex items-center gap-1"
+                className="w-full py-3 px-4 bg-stone-50 border-2 border-dashed border-stone-300 rounded-xl text-sage-600 text-sm font-medium hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
                 <Plus size={16} />
                 Add another link
               </button>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Price */}
-              <div>
-                <label htmlFor="item-price" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
-                  Price <span className="font-normal text-stone-400">(optional)</span>
-                </label>
-                <input
-                  id="item-price"
-                  type="text"
-                  value={price}
-                  onChange={(e) => onPriceChange(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-base"
-                  placeholder="$99"
-                />
-              </div>
 
               {/* Notes */}
               <div>
@@ -3651,7 +3633,6 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
                   placeholder="Size, color, notes…"
                 />
               </div>
-            </div>
           </>
         )}
       </div>
@@ -3669,14 +3650,17 @@ interface ShoppingItemCardProps {
   isEditing: boolean;
   editName: string;
   editDescription: string;
-  editLink: string;
-  editPrice: string;
+  editLinks: { url: string; description: string; linkPreview: LinkPreview | null }[];
   editCategory: ShoppingCategory;
   onEditNameChange: (value: string) => void;
   onEditDescriptionChange: (value: string) => void;
-  onEditLinkChange: (value: string) => void;
-  onEditPriceChange: (value: string) => void;
+  onEditLinkChange: (index: number, url: string) => void;
+  onEditLinkDescriptionChange: (index: number, description: string) => void;
   onEditCategoryChange: (value: ShoppingCategory) => void;
+  onEditAddLink: () => void;
+  onEditRemoveLink: (index: number) => void;
+  onEditFetchPreview: (index: number) => void;
+  isFetchingEditPreviewIndex: number | null;
   onStartEdit: () => void;
   onCancelEdit: () => void;
   onSave: () => void;
@@ -3694,14 +3678,17 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
   isEditing,
   editName,
   editDescription,
-  editLink,
-  editPrice,
+  editLinks,
   editCategory,
   onEditNameChange,
   onEditDescriptionChange,
   onEditLinkChange,
-  onEditPriceChange,
+  onEditLinkDescriptionChange,
   onEditCategoryChange,
+  onEditAddLink,
+  onEditRemoveLink,
+  onEditFetchPreview,
+  isFetchingEditPreviewIndex,
   onStartEdit,
   onCancelEdit,
   onSave,
@@ -3715,72 +3702,24 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
   return (
     <div className="bg-white p-3 md:p-4 rounded-2xl border border-stone-100 shadow-sm">
       {isEditing ? (
-        <div className="space-y-3">
-          {/* Category pills for editing */}
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_ORDER.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => onEditCategoryChange(cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                  editCategory === cat
-                    ? 'bg-sage-500 text-white'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                }`}
-              >
-                {CATEGORY_LABELS[cat]}
-              </button>
-            ))}
-          </div>
-          <input
-            type="text"
-            value={editName}
-            onChange={(e) => onEditNameChange(e.target.value)}
-            className="w-full h-10 px-3 rounded-xl border border-stone-200 bg-white text-stone-900 text-base focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent"
-            placeholder="Item name"
-            autoFocus
-          />
-          <textarea
-            value={editDescription}
-            onChange={(e) => onEditDescriptionChange(e.target.value)}
-            rows={2}
-            className="w-full px-3 py-2 rounded-xl border border-stone-200 bg-white text-stone-900 text-base focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent resize-none"
-            placeholder="Description"
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="url"
-              value={editLink}
-              onChange={(e) => onEditLinkChange(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-stone-200 bg-white text-stone-900 text-base focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent"
-              placeholder="Link URL"
-            />
-            <input
-              type="text"
-              value={editPrice}
-              onChange={(e) => onEditPriceChange(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-stone-200 bg-white text-stone-900 text-base focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent"
-              placeholder="Price"
-            />
-          </div>
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={onSave}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 transition-colors cursor-pointer"
-            >
-              <Save size={16} />
-              Save
-            </button>
-            <button
-              onClick={onCancelEdit}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 transition-colors cursor-pointer"
-            >
-              <X size={16} />
-              Cancel
-            </button>
-          </div>
-        </div>
+        <ShoppingItemForm
+          name={editName}
+          description={editDescription}
+          links={editLinks}
+          category={editCategory}
+          isFetchingPreviewIndex={isFetchingEditPreviewIndex}
+          onNameChange={onEditNameChange}
+          onDescriptionChange={onEditDescriptionChange}
+          onLinkChange={onEditLinkChange}
+          onLinkDescriptionChange={onEditLinkDescriptionChange}
+          onCategoryChange={onEditCategoryChange}
+          onFetchPreview={onEditFetchPreview}
+          onAddLink={onEditAddLink}
+          onRemoveLink={onEditRemoveLink}
+          onSubmit={onSave}
+          isSubmitting={false}
+          submitLabel="Save Changes"
+        />
       ) : (
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Image or Icon */}
@@ -3803,37 +3742,89 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-start gap-2">
               <h3 className="font-medium text-stone-900 text-base">{item.name}</h3>
-              {item.price && (
-                <span className="flex items-center gap-0.5 text-sm text-sage-600 font-medium bg-sage-50 px-2 py-0.5 rounded-full">
-                  <DollarSign size={12} />
-                  {item.price.replace('$', '')}
-                </span>
-              )}
             </div>
             {item.description && (
               <p className="text-stone-500 text-sm mt-1 line-clamp-2">{item.description}</p>
             )}
-            {item.link && (
-              <div className="flex items-center gap-2 mt-2">
-                {item.linkPreview?.favicon && (
-                  <img
-                    src={item.linkPreview.favicon}
-                    alt=""
-                    className="w-4 h-4"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                )}
-                <a
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sage-600 text-sm hover:underline truncate max-w-xs"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {item.linkPreview?.siteName || new URL(item.link).hostname}
-                </a>
+            
+            {/* Multiple Links */}
+            {item.links && item.links.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {item.links.map((link, index) => (
+                  <div key={index} className="border-t border-stone-200 pt-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-stone-400 text-sm">
+                        {link.linkPreview?.favicon && (
+                          <img
+                            src={link.linkPreview.favicon}
+                            alt=""
+                            className="w-4 h-4"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        )}
+                        <span className="truncate max-w-[120px]">
+                          {link.linkPreview?.siteName || (() => {
+                            try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Shop'; }
+                          })()}
+                        </span>
+                      </div>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sage-600 text-sm hover:underline truncate max-w-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {link.linkPreview?.siteName || new URL(link.url).hostname}
+                      </a>
+                    </div>
+                    {/* Link description */}
+                    {link.description && (
+                      <p className="text-stone-600 text-sm mt-1 line-clamp-2">
+                        {link.description}
+                      </p>
+                    )}
+                    {/* Full URL display */}
+                    <p className="text-xs text-stone-400 break-all">
+                      {link.url}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
+
+            {/* Single Link (fallback for backward compatibility) */}
+            {!item.links || item.links.length === 0 ? (
+              <>
+                {item.link && (
+                  <div className="flex items-center gap-2 mt-2">
+                    {item.linkPreview?.favicon && (
+                      <img
+                        src={item.linkPreview.favicon}
+                        alt=""
+                        className="w-4 h-4"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sage-600 text-sm hover:underline truncate max-w-xs"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {item.linkPreview?.siteName || new URL(item.link).hostname}
+                    </a>
+                  </div>
+                )}
+                {/* Full URL display */}
+                {item.link && (
+                  <p className="text-xs text-stone-400 break-all mt-2">
+                    {item.link}
+                  </p>
+                )}
+              </>
+            ) : null}
           </div>
 
           {/* Actions */}

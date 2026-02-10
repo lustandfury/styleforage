@@ -14,5 +14,14 @@ self.addEventListener('activate', (event) => {
 
 // Pass through fetch requests (no caching strategy for now)
 self.addEventListener('fetch', (event) => {
-  event.respondWith(fetch(event.request));
+  event.respondWith(
+    fetch(event.request).catch((error) => {
+      console.error('Fetch failed:', error);
+      // Return a basic error response or try to serve from cache if available
+      return new Response('Network error occurred', {
+        status: 500,
+        statusText: 'Service Unavailable'
+      });
+    })
+  );
 });

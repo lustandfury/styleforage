@@ -166,8 +166,8 @@ interface ShoppingItem {
   name: string;
   description?: string;
   link?: string;
-  price?: string;
   linkPreview?: LinkPreview;
+  links?: { url: string; description?: string; linkPreview?: LinkPreview }[];
   category: ShoppingCategory;
   checked: boolean;
   order: number;
@@ -303,12 +303,10 @@ export const Lookbook: React.FC = () => {
   const [entries, setEntries] = useState<EditorialEntry[]>([]);
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
   const [shoppingLinks, setShoppingLinks] = useState<ShoppingLink[]>([]);
-  const [linkCards, setLinkCards] = useState<LinkCard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [showShoppingLinks, setShowShoppingLinks] = useState(false);
-  const [showLinkCards, setShowLinkCards] = useState(false);
   const [tips, setTips] = useState<Tip[]>([]);
   const [showTips, setShowTips] = useState(false);
   const [captionExpanded, setCaptionExpanded] = useState(false);
@@ -377,7 +375,6 @@ export const Lookbook: React.FC = () => {
       fetchEntries();
       fetchShoppingItems();
       fetchShoppingLinks();
-      fetchLinkCards();
       fetchTips();
     }
   }, [isAuthenticated, slug]);
@@ -516,20 +513,49 @@ export const Lookbook: React.FC = () => {
     }
   };
 
-  const fetchLinkCards = async () => {
-    if (!slug) return;
+  const handleToggleChecked = async (itemId: string, checked: boolean) => {
+    // Optimistic update
+    setShoppingItems(prev => prev.map(item => 
+      item.id === itemId ? { ...item, checked } : item
+    ));
 
     try {
-      const res = await fetch(`/.netlify/functions/cms-linkcards?slug=${slug}`, {
-        headers: { 'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '' },
+      await fetch('/.netlify/functions/cms-shopping', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '',
+        },
+        body: JSON.stringify({ slug, id: itemId, checked }),
       });
-
-      if (res.ok) {
-        const data = await res.json();
-        setLinkCards(data);
-      }
     } catch {
-      // Ignore - link cards are optional
+      // Revert on error
+      setShoppingItems(prev => prev.map(item => 
+        item.id === itemId ? { ...item, checked: !checked } : item
+      ));
+    }
+  };
+
+  const handleToggleLinkChecked = async (linkId: string, checked: boolean) => {
+    // Optimistic update
+    setShoppingLinks(prev => prev.map(link => 
+      link.id === linkId ? { ...link, checked } : link
+    ));
+
+    try {
+      await fetch('/.netlify/functions/cms-links', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '',
+        },
+        body: JSON.stringify({ slug, id: linkId, checked }),
+      });
+    } catch {
+      // Revert on error
+      setShoppingLinks(prev => prev.map(link => 
+        link.id === linkId ? { ...link, checked: !checked } : link
+      ));
     }
   };
 
@@ -645,52 +671,6 @@ export const Lookbook: React.FC = () => {
     );
   }
 
-  const handleToggleChecked = async (itemId: string, checked: boolean) => {
-    // Optimistic update
-    setShoppingItems(prev => prev.map(item => 
-      item.id === itemId ? { ...item, checked } : item
-    ));
-
-    try {
-      await fetch('/.netlify/functions/cms-shopping', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '',
-        },
-        body: JSON.stringify({ slug, id: itemId, checked }),
-      });
-    } catch {
-      // Revert on error
-      setShoppingItems(prev => prev.map(item => 
-        item.id === itemId ? { ...item, checked: !checked } : item
-      ));
-    }
-  };
-
-  const handleToggleLinkChecked = async (linkId: string, checked: boolean) => {
-    // Optimistic update
-    setShoppingLinks(prev => prev.map(link => 
-      link.id === linkId ? { ...link, checked } : link
-    ));
-
-    try {
-      await fetch('/.netlify/functions/cms-links', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '',
-        },
-        body: JSON.stringify({ slug, id: linkId, checked }),
-      });
-    } catch {
-      // Revert on error
-      setShoppingLinks(prev => prev.map(link => 
-        link.id === linkId ? { ...link, checked: !checked } : link
-      ));
-    }
-  };
-
   // Story-style lookbook view with shopping list modal
   return (
     <>
@@ -705,13 +685,11 @@ export const Lookbook: React.FC = () => {
         relatedLookbooks={relatedLookbooks}
         shoppingItemsCount={shoppingItems.length}
         shoppingLinksCount={shoppingLinks.length}
-        linkCardsCount={linkCards.length}
         tipsCount={tips.length}
         captionExpanded={captionExpanded}
         setCaptionExpanded={setCaptionExpanded}
         onShowShoppingList={() => { setCaptionExpanded(false); setShowShoppingList(true); }}
         onShowShoppingLinks={() => { setCaptionExpanded(false); setShowShoppingLinks(true); }}
-        onShowLinkCards={() => { setCaptionExpanded(false); setShowLinkCards(true); }}
         onShowTips={() => { setCaptionExpanded(false); setShowTips(true); }}
       />
       
@@ -755,128 +733,6 @@ export const Lookbook: React.FC = () => {
             onBack={() => setShowShoppingLinks(false)}
             onToggleChecked={handleToggleLinkChecked}
           />
-        </div>
-      )}
-
-      <ActionSheet
-        isOpen={showLinkCards}
-        onClose={() => setShowLinkCards(false)}
-        title="Links"
-      >
-        {linkCards.length === 0 ? (
-          <p className="text-stone-500 text-sm text-center py-8">No links yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {linkCards.map((linkCard) => (
-              <div key={linkCard.id} className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-                <div className="p-4">
-                  <h3 className="font-serif text-lg text-stone-900 mb-2">{linkCard.title}</h3>
-                  <p className="text-stone-600 text-sm leading-relaxed mb-4">{linkCard.description}</p>
-                  
-                  {linkCard.links.length > 0 && (
-                    <div className="space-y-3">
-                      {linkCard.links.map((link, index) => (
-                        <div key={index} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl">
-                          {link.linkPreview?.image ? (
-                            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-stone-200">
-                              <img src={link.linkPreview.image} alt="" className="w-full h-full object-cover" />
-                            </div>
-                          ) : (
-                            <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-stone-200 flex items-center justify-center">
-                              <ExternalLink size={20} className="text-stone-400" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <a
-                              href={link.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-medium text-stone-900 hover:text-sage-600 transition-colors truncate block"
-                            >
-                              {link.linkPreview?.title || 'View Link'}
-                            </a>
-                            <p className="text-xs text-stone-500 truncate">
-                              {link.linkPreview?.siteName || (() => {
-                                try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
-                              })()}
-                            </p>
-                          </div>
-                          <ExternalLink size={16} className="flex-shrink-0 text-stone-400" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </ActionSheet>
-
-      {/* Desktop: LinkCards overlay */}
-      {showLinkCards && (
-        <div className="hidden md:block fixed inset-0 z-50 bg-white">
-          <div className="h-full flex flex-col max-w-4xl mx-auto">
-            <div className="p-6 border-b border-stone-100 flex-shrink-0 flex items-center justify-between">
-              <h2 className="font-serif text-xl text-stone-900">Links</h2>
-              <button
-                onClick={() => setShowLinkCards(false)}
-                className="p-2 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 cursor-pointer"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              {linkCards.length === 0 ? (
-                <p className="text-stone-500 text-sm text-center py-12">No links yet.</p>
-              ) : (
-                <div className="space-y-6">
-                  {linkCards.map((linkCard) => (
-                    <div key={linkCard.id} className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-                      <div className="p-6">
-                        <h3 className="font-serif text-xl text-stone-900 mb-3">{linkCard.title}</h3>
-                        <p className="text-stone-600 text-base leading-relaxed mb-6">{linkCard.description}</p>
-                        
-                        {linkCard.links.length > 0 && (
-                          <div className="space-y-4">
-                            {linkCard.links.map((link, index) => (
-                              <div key={index} className="flex items-center gap-4 p-4 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors">
-                                {link.linkPreview?.image ? (
-                                  <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-stone-200">
-                                    <img src={link.linkPreview.image} alt="" className="w-full h-full object-cover" />
-                                  </div>
-                                ) : (
-                                  <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-stone-200 flex items-center justify-center">
-                                    <ExternalLink size={24} className="text-stone-400" />
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <a
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-medium text-stone-900 hover:text-sage-600 transition-colors truncate block text-base"
-                                  >
-                                    {link.linkPreview?.title || 'View Link'}
-                                  </a>
-                                  <p className="text-sm text-stone-500 truncate">
-                                    {link.linkPreview?.siteName || (() => {
-                                      try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
-                                    })()}
-                                  </p>
-                                </div>
-                                <ExternalLink size={20} className="flex-shrink-0 text-stone-400" />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
@@ -955,17 +811,15 @@ interface StoryViewProps {
   relatedLookbooks: RelatedLookbook[];
   shoppingItemsCount: number;
   shoppingLinksCount: number;
-  linkCardsCount: number;
   tipsCount: number;
   captionExpanded: boolean;
   setCaptionExpanded: (value: boolean) => void;
   onShowShoppingList: () => void;
   onShowShoppingLinks: () => void;
-  onShowLinkCards: () => void;
   onShowTips: () => void;
 }
 
-const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, shoppingLinksCount, linkCardsCount, tipsCount, captionExpanded, setCaptionExpanded, onShowShoppingList, onShowShoppingLinks, onShowLinkCards, onShowTips }) => {
+const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, shoppingLinksCount, tipsCount, captionExpanded, setCaptionExpanded, onShowShoppingList, onShowShoppingLinks, onShowTips }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -1155,18 +1009,6 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
               </span>
             </button>
           )}
-          {linkCardsCount > 0 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onShowLinkCards(); }}
-              className="flex items-center gap-2 px-4 py-2 border border-stone-300 text-stone-700 bg-transparent rounded-full text-sm font-medium hover:bg-stone-50 transition-colors cursor-pointer"
-            >
-              <Link2 size={16} />
-              Links
-              <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
-                {linkCardsCount}
-              </span>
-            </button>
-          )}
           {tipsCount > 0 && (
             <button
               onClick={(e) => { e.stopPropagation(); onShowTips(); }}
@@ -1226,15 +1068,6 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
             onClick={(e) => { e.stopPropagation(); onShowShoppingLinks(); }}
             className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors cursor-pointer"
             aria-label="View shopping links"
-          >
-            <Link2 size={24} />
-          </button>
-        )}
-        {linkCardsCount > 0 && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onShowLinkCards(); }}
-            className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors cursor-pointer"
-            aria-label="View links"
           >
             <Link2 size={24} />
           </button>
@@ -1649,13 +1482,6 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
             {item.checked ? <CheckSquare size={24} /> : <Square size={24} />}
           </button>
           <div className="flex-1 min-w-0">
-            {/* Price badge */}
-            {item.price && (
-              <span className={`inline-block font-semibold text-lg mb-1 ${item.checked ? 'text-stone-400' : 'text-sage-700'}`}>
-                {item.price.startsWith('$') ? item.price : `$${item.price}`}
-              </span>
-            )}
-
             {/* Item name */}
             <h3 className={`font-medium text-lg ${item.checked ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
               {item.name}
@@ -1670,46 +1496,101 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
           </div>
         </div>
 
-        {/* Link info and button */}
-        {item.link && (
-          <div className="mt-4 flex items-center justify-between pl-9">
-            <div className="flex items-center gap-2 text-stone-400 text-sm">
-              {item.linkPreview?.favicon && (
-                <img
-                  src={item.linkPreview.favicon}
-                  alt=""
-                  className="w-4 h-4"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              )}
-              <span className="truncate max-w-[150px]">
-                {item.linkPreview?.siteName || (() => {
-                  try { return new URL(item.link!).hostname; } catch { return 'Shop'; }
-                })()}
-              </span>
-            </div>
-            <a
-              href={item.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
-                item.checked
-                  ? 'bg-stone-200 text-stone-500'
-                  : 'bg-sage-500 text-white hover:bg-sage-600'
-              }`}
-            >
-              <ExternalLink size={14} />
-              {item.checked ? 'View' : 'Shop Now'}
-            </a>
+        {/* Multiple Links */}
+        {item.links && item.links.length > 0 && (
+          <div className="mt-4 space-y-3 pl-9">
+            {item.links.map((link, index) => (
+              <div key={index} className="border-t border-stone-100 pt-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-stone-400 text-sm">
+                    {link.linkPreview?.favicon && (
+                      <img
+                        src={link.linkPreview.favicon}
+                        alt=""
+                        className="w-4 h-4"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <span className="truncate max-w-[150px]">
+                      {link.linkPreview?.siteName || (() => {
+                        try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Shop'; }
+                      })()}
+                    </span>
+                  </div>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                      item.checked
+                        ? 'bg-stone-200 text-stone-500'
+                        : 'bg-sage-500 text-white hover:bg-sage-600'
+                    }`}
+                  >
+                    <ExternalLink size={14} />
+                    {item.checked ? 'View' : 'Shop Now'}
+                  </a>
+                </div>
+                {/* Link description */}
+                {link.description && (
+                  <p className="text-stone-600 text-sm mt-2 line-clamp-2">
+                    {link.description}
+                  </p>
+                )}
+                {/* Full URL display */}
+                <p className="text-xs text-stone-400 break-all">
+                  {link.url}
+                </p>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Full URL display */}
-        {item.link && (
-          <p className="mt-3 ml-9 text-xs text-stone-400 break-all border-t border-stone-100 pt-3">
-            {item.link}
-          </p>
-        )}
+        {/* Single Link (fallback for backward compatibility) */}
+        {!item.links || item.links.length === 0 ? (
+          <>
+            {/* Link info and button */}
+            {item.link && (
+              <div className="mt-4 flex items-center justify-between pl-9">
+                <div className="flex items-center gap-2 text-stone-400 text-sm">
+                  {item.linkPreview?.favicon && (
+                    <img
+                      src={item.linkPreview.favicon}
+                      alt=""
+                      className="w-4 h-4"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="truncate max-w-[150px]">
+                    {item.linkPreview?.siteName || (() => {
+                      try { return new URL(item.link!).hostname; } catch { return 'Shop'; }
+                    })()}
+                  </span>
+                </div>
+                <a
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                    item.checked
+                      ? 'bg-stone-200 text-stone-500'
+                      : 'bg-sage-500 text-white hover:bg-sage-600'
+                  }`}
+                >
+                  <ExternalLink size={14} />
+                  {item.checked ? 'View' : 'Shop Now'}
+                </a>
+              </div>
+            )}
+
+            {/* Full URL display */}
+            {item.link && (
+              <p className="mt-3 ml-9 text-xs text-stone-400 break-all border-t border-stone-100 pt-3">
+                {item.link}
+              </p>
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   );
@@ -1843,25 +1724,70 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
             {item.checked ? <CheckSquare size={20} /> : <Square size={20} />}
           </button>
           <div className="flex-1 min-w-0">
-            {item.price && (
-              <span className={`font-semibold text-base ${item.checked ? 'text-stone-400' : 'text-sage-700'}`}>
-                {item.price.startsWith('$') ? item.price : `$${item.price}`}
-              </span>
-            )}
             <h4 className={`font-medium text-sm ${item.checked ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
               {item.name}
             </h4>
-            {item.link && (
-              <a
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mt-2 text-xs text-sage-600 hover:text-sage-700"
-              >
-                <ExternalLink size={12} />
-                Shop
-              </a>
+            
+            {/* Multiple Links */}
+            {item.links && item.links.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {item.links.map((link, index) => (
+                  <div key={index} className="border-t border-stone-200 pt-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-stone-400 text-xs">
+                        {link.linkPreview?.favicon && (
+                          <img
+                            src={link.linkPreview.favicon}
+                            alt=""
+                            className="w-3 h-3"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        )}
+                        <span className="truncate max-w-[120px]">
+                          {link.linkPreview?.siteName || (() => {
+                            try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Shop'; }
+                          })()}
+                        </span>
+                      </div>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-1 text-xs text-sage-600 hover:text-sage-700"
+                      >
+                        <ExternalLink size={10} />
+                        Shop
+                      </a>
+                    </div>
+                    {/* Link description */}
+                    {link.description && (
+                      <p className="text-stone-600 text-xs mt-1 line-clamp-2">
+                        {link.description}
+                      </p>
+                    )}
+                    {/* Full URL display */}
+                    <p className="text-xs text-stone-400 break-all">
+                      {link.url}
+                    </p>
+                  </div>
+                ))}
+              </div>
             )}
+
+            {/* Single Link (fallback for backward compatibility) */}
+            {!item.links || item.links.length === 0 ? (
+              item.link && (
+                <a
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-2 text-xs text-sage-600 hover:text-sage-700"
+                >
+                  <ExternalLink size={12} />
+                  Shop
+                </a>
+              )
+            ) : null}
           </div>
         </div>
       </div>

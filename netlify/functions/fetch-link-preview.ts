@@ -132,11 +132,23 @@ function parseMetadata(html: string, url: string): LinkPreview {
 
   // Extract image
   preview.image = getMetaContent('image');
-  if (preview.image && !preview.image.startsWith('http')) {
-    // Make relative URL absolute
+  if (preview.image) {
+    // Make relative URL absolute and ensure HTTPS
     try {
       const baseUrl = new URL(url);
-      preview.image = new URL(preview.image, baseUrl.origin).href;
+      let imageUrl = preview.image;
+      
+      // Convert to absolute URL if relative
+      if (!imageUrl.startsWith('http')) {
+        imageUrl = new URL(imageUrl, baseUrl.origin).href;
+      }
+      
+      // Ensure HTTPS protocol
+      if (imageUrl.startsWith('http://')) {
+        imageUrl = imageUrl.replace('http://', 'https://');
+      }
+      
+      preview.image = imageUrl;
     } catch {
       // Ignore invalid URLs
     }
@@ -157,20 +169,34 @@ function parseMetadata(html: string, url: string): LinkPreview {
     || html.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["'](?:shortcut )?icon["']/i);
   if (faviconMatch) {
     let favicon = faviconMatch[1];
-    if (!favicon.startsWith('http')) {
+    try {
+      const baseUrl = new URL(url);
+      
+      // Convert to absolute URL if relative
+      if (!favicon.startsWith('http')) {
+        favicon = new URL(favicon, baseUrl.origin).href;
+      }
+      
+      // Ensure HTTPS protocol
+      if (favicon.startsWith('http://')) {
+        favicon = favicon.replace('http://', 'https://');
+      }
+      
+      preview.favicon = favicon;
+    } catch {
+      // Default to /favicon.ico with HTTPS
       try {
         const baseUrl = new URL(url);
-        favicon = new URL(favicon, baseUrl.origin).href;
+        preview.favicon = `${baseUrl.origin.replace('http://', 'https://')}/favicon.ico`;
       } catch {
         // Ignore
       }
     }
-    preview.favicon = favicon;
   } else {
-    // Default to /favicon.ico
+    // Default to /favicon.ico with HTTPS
     try {
       const baseUrl = new URL(url);
-      preview.favicon = `${baseUrl.origin}/favicon.ico`;
+      preview.favicon = `${baseUrl.origin.replace('http://', 'https://')}/favicon.ico`;
     } catch {
       // Ignore
     }
