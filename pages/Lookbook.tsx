@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, Check, Square, CheckSquare, SlidersHorizontal, Link2, Lightbulb, Share, Plus, MoreVertical, Smartphone } from 'lucide-react';
+import { Lock, Image as ImageIcon, X, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, Check, Square, CheckSquare, SlidersHorizontal, Lightbulb, Share, Plus, MoreVertical, Smartphone } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { normalizePastedText } from '../utils/normalizeText';
 
@@ -174,26 +174,6 @@ interface ShoppingItem {
   createdAt: string;
 }
 
-interface ShoppingLink {
-  id: string;
-  url: string;
-  title?: string;
-  description?: string;
-  linkPreview?: LinkPreview;
-  checked: boolean;
-  order: number;
-  createdAt: string;
-}
-
-interface LinkCard {
-  id: string;
-  title: string;
-  description: string;
-  links: { url: string; linkPreview?: LinkPreview }[];
-  order: number;
-  createdAt: string;
-}
-
 interface Tip {
   id: string;
   text: string;
@@ -302,11 +282,9 @@ export const Lookbook: React.FC = () => {
   // Content state
   const [entries, setEntries] = useState<EditorialEntry[]>([]);
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
-  const [shoppingLinks, setShoppingLinks] = useState<ShoppingLink[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showShoppingList, setShowShoppingList] = useState(false);
-  const [showShoppingLinks, setShowShoppingLinks] = useState(false);
   const [tips, setTips] = useState<Tip[]>([]);
   const [showTips, setShowTips] = useState(false);
   const [captionExpanded, setCaptionExpanded] = useState(false);
@@ -374,7 +352,6 @@ export const Lookbook: React.FC = () => {
     if (isAuthenticated && slug) {
       fetchEntries();
       fetchShoppingItems();
-      fetchShoppingLinks();
       fetchTips();
     }
   }, [isAuthenticated, slug]);
@@ -479,23 +456,6 @@ export const Lookbook: React.FC = () => {
     }
   };
 
-  const fetchShoppingLinks = async () => {
-    if (!slug) return;
-
-    try {
-      const res = await fetch(`/.netlify/functions/cms-links?slug=${slug}`, {
-        headers: { 'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '' },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setShoppingLinks(data);
-      }
-    } catch {
-      // Ignore - shopping links are optional
-    }
-  };
-
   const fetchTips = async () => {
     if (!slug) return;
 
@@ -532,29 +492,6 @@ export const Lookbook: React.FC = () => {
       // Revert on error
       setShoppingItems(prev => prev.map(item => 
         item.id === itemId ? { ...item, checked: !checked } : item
-      ));
-    }
-  };
-
-  const handleToggleLinkChecked = async (linkId: string, checked: boolean) => {
-    // Optimistic update
-    setShoppingLinks(prev => prev.map(link => 
-      link.id === linkId ? { ...link, checked } : link
-    ));
-
-    try {
-      await fetch('/.netlify/functions/cms-links', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-View-Passcode': sessionStorage.getItem(passcodeKey) || '',
-        },
-        body: JSON.stringify({ slug, id: linkId, checked }),
-      });
-    } catch {
-      // Revert on error
-      setShoppingLinks(prev => prev.map(link => 
-        link.id === linkId ? { ...link, checked: !checked } : link
       ));
     }
   };
@@ -684,12 +621,10 @@ export const Lookbook: React.FC = () => {
         currentSeason={currentSeason}
         relatedLookbooks={relatedLookbooks}
         shoppingItemsCount={shoppingItems.length}
-        shoppingLinksCount={shoppingLinks.length}
         tipsCount={tips.length}
         captionExpanded={captionExpanded}
         setCaptionExpanded={setCaptionExpanded}
         onShowShoppingList={() => { setCaptionExpanded(false); setShowShoppingList(true); }}
-        onShowShoppingLinks={() => { setCaptionExpanded(false); setShowShoppingLinks(true); }}
         onShowTips={() => { setCaptionExpanded(false); setShowTips(true); }}
       />
       
@@ -712,26 +647,6 @@ export const Lookbook: React.FC = () => {
             clientName={clientName}
             onBack={() => setShowShoppingList(false)}
             onToggleChecked={handleToggleChecked}
-          />
-        </div>
-      )}
-
-      <ActionSheet
-        isOpen={showShoppingLinks}
-        onClose={() => setShowShoppingLinks(false)}
-        title="Shop Links"
-      >
-        <ShoppingLinksContent links={shoppingLinks} onToggleChecked={handleToggleLinkChecked} />
-      </ActionSheet>
-
-      {/* Desktop: Shopping links as overlay */}
-      {showShoppingLinks && (
-        <div className="hidden md:block fixed inset-0 z-50">
-          <ShoppingLinksView
-            links={shoppingLinks}
-            clientName={clientName}
-            onBack={() => setShowShoppingLinks(false)}
-            onToggleChecked={handleToggleLinkChecked}
           />
         </div>
       )}
@@ -810,16 +725,14 @@ interface StoryViewProps {
   currentSeason?: Season;
   relatedLookbooks: RelatedLookbook[];
   shoppingItemsCount: number;
-  shoppingLinksCount: number;
   tipsCount: number;
   captionExpanded: boolean;
   setCaptionExpanded: (value: boolean) => void;
   onShowShoppingList: () => void;
-  onShowShoppingLinks: () => void;
   onShowTips: () => void;
 }
 
-const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, shoppingLinksCount, tipsCount, captionExpanded, setCaptionExpanded, onShowShoppingList, onShowShoppingLinks, onShowTips }) => {
+const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, tipsCount, captionExpanded, setCaptionExpanded, onShowShoppingList, onShowTips }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -997,18 +910,6 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
               </span>
             </button>
           )}
-          {shoppingLinksCount > 0 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onShowShoppingLinks(); }}
-              className="flex items-center gap-2 px-4 py-2 border border-stone-300 text-stone-700 bg-transparent rounded-full text-sm font-medium hover:bg-stone-50 transition-colors cursor-pointer"
-            >
-              <Link2 size={16} />
-              Shop Links
-              <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
-                {shoppingLinksCount}
-              </span>
-            </button>
-          )}
           {tipsCount > 0 && (
             <button
               onClick={(e) => { e.stopPropagation(); onShowTips(); }}
@@ -1061,15 +962,6 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
             aria-label="View shopping list"
           >
             <ShoppingBag size={24} />
-          </button>
-        )}
-        {shoppingLinksCount > 0 && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onShowShoppingLinks(); }}
-            className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors cursor-pointer"
-            aria-label="View shopping links"
-          >
-            <Link2 size={24} />
           </button>
         )}
         {tipsCount > 0 && (
@@ -1521,10 +1413,10 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full border-2 transition-colors ${
                       item.checked
-                        ? 'bg-stone-200 text-stone-500'
-                        : 'bg-sage-500 text-white hover:bg-sage-600'
+                        ? 'border-stone-200 text-stone-400'
+                        : 'border-sage-500 text-sage-600 hover:bg-sage-50'
                     }`}
                   >
                     <ExternalLink size={14} />
@@ -1571,10 +1463,10 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
                   href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full border-2 transition-colors ${
                     item.checked
-                      ? 'bg-stone-200 text-stone-500'
-                      : 'bg-sage-500 text-white hover:bg-sage-600'
+                      ? 'border-stone-200 text-stone-400'
+                      : 'border-sage-500 text-sage-600 hover:bg-sage-50'
                   }`}
                 >
                   <ExternalLink size={14} />
@@ -1728,6 +1620,13 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
               {item.name}
             </h4>
             
+            {/* Description */}
+            {item.description && (
+              <p className="text-stone-500 text-xs mt-1 line-clamp-2">
+                {item.description}
+              </p>
+            )}
+            
             {/* Multiple Links */}
             {item.links && item.links.length > 0 && (
               <div className="mt-2 space-y-2">
@@ -1839,246 +1738,3 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
   );
 };
 
-// Shopping Links View Component (Desktop)
-interface ShoppingLinksViewProps {
-  links: ShoppingLink[];
-  clientName: string | null;
-  onBack: () => void;
-  onToggleChecked: (linkId: string, checked: boolean) => void;
-}
-
-const ShoppingLinksView: React.FC<ShoppingLinksViewProps> = ({ links, clientName, onBack, onToggleChecked }) => {
-  const uncheckedLinks = links.filter(link => !link.checked);
-  const checkedLinks = links.filter(link => link.checked);
-
-  return (
-    <div className="h-screen flex flex-col overflow-hidden bg-stone-50">
-      {/* Header */}
-      <header className="bg-white border-b border-stone-100 flex-shrink-0 z-10">
-        <div className="px-4 py-4 flex items-center justify-between max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
-            <Link2 size={20} className="text-sage-600" />
-            <div>
-              <h1 className="font-serif text-lg text-stone-900">Shop Links</h1>
-              {clientName && (
-                <p className="text-xs text-stone-400">Curated for {clientName}</p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-stone-400">
-              <span className="text-sm font-medium">{links.length} links</span>
-            </div>
-            <button
-              onClick={onBack}
-              className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-full transition-colors cursor-pointer"
-              aria-label="Close"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Links List - scrollable */}
-      <main className="flex-1 min-h-0 overflow-y-auto px-4 py-6 max-w-2xl mx-auto">
-        {links.length > 0 && (
-          <p className="text-xs text-stone-500 mb-4">Tap the box next to a link to mark it as purchased.</p>
-        )}
-        {links.length === 0 ? (
-          <div className="text-center py-12 text-stone-500">
-            <Link2 size={48} className="mx-auto mb-4 opacity-50" />
-            <p>No shopping links yet.</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Unchecked links */}
-            {uncheckedLinks.length > 0 && (
-              <div className="space-y-2">
-                {uncheckedLinks.map((link) => {
-                  const displayTitle = link.title || link.linkPreview?.title || 'View Product';
-                  const displaySiteName = link.linkPreview?.siteName || (() => {
-                    try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
-                  })();
-
-                  return (
-                    <div
-                      key={link.id}
-                      className="bg-white rounded-xl border border-stone-100 shadow-sm p-4 flex items-center gap-3"
-                    >
-                      <button
-                        onClick={() => onToggleChecked(link.id, true)}
-                        className="flex-shrink-0 cursor-pointer"
-                        aria-label="Mark as purchased"
-                      >
-                        <Square size={22} className="text-stone-300 hover:text-stone-400" />
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-stone-900 hover:text-sage-600 transition-colors"
-                        >
-                          {displayTitle}
-                        </a>
-                        <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
-                          <ExternalLink size={10} />
-                          {displaySiteName}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Purchased section */}
-            {checkedLinks.length > 0 && (
-              <div className="pt-4 border-t border-stone-200">
-                <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <Check size={12} />
-                  Purchased ({checkedLinks.length})
-                </h4>
-                <div className="space-y-2">
-                  {checkedLinks.map((link) => {
-                    const displayTitle = link.title || link.linkPreview?.title || 'View Product';
-                    const displaySiteName = link.linkPreview?.siteName || (() => {
-                      try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
-                    })();
-
-                    return (
-                      <div
-                        key={link.id}
-                        className="bg-white rounded-xl border border-stone-100 shadow-sm p-4 flex items-center gap-3 opacity-60"
-                      >
-                        <button
-                          onClick={() => onToggleChecked(link.id, false)}
-                          className="flex-shrink-0 cursor-pointer"
-                          aria-label="Mark as not purchased"
-                        >
-                          <CheckSquare size={22} className="text-sage-500" />
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-medium text-stone-500 line-through hover:text-sage-600 transition-colors"
-                          >
-                            {displayTitle}
-                          </a>
-                          <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
-                            <ExternalLink size={10} />
-                            {displaySiteName}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Back button */}
-        <div className="mt-8 text-center">
-          <button
-            onClick={onBack}
-            className="text-sage-600 hover:text-sage-700 text-sm font-medium cursor-pointer"
-          >
-            ← Back to Lookbook
-          </button>
-        </div>
-      </main>
-    </div>
-  );
-};
-
-// Shopping Links Content (for mobile modal)
-interface ShoppingLinksContentProps {
-  links: ShoppingLink[];
-  onToggleChecked: (linkId: string, checked: boolean) => void;
-}
-
-const ShoppingLinksContent: React.FC<ShoppingLinksContentProps> = ({ links, onToggleChecked }) => {
-  if (links.length === 0) {
-    return (
-      <div className="text-center py-8 text-stone-500">
-        <Link2 size={36} className="mx-auto mb-3 opacity-50" />
-        <p className="text-sm">No shopping links yet.</p>
-      </div>
-    );
-  }
-
-  const uncheckedLinks = links.filter(link => !link.checked);
-  const checkedLinks = links.filter(link => link.checked);
-
-  const renderLink = (link: ShoppingLink) => {
-    const displayTitle = link.title || link.linkPreview?.title || 'View Product';
-    const displaySiteName = link.linkPreview?.siteName || (() => {
-      try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
-    })();
-
-    return (
-      <div
-        key={link.id}
-        className={`bg-stone-50 rounded-xl p-3 flex items-center gap-3 ${link.checked ? 'opacity-60' : ''}`}
-      >
-        <button
-          onClick={() => onToggleChecked(link.id, !link.checked)}
-          className="flex-shrink-0 cursor-pointer"
-          aria-label={link.checked ? 'Mark as not purchased' : 'Mark as purchased'}
-        >
-          {link.checked ? (
-            <CheckSquare size={20} className="text-sage-500" />
-          ) : (
-            <Square size={20} className="text-stone-300" />
-          )}
-        </button>
-        <div className="flex-1 min-w-0">
-          <a
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`font-medium text-sm hover:text-sage-600 transition-colors ${
-              link.checked ? 'text-stone-500 line-through' : 'text-stone-900'
-            }`}
-          >
-            {displayTitle}
-          </a>
-          <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1">
-            <ExternalLink size={10} />
-            {displaySiteName}
-          </p>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="space-y-6">
-      <p className="text-xs text-stone-500">Tap the box next to a link to mark it as purchased.</p>
-      {/* Unchecked links */}
-      {uncheckedLinks.length > 0 && (
-        <div className="space-y-2">
-          {uncheckedLinks.map(renderLink)}
-        </div>
-      )}
-
-      {/* Purchased section */}
-      {checkedLinks.length > 0 && (
-        <div className="pt-4 border-t border-stone-200">
-          <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <Check size={12} />
-            Purchased ({checkedLinks.length})
-          </h4>
-          <div className="space-y-2">
-            {checkedLinks.map(renderLink)}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};

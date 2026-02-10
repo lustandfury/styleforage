@@ -17,7 +17,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Lock, Upload, Trash2, Edit3, Save, X, LogOut, Image as ImageIcon, ArrowLeft, Plus, Users, Copy, Check, FolderOpen, Eye, Camera, ShoppingBag, ExternalLink, DollarSign, Link2, Square, CheckSquare, Lightbulb, ChevronUp, ChevronDown, Share2, GripVertical } from 'lucide-react';
+import { Lock, Upload, Trash2, Edit3, Save, X, LogOut, Image as ImageIcon, ArrowLeft, Plus, Users, Copy, Check, FolderOpen, Eye, Camera, ShoppingBag, DollarSign, Square, CheckSquare, Lightbulb, ChevronUp, ChevronDown, Share2, GripVertical } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { normalizePastedText } from '../utils/normalizeText';
 
@@ -150,15 +150,6 @@ interface LinkPreview {
   image?: string;
   siteName?: string;
   favicon?: string;
-}
-
-interface LinkCard {
-  id: string;
-  title: string;
-  description: string;
-  links: { url: string; linkPreview?: LinkPreview }[];
-  order: number;
-  createdAt: string;
 }
 
 type ShoppingCategory = 'tops' | 'bottoms' | 'accessories' | 'footwear' | 'outerwear' | 'uncategorized';
@@ -452,6 +443,7 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
   const [newDescription, setNewDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [shareLookbook, setShareLookbook] = useState<Lookbook | null>(null);
+  const [copiedLookbookId, setCopiedLookbookId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLookbooks();
@@ -611,13 +603,14 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
                 <Button type="submit" variant="primary" size="md" className="rounded-full" disabled={!newClientName.trim() || isCreating}>
                   {isCreating ? 'Creating…' : 'Create Lookbook'}
                 </Button>
-                <button
+                <Button
                   type="button"
                   onClick={() => { setShowCreateForm(false); setNewClientName(''); setNewTitle(''); setNewDescription(''); }}
-                  className="px-4 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 transition-colors cursor-pointer"
+                  variant="ghost"
+                  size="md"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -670,9 +663,19 @@ const LookbookList: React.FC<LookbookListProps> = ({ onLogout }) => {
                         /lookbook/{lookbook.slug}
                       </p>
                       <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-xs text-stone-500 bg-stone-100 px-2 py-1 rounded-full font-mono">
-                          {lookbook.passcode}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(lookbook.passcode);
+                            setCopiedLookbookId(lookbook.slug);
+                            setTimeout(() => setCopiedLookbookId(null), 2000);
+                          }}
+                          className="inline-flex items-center gap-1.5 text-sm font-mono bg-stone-100 hover:bg-sage-100 text-stone-600 px-3 py-1 rounded-full transition-colors cursor-pointer"
+                          title="Click to copy code"
+                        >
+                          {copiedLookbookId === lookbook.slug ? <Check size={14} className="text-sage-600" /> : <Copy size={14} className="text-stone-400" />}
+                          {copiedLookbookId === lookbook.slug ? 'Copied!' : lookbook.passcode}
+                        </button>
                       </div>
                     </div>
 
@@ -722,7 +725,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const navigate = useNavigate();
   
   // Tab state
-  const [activeTab, setActiveTab] = useState<'looks' | 'shopping' | 'links' | 'tips'>('looks');
+  const [activeTab, setActiveTab] = useState<'looks' | 'shopping' | 'tips'>('looks');
   
   // CMS state
   const [entries, setEntries] = useState<EditorialEntry[]>([]);
@@ -731,6 +734,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [lookbookInfo, setLookbookInfo] = useState<{ clientName: string; passcode: string } | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [isResettingPasscode, setIsResettingPasscode] = useState(false);
+  const [copiedPasscode, setCopiedPasscode] = useState(false);
 
   // Upload state
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
@@ -796,18 +800,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
   const [editingTipId, setEditingTipId] = useState<string | null>(null);
   const [editTipText, setEditTipText] = useState('');
 
-  // LinkCards state
-  const [linkCards, setLinkCards] = useState<LinkCard[]>([]);
-  const [isLoadingLinkCards, setIsLoadingLinkCards] = useState(false);
-  const [showAddLinkCard, setShowAddLinkCard] = useState(false);
-  const [newLinkCardTitle, setNewLinkCardTitle] = useState('');
-  const [newLinkCardDescription, setNewLinkCardDescription] = useState('');
-  const [newLinkCardLinks, setNewLinkCardLinks] = useState<{ url: string; linkPreview?: LinkPreview | null }[]>([{ url: '', linkPreview: null }]);
-  const [isAddingLinkCard, setIsAddingLinkCard] = useState(false);
-  const [editingLinkCardId, setEditingLinkCardId] = useState<string | null>(null);
-  const [editLinkCardTitle, setEditLinkCardTitle] = useState('');
-  const [editLinkCardDescription, setEditLinkCardDescription] = useState('');
-  const [editLinkCardLinks, setEditLinkCardLinks] = useState<{ url: string; linkPreview?: LinkPreview | null }[]>([{ url: '', linkPreview: null }]);
 
   useEffect(() => {
     fetchLookbookInfo();
@@ -815,7 +807,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     fetchShoppingItems();
     fetchShoppingLinks();
     fetchTips();
-    fetchLinkCards();
   }, [slug]);
 
   const fetchLookbookInfo = async () => {
@@ -1316,76 +1307,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     }
   };
 
-  // LinkCard link management helpers
-  const addNewLinkCardLink = () => {
-    setNewLinkCardLinks(prev => [...prev, { url: '', linkPreview: null }]);
-  };
-
-  const removeNewLinkCardLink = (index: number) => {
-    setNewLinkCardLinks(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const updateNewLinkCardLink = (index: number, field: 'url', value: string) => {
-    setNewLinkCardLinks(prev => prev.map((link, i) => 
-      i === index ? { ...link, [field]: value } : link
-    ));
-  };
-
-  const fetchLinkCardLinkPreview = async (index: number) => {
-    const url = newLinkCardLinks[index]?.url;
-    if (!url || !url.startsWith('http')) return;
-    
-    try {
-      const res = await fetch(`/.netlify/functions/fetch-link-preview?url=${encodeURIComponent(url)}`, {
-        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-      });
-      if (res.ok) {
-        const preview = await res.json();
-        if (!preview.error) {
-          setNewLinkCardLinks(prev => prev.map((link, i) => 
-            i === index ? { ...link, linkPreview: preview } : link
-          ));
-        }
-      }
-    } catch {
-      // Ignore
-    }
-  };
-
-  const addEditLinkCardLink = () => {
-    setEditLinkCardLinks(prev => [...prev, { url: '', linkPreview: null }]);
-  };
-
-  const removeEditLinkCardLink = (index: number) => {
-    setEditLinkCardLinks(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const updateEditLinkCardLink = (index: number, field: 'url', value: string) => {
-    setEditLinkCardLinks(prev => prev.map((link, i) => 
-      i === index ? { ...link, [field]: value } : link
-    ));
-  };
-
-  const fetchEditLinkCardLinkPreview = async (index: number) => {
-    const url = editLinkCardLinks[index]?.url;
-    if (!url || !url.startsWith('http')) return;
-    
-    try {
-      const res = await fetch(`/.netlify/functions/fetch-link-preview?url=${encodeURIComponent(url)}`, {
-        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-      });
-      if (res.ok) {
-        const preview = await res.json();
-        if (!preview.error) {
-          setEditLinkCardLinks(prev => prev.map((link, i) => 
-            i === index ? { ...link, linkPreview: preview } : link
-          ));
-        }
-      }
-    } catch {
-      // Ignore
-    }
-  };
 
   const handleUpdateShoppingItem = async (id: string) => {
     setError('');
@@ -1561,133 +1482,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
     }
   };
 
-  // LinkCards functions
-  const fetchLinkCards = async () => {
-    if (!slug) return;
-    setIsLoadingLinkCards(true);
-    try {
-      const res = await fetch(`/.netlify/functions/cms-linkcards?slug=${slug}`, {
-        headers: { 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLinkCards(data);
-      }
-    } catch {
-      // Ignore - not critical
-    } finally {
-      setIsLoadingLinkCards(false);
-    }
-  };
-
-  const handleAddLinkCard = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newLinkCardTitle.trim()) return;
-
-    setIsAddingLinkCard(true);
-    setError('');
-
-    try {
-      const res = await fetch('/.netlify/functions/cms-linkcards', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
-        },
-        body: JSON.stringify({
-          slug,
-          title: newLinkCardTitle.trim(),
-          description: newLinkCardDescription.trim(),
-          links: newLinkCardLinks.filter(l => l.url.trim()).map(l => ({ 
-            url: l.url.trim(), 
-            linkPreview: l.linkPreview || undefined 
-          })),
-        }),
-      });
-
-      if (res.ok) {
-        const newLinkCard = await res.json();
-        setLinkCards([...linkCards, newLinkCard]);
-        resetAddLinkCardForm();
-      } else {
-        const data = await res.json();
-        setError(data.error || 'Failed to add link card');
-      }
-    } catch {
-      setError('Failed to add link card');
-    } finally {
-      setIsAddingLinkCard(false);
-    }
-  };
-
-  const handleUpdateLinkCard = async (id: string) => {
-    try {
-      const res = await fetch('/.netlify/functions/cms-linkcards', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
-        },
-        body: JSON.stringify({
-          id,
-          slug,
-          title: editLinkCardTitle.trim(),
-          description: editLinkCardDescription.trim(),
-          links: editLinkCardLinks.filter(l => l.url.trim()).map(l => ({ 
-            url: l.url.trim(), 
-            linkPreview: l.linkPreview || undefined 
-          })),
-        }),
-      });
-
-      if (res.ok) {
-        const updated = await res.json();
-        setLinkCards(linkCards.map(lc => (lc.id === id ? updated : lc)));
-        setEditingLinkCardId(null);
-      } else {
-        setError('Failed to update link card');
-      }
-    } catch {
-      setError('Failed to update link card');
-    }
-  };
-
-  const handleDeleteLinkCard = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this link card?')) return;
-
-    try {
-      const res = await fetch('/.netlify/functions/cms-linkcards', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '',
-        },
-        body: JSON.stringify({ id, slug }),
-      });
-
-      if (res.ok) {
-        setLinkCards(linkCards.filter(lc => lc.id !== id));
-      } else {
-        setError('Failed to delete link card');
-      }
-    } catch {
-      setError('Failed to delete link card');
-    }
-  };
-
-  const resetAddLinkCardForm = () => {
-    setNewLinkCardTitle('');
-    setNewLinkCardDescription('');
-    setNewLinkCardLinks([{ url: '', linkPreview: null }]);
-    setShowAddLinkCard(false);
-  };
-
-  const startEditingLinkCard = (linkCard: LinkCard) => {
-    setEditingLinkCardId(linkCard.id);
-    setEditLinkCardTitle(linkCard.title);
-    setEditLinkCardDescription(linkCard.description);
-    setEditLinkCardLinks(linkCard.links.length > 0 ? linkCard.links.map(l => ({ ...l, linkPreview: l.linkPreview || null })) : [{ url: '', linkPreview: null }]);
-  };
 
   const handleAddTip = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1992,8 +1786,20 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                 {lookbookInfo?.clientName || 'Lookbook'}
               </h1>
               {lookbookInfo && (
-                <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                  <span>Code: {lookbookInfo.passcode}</span>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(lookbookInfo.passcode);
+                      setCopiedPasscode(true);
+                      setTimeout(() => setCopiedPasscode(false), 2000);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-sm font-mono bg-stone-100 hover:bg-sage-100 text-stone-600 px-3 py-1 rounded-full transition-colors cursor-pointer"
+                    title="Click to copy"
+                  >
+                    {copiedPasscode ? <Check size={14} className="text-sage-600" /> : <Copy size={14} className="text-stone-400" />}
+                    {copiedPasscode ? 'Copied!' : lookbookInfo.passcode}
+                  </button>
                   {!/^\d{4}$/.test(lookbookInfo.passcode) && (
                     <button
                       type="button"
@@ -2004,7 +1810,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                       {isResettingPasscode ? 'Resetting…' : 'Reset to 4-digit code'}
                     </button>
                   )}
-                </p>
+                </div>
               )}
             </div>
           </div>
@@ -2081,61 +1887,10 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
               Tips {tips.length > 0 && `(${tips.length})`}
             </span>
           </button>
-          <button
-            onClick={() => setActiveTab('links')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'links'
-                ? 'border-sage-500 text-sage-600'
-                : 'border-transparent text-stone-500 hover:text-stone-700'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Link2 size={16} />
-              Links {linkCards.length > 0 && `(${linkCards.length})`}
-            </span>
-          </button>
         </div>
       </div>
 
       <main className="px-4 py-4 md:py-8 max-w-4xl mx-auto">
-        {/* Mobile: Floating Add Button */}
-        {activeTab === 'looks' && (
-          <button
-            onClick={() => setShowUploadForm(true)}
-            className="md:hidden fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
-            aria-label="Add new outfit"
-          >
-            <Plus size={28} />
-          </button>
-        )}
-        {activeTab === 'shopping' && (
-          <button
-            onClick={() => setShowAddItem(true)}
-            className="md:hidden fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
-            aria-label="Add shopping item"
-          >
-            <Plus size={28} />
-          </button>
-        )}
-        {activeTab === 'links' && (
-          <button
-            onClick={() => setShowAddLinkCard(true)}
-            className="md:hidden fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
-            aria-label="Add link card"
-          >
-            <Plus size={28} />
-          </button>
-        )}
-        {activeTab === 'tips' && (
-          <button
-            onClick={() => setShowAddTip(true)}
-            className="md:hidden fixed bottom-6 right-6 z-20 h-14 w-14 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
-            aria-label="Add tip"
-          >
-            <Plus size={28} />
-          </button>
-        )}
-
         {/* Error */}
         {error && (
           <div className="mb-4 md:mb-6 p-3 md:p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm" role="alert">
@@ -2146,110 +1901,90 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         {/* LOOKS TAB */}
         {activeTab === 'looks' && (
           <>
-            {/* Mobile: Upload Modal */}
-            {showUploadForm && (
-              <div className="md:hidden fixed inset-0 z-30 bg-black/50 flex items-end">
-                <div className="bg-white w-full rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto animate-slide-up">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-serif text-lg text-stone-900">Add New Outfit</h2>
-                    <button
-                      onClick={resetUploadForm}
-                      className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
-                      aria-label="Close"
-                    >
-                      <X size={24} />
-                    </button>
-                  </div>
-                  <UploadForm
-                    fileInputRef={fileInputRef}
-                    uploadFiles={uploadFiles}
-                    uploadPreview={uploadPreview}
-                    uploadProgress={uploadProgress}
-                    uploadTitle={uploadTitle}
-                    uploadCaption={uploadCaption}
-                    uploadSeason={uploadSeason}
-                    isUploading={isUploading}
-                    onFileChange={handleFileChange}
-                    onTitleChange={setUploadTitle}
-                    onCaptionChange={setUploadCaption}
-                    onSeasonChange={setUploadSeason}
-                    onSubmit={handleUpload}
-                    onClearFile={() => {
-                      setUploadFiles([]);
-                      setUploadPreview(null);
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Desktop: Upload Form */}
-            <section className="hidden md:block bg-white p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
-              <h2 className="font-serif text-lg text-stone-900 mb-4">
-                Add New Outfit
-              </h2>
-              <UploadForm
-                fileInputRef={fileInputRef}
-                uploadFiles={uploadFiles}
-                uploadPreview={uploadPreview}
-                uploadProgress={uploadProgress}
-                uploadTitle={uploadTitle}
-                uploadCaption={uploadCaption}
-                uploadSeason={uploadSeason}
-                isUploading={isUploading}
-                onFileChange={handleFileChange}
-                onTitleChange={setUploadTitle}
-                onCaptionChange={setUploadCaption}
-                onSeasonChange={setUploadSeason}
-                onSubmit={handleUpload}
-                onClearFile={() => {
-                  setUploadFiles([]);
-                  setUploadPreview(null);
-                  if (fileInputRef.current) fileInputRef.current.value = '';
-                }}
-              />
-            </section>
-
             {/* Entries List */}
             <section>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 md:mb-4">
+              <div className="flex items-center justify-between mb-3 md:mb-4">
                 <h2 className="font-serif text-base md:text-lg text-stone-900">
                   Lookbook Entries {entries.length > 0 && <span className="text-stone-400">({entries.length})</span>}
                 </h2>
-                {/* Season Filter for entries */}
-                {entries.some(e => e.season) && (
-                  <div className="flex flex-wrap gap-1.5">
+                {!showUploadForm && (
+                  <button
+                    onClick={() => setShowUploadForm(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Plus size={16} />
+                    Add Outfit
+                  </button>
+                )}
+              </div>
+              {/* Season Filter for entries */}
+              {entries.some(e => e.season) && (
+                <div className="flex flex-wrap gap-1.5 mb-3 md:mb-4">
+                  <button
+                    onClick={() => setSelectedEntrySeason('all')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                      selectedEntrySeason === 'all'
+                        ? 'bg-stone-800 text-white'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {SEASON_ORDER.map((season) => (
                     <button
-                      onClick={() => setSelectedEntrySeason('all')}
+                      key={season}
+                      onClick={() => setSelectedEntrySeason(season)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                        selectedEntrySeason === 'all'
+                        selectedEntrySeason === season
                           ? 'bg-stone-800 text-white'
                           : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                       }`}
                     >
-                      All
+                      {SEASON_LABELS[season]}
                     </button>
-                    {SEASON_ORDER.map((season) => (
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-3 md:space-y-4">
+                {showUploadForm && (
+                  <div className="bg-white p-3 md:p-4 rounded-2xl border border-sage-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-serif text-base text-stone-900">New Outfit</h3>
                       <button
-                        key={season}
-                        onClick={() => setSelectedEntrySeason(season)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                          selectedEntrySeason === season
-                            ? 'bg-stone-800 text-white'
-                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                        }`}
+                        onClick={resetUploadForm}
+                        className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer"
+                        aria-label="Cancel"
                       >
-                        {SEASON_LABELS[season]}
+                        <X size={18} />
                       </button>
-                    ))}
+                    </div>
+                    <UploadForm
+                      fileInputRef={fileInputRef}
+                      uploadFiles={uploadFiles}
+                      uploadPreview={uploadPreview}
+                      uploadProgress={uploadProgress}
+                      uploadTitle={uploadTitle}
+                      uploadCaption={uploadCaption}
+                      uploadSeason={uploadSeason}
+                      isUploading={isUploading}
+                      onFileChange={handleFileChange}
+                      onTitleChange={setUploadTitle}
+                      onCaptionChange={setUploadCaption}
+                      onSeasonChange={setUploadSeason}
+                      onSubmit={handleUpload}
+                      onClearFile={() => {
+                        setUploadFiles([]);
+                        setUploadPreview(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    />
                   </div>
                 )}
               </div>
-
               {isLoading ? (
                 <div className="text-center py-12 text-stone-500">Loading…</div>
-              ) : entries.length === 0 ? (
+              ) : entries.length === 0 && !showUploadForm ? (
                 <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
                   <ImageIcon size={48} className="mx-auto mb-4 opacity-50" />
                   <p className="text-sm md:text-base">No entries yet. Upload the first outfit.</p>
@@ -2343,82 +2078,64 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
         {/* SHOPPING TAB */}
         {activeTab === 'shopping' && (
           <>
-            {/* Mobile: Add Item Modal */}
-            {showAddItem && (
-              <div className="md:hidden fixed inset-0 z-30 bg-black/50 flex items-end">
-                <div className="bg-white w-full rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto animate-slide-up">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-serif text-lg text-stone-900">Add Shopping Item</h2>
-                    <button
-                      onClick={resetAddItemForm}
-                      className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
-                      aria-label="Close"
-                    >
-                      <X size={24} />
-                    </button>
-                  </div>
-                  <ShoppingItemForm
-                    name={newItemName}
-                    description={newItemDescription}
-                    links={newItemLinks}
-                    category={newItemCategory}
-                    isFetchingPreviewIndex={isFetchingPreviewIndex}
-                    onNameChange={setNewItemName}
-                    onDescriptionChange={setNewItemDescription}
-                    onLinkChange={(i, url) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, url } : l)))}
-                    onLinkDescriptionChange={(i, description) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, description } : l)))}
-                    onCategoryChange={setNewItemCategory}
-                    onFetchPreview={fetchLinkPreviewForIndex}
-                    onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', description: '', linkPreview: null }])}
-                    onRemoveLink={(i) => setNewItemLinks((prev) => prev.filter((_, j) => j !== i))}
-                    onSubmit={handleAddShoppingItem}
-                    isSubmitting={isAddingItem}
-                    submitLabel="Add Item"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Desktop: Add Item Form */}
-            <section className="hidden md:block bg-white p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
-              <h2 className="font-serif text-lg text-stone-900 mb-4">
-                Add Shopping Item
-              </h2>
-              <ShoppingItemForm
-                name={newItemName}
-                description={newItemDescription}
-                links={newItemLinks}
-                category={newItemCategory}
-                isFetchingPreviewIndex={isFetchingPreviewIndex}
-                onNameChange={setNewItemName}
-                onDescriptionChange={setNewItemDescription}
-                onLinkChange={(i, url) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, url } : l)))}
-                onLinkDescriptionChange={(i, description) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, description } : l)))}
-                onCategoryChange={setNewItemCategory}
-                onFetchPreview={fetchLinkPreviewForIndex}
-                onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', description: '', linkPreview: null }])}
-                onRemoveLink={(i) => setNewItemLinks((prev) => prev.filter((_, j) => j !== i))}
-                onSubmit={handleAddShoppingItem}
-                isSubmitting={isAddingItem}
-                submitLabel="Add to List"
-              />
-            </section>
-
             {/* Shopping Items List - Drag to reorder */}
             <section>
-              <h2 className="font-serif text-base md:text-lg text-stone-900 mb-3 md:mb-4">
-                Shopping Items {shoppingItems.length > 0 && <span className="text-stone-400">({shoppingItems.length})</span>}
-              </h2>
+              <div className="flex items-center justify-between mb-3 md:mb-4">
+                <h2 className="font-serif text-base md:text-lg text-stone-900">
+                  Shopping Items {shoppingItems.length > 0 && <span className="text-stone-400">({shoppingItems.length})</span>}
+                </h2>
+                {!showAddItem && (
+                  <button
+                    onClick={() => setShowAddItem(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Plus size={16} />
+                    Add Item
+                  </button>
+                )}
+              </div>
 
-              <div className="pr-1">
+              <div className="pr-1 space-y-3">
+                {showAddItem && (
+                  <div className="bg-white p-3 md:p-4 rounded-2xl border border-sage-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-serif text-base text-stone-900">New Item</h3>
+                      <button
+                        onClick={resetAddItemForm}
+                        className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer"
+                        aria-label="Cancel"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                    <ShoppingItemForm
+                      name={newItemName}
+                      description={newItemDescription}
+                      links={newItemLinks}
+                      category={newItemCategory}
+                      isFetchingPreviewIndex={isFetchingPreviewIndex}
+                      onNameChange={setNewItemName}
+                      onDescriptionChange={setNewItemDescription}
+                      onLinkChange={(i, url) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, url } : l)))}
+                      onLinkDescriptionChange={(i, description) => setNewItemLinks((prev) => prev.map((l, j) => (j === i ? { ...l, description } : l)))}
+                      onCategoryChange={setNewItemCategory}
+                      onFetchPreview={fetchLinkPreviewForIndex}
+                      onAddLink={() => setNewItemLinks((prev) => [...prev, { url: '', description: '', linkPreview: null }])}
+                      onRemoveLink={(i) => setNewItemLinks((prev) => prev.filter((_, j) => j !== i))}
+                      onSubmit={handleAddShoppingItem}
+                      isSubmitting={isAddingItem}
+                      submitLabel="Add Item"
+                    />
+                  </div>
+                )}
                 {isLoadingShopping ? (
                   <div className="text-center py-12 text-stone-500">Loading…</div>
-                ) : shoppingItems.length === 0 ? (
+                ) : shoppingItems.length === 0 && !showAddItem ? (
                   <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
                     <ShoppingBag size={48} className="mx-auto mb-4 opacity-50" />
                     <p className="text-sm md:text-base">No items yet. Add the first shopping item.</p>
                   </div>
-                ) : (
+                ) : shoppingItems.length > 0 ? (
                   <DndContext
                     sensors={shoppingSensors}
                     collisionDetection={closestCenter}
@@ -2476,351 +2193,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
                       </div>
                     </SortableContext>
                   </DndContext>
-                )}
-              </div>
-            </section>
-          </>
-        )}
-
-        {/* LINKS TAB */}
-        {activeTab === 'links' && (
-          <>
-            {/* Mobile: Add LinkCard Modal */}
-            {showAddLinkCard && (
-              <div className="md:hidden fixed inset-0 z-30 bg-black/50 flex items-end">
-                <div className="bg-white w-full rounded-t-3xl p-5 pb-8 max-h-[85vh] overflow-y-auto animate-slide-up">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-serif text-lg text-stone-900">Add Link Card</h2>
-                    <button
-                      onClick={resetAddLinkCardForm}
-                      className="p-2 -mr-2 text-stone-400 hover:text-stone-600 cursor-pointer"
-                      aria-label="Close"
-                    >
-                      <X size={24} />
-                    </button>
-                  </div>
-                  <form onSubmit={handleAddLinkCard} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Title</label>
-                      <input
-                        type="text"
-                        value={newLinkCardTitle}
-                        onChange={(e) => setNewLinkCardTitle(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500"
-                        placeholder="e.g., Summer Essentials"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Description</label>
-                      <textarea
-                        value={newLinkCardDescription}
-                        onChange={(e) => setNewLinkCardDescription(e.target.value)}
-                        rows={3}
-                        className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500 resize-none"
-                        placeholder="Add a description for this link collection..."
-                        required
-                      />
-                    </div>
-                    
-                    {/* Links */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Links</label>
-                        <button
-                          type="button"
-                          onClick={addNewLinkCardLink}
-                          className="text-xs text-sage-600 hover:text-sage-700 font-medium cursor-pointer"
-                        >
-                          + Add Link
-                        </button>
-                      </div>
-                      <div className="space-y-3">
-                        {newLinkCardLinks.map((link, index) => (
-                          <div key={index} className="space-y-2 p-3 border border-stone-200 rounded-xl">
-                            <div className="flex gap-2">
-                              <input
-                                type="url"
-                                value={link.url}
-                                onChange={(e) => updateNewLinkCardLink(index, 'url', e.target.value)}
-                                onBlur={() => fetchLinkCardLinkPreview(index)}
-                                className="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
-                                placeholder="https://..."
-                              />
-                              {newLinkCardLinks.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeNewLinkCardLink(index)}
-                                  className="p-2 rounded-full text-stone-400 hover:text-red-600 cursor-pointer"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              )}
-                            </div>
-                            {link.linkPreview?.image && (
-                              <div className="rounded-lg overflow-hidden bg-stone-100">
-                                <img src={link.linkPreview.image} alt="Preview" className="w-full h-20 object-cover" />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <Button type="submit" variant="primary" size="lg" className="w-full rounded-full" disabled={!newLinkCardTitle.trim() || isAddingLinkCard}>
-                      {isAddingLinkCard ? 'Adding...' : 'Add Link Card'}
-                    </Button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Desktop: Add LinkCard Form */}
-            <section className="hidden md:block bg-white p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
-              <h2 className="font-serif text-lg text-stone-900 mb-4 flex items-center gap-2">
-                <Link2 size={20} className="text-sage-600" />
-                Add Link Card
-              </h2>
-              <form onSubmit={handleAddLinkCard} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Title</label>
-                  <input
-                    type="text"
-                    value={newLinkCardTitle}
-                    onChange={(e) => setNewLinkCardTitle(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500"
-                    placeholder="e.g., Summer Essentials"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Description</label>
-                  <textarea
-                    value={newLinkCardDescription}
-                    onChange={(e) => setNewLinkCardDescription(e.target.value)}
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500 resize-none"
-                    placeholder="Add a description for this link collection..."
-                    required
-                  />
-                </div>
-                
-                {/* Links */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Links</label>
-                    <button
-                      type="button"
-                      onClick={addNewLinkCardLink}
-                      className="text-xs text-sage-600 hover:text-sage-700 font-medium cursor-pointer"
-                    >
-                      + Add Link
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    {newLinkCardLinks.map((link, index) => (
-                      <div key={index} className="space-y-2 p-3 border border-stone-200 rounded-xl">
-                        <div className="flex gap-2">
-                          <input
-                            type="url"
-                            value={link.url}
-                            onChange={(e) => updateNewLinkCardLink(index, 'url', e.target.value)}
-                            onBlur={() => fetchLinkCardLinkPreview(index)}
-                            className="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
-                            placeholder="https://..."
-                          />
-                          {newLinkCardLinks.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeNewLinkCardLink(index)}
-                              className="p-2 rounded-full text-stone-400 hover:text-red-600 cursor-pointer"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
-                        {link.linkPreview?.image && (
-                          <div className="rounded-lg overflow-hidden bg-stone-100 max-w-xs">
-                            <img src={link.linkPreview.image} alt="Preview" className="w-full h-20 object-cover" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <Button type="submit" variant="primary" size="lg" className="rounded-full" disabled={!newLinkCardTitle.trim() || isAddingLinkCard}>
-                  {isAddingLinkCard ? 'Adding...' : 'Add Link Card'}
-                </Button>
-              </form>
-            </section>
-
-            {/* LinkCards List */}
-            <section>
-              <h2 className="font-serif text-base md:text-lg text-stone-900 mb-3 md:mb-4">
-                Link Cards {linkCards.length > 0 && <span className="text-stone-400">({linkCards.length})</span>}
-              </h2>
-
-              <div className="pr-1">
-                {isLoadingLinkCards ? (
-                  <div className="text-center py-12 text-stone-500">Loading…</div>
-                ) : linkCards.length === 0 ? (
-                  <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
-                    <Link2 size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="text-sm md:text-base">No link cards yet. Create curated collections of links for your client.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {linkCards.map((linkCard) => (
-                      <div key={linkCard.id} className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
-                        {editingLinkCardId === linkCard.id ? (
-                          <div className="p-4 md:p-6 space-y-4">
-                            <div>
-                              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Title</label>
-                              <input
-                                type="text"
-                                value={editLinkCardTitle}
-                                onChange={(e) => setEditLinkCardTitle(e.target.value)}
-                                className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
-                                placeholder="Title"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">Description</label>
-                              <textarea
-                                value={editLinkCardDescription}
-                                onChange={(e) => setEditLinkCardDescription(e.target.value)}
-                                rows={3}
-                                className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500 resize-none"
-                                placeholder="Description"
-                              />
-                            </div>
-                            
-                            {/* Edit Links */}
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Links</label>
-                                <button
-                                  type="button"
-                                  onClick={addEditLinkCardLink}
-                                  className="text-xs text-sage-600 hover:text-sage-700 font-medium cursor-pointer"
-                                >
-                                  + Add Link
-                                </button>
-                              </div>
-                              <div className="space-y-2">
-                                {editLinkCardLinks.map((link, index) => (
-                                  <div key={index} className="space-y-2 p-3 border border-stone-200 rounded-xl">
-                                    <div className="flex gap-2">
-                                      <input
-                                        type="url"
-                                        value={link.url}
-                                        onChange={(e) => updateEditLinkCardLink(index, 'url', e.target.value)}
-                                        onBlur={() => fetchEditLinkCardLinkPreview(index)}
-                                        className="flex-1 px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
-                                        placeholder="https://..."
-                                      />
-                                      {editLinkCardLinks.length > 1 && (
-                                        <button
-                                          type="button"
-                                          onClick={() => removeEditLinkCardLink(index)}
-                                          className="p-2 rounded-full text-stone-400 hover:text-red-600 cursor-pointer"
-                                        >
-                                          <Trash2 size={16} />
-                                        </button>
-                                      )}
-                                    </div>
-                                    {link.linkPreview?.image && (
-                                      <div className="rounded-lg overflow-hidden bg-stone-100 max-w-xs">
-                                        <img src={link.linkPreview.image} alt="Preview" className="w-full h-20 object-cover" />
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleUpdateLinkCard(linkCard.id)}
-                                className="flex items-center gap-1 px-4 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 cursor-pointer"
-                              >
-                                <Save size={14} />
-                                Save
-                              </button>
-                              <button
-                                onClick={() => setEditingLinkCardId(null)}
-                                className="flex items-center gap-1 px-4 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 cursor-pointer"
-                              >
-                                <X size={14} />
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-4 md:p-6">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex-1 pr-4">
-                                <h3 className="font-serif text-lg md:text-xl text-stone-900 mb-2">{linkCard.title}</h3>
-                                <p className="text-stone-600 text-sm leading-relaxed">{linkCard.description}</p>
-                              </div>
-                              <div className="flex gap-2 flex-shrink-0">
-                                <button
-                                  onClick={() => startEditingLinkCard(linkCard)}
-                                  className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
-                                  title="Edit"
-                                >
-                                  <Edit3 size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteLinkCard(linkCard.id)}
-                                  className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </div>
-                            
-                            {linkCard.links.length > 0 && (
-                              <div className="space-y-3">
-                                {linkCard.links.map((link, index) => (
-                                  <div key={index} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors">
-                                    {link.linkPreview?.image ? (
-                                      <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-stone-200">
-                                        <img src={link.linkPreview.image} alt="" className="w-full h-full object-cover" />
-                                      </div>
-                                    ) : (
-                                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-stone-200 flex items-center justify-center">
-                                        <ExternalLink size={20} className="text-stone-400" />
-                                      </div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <a
-                                        href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="font-medium text-stone-900 hover:text-sage-600 transition-colors truncate block"
-                                      >
-                                        {link.linkPreview?.title || 'Untitled Link'}
-                                      </a>
-                                      <p className="text-xs text-stone-500 truncate">
-                                        {link.linkPreview?.siteName || (() => {
-                                          try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Link'; }
-                                        })()}
-                                      </p>
-                                    </div>
-                                    <ExternalLink size={16} className="flex-shrink-0 text-stone-400" />
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                ) : null}
               </div>
             </section>
           </>
@@ -2828,99 +2201,120 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug }) => {
 
         {/* TIPS TAB */}
         {activeTab === 'tips' && (
-          <>
-            <section className="bg-white p-4 md:p-6 rounded-2xl border border-stone-100 shadow-sm mb-8">
-              <h2 className="font-serif text-lg text-stone-900 mb-4">
-                Add Tip
-              </h2>
-              <form onSubmit={handleAddTip} className="space-y-3">
-                <textarea
-                  value={newTipText}
-                  onChange={(e) => setNewTipText(e.target.value)}
-                  placeholder="e.g. Try pairing with neutral accessories..."
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
-                />
-                <Button type="submit" variant="primary" size="lg" className="rounded-full" disabled={!newTipText.trim() || isAddingTip}>
-                  {isAddingTip ? 'Adding...' : 'Add Tip'}
-                </Button>
-              </form>
-            </section>
-
-            <section>
-              <h2 className="font-serif text-base md:text-lg text-stone-900 mb-3 md:mb-4">
+          <section>
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <h2 className="font-serif text-base md:text-lg text-stone-900">
                 Tips {tips.length > 0 && <span className="text-stone-400">({tips.length})</span>}
               </h2>
+              {!showAddTip && (
+                <button
+                  onClick={() => setShowAddTip(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 active:scale-95 transition-all cursor-pointer"
+                >
+                  <Plus size={16} />
+                  Add Tip
+                </button>
+              )}
+            </div>
 
+            <div className="space-y-2">
+              {showAddTip && (
+                <div className="bg-white rounded-xl border border-sage-200 shadow-sm p-3 md:p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-serif text-base text-stone-900">New Tip</h3>
+                    <button
+                      onClick={() => { setNewTipText(''); setShowAddTip(false); }}
+                      className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer"
+                      aria-label="Cancel"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <form onSubmit={handleAddTip} className="space-y-3">
+                    <textarea
+                      value={newTipText}
+                      onChange={(e) => setNewTipText(e.target.value)}
+                      placeholder="e.g. Try pairing with neutral accessories..."
+                      rows={3}
+                      className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <Button type="submit" variant="primary" size="lg" className="rounded-full" disabled={!newTipText.trim() || isAddingTip}>
+                        {isAddingTip ? 'Adding...' : 'Add Tip'}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => { setNewTipText(''); setShowAddTip(false); }}
+                        variant="ghost"
+                        size="md"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              )}
               {isLoadingTips ? (
                 <div className="text-center py-12 text-stone-500">Loading…</div>
-              ) : tips.length === 0 ? (
+              ) : tips.length === 0 && !showAddTip ? (
                 <div className="text-center py-12 text-stone-500 bg-white rounded-2xl border border-stone-100">
                   <Lightbulb size={48} className="mx-auto mb-4 opacity-50" />
                   <p className="text-sm md:text-base">No tips yet. Add styling tips for your client.</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {tips.map((tip, index) => (
-                    <div
-                      key={tip.id}
-                      className="bg-white rounded-xl border border-stone-100 shadow-sm p-3 md:p-4 flex items-start gap-3"
-                    >
-                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-sage-100 text-sage-700 text-sm font-semibold flex items-center justify-center">
-                        {index + 1}
-                      </span>
-                      {editingTipId === tip.id ? (
-                        <div className="flex-1 space-y-2">
-                          <textarea
-                            value={editTipText}
-                            onChange={(e) => setEditTipText(e.target.value)}
-                            rows={2}
-                            className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleUpdateTip(tip.id)}
-                              className="flex items-center gap-1 px-3 py-2 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 cursor-pointer"
-                            >
-                              <Save size={14} />
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingTipId(null)}
-                              className="flex items-center gap-1 px-3 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 cursor-pointer"
-                            >
-                              <X size={14} />
-                              Cancel
-                            </button>
-                          </div>
+                tips.map((tip, index) => (
+                  <div
+                    key={tip.id}
+                    className="bg-white rounded-xl border border-stone-100 shadow-sm p-3 md:p-4 flex items-start gap-3"
+                  >
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-sage-100 text-sage-700 text-sm font-semibold flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    {editingTipId === tip.id ? (
+                      <div className="flex-1 space-y-2">
+                        <textarea
+                          value={editTipText}
+                          onChange={(e) => setEditTipText(e.target.value)}
+                          rows={2}
+                          className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-sage-500"
+                        />
+                        <div className="flex gap-2">
+                          <Button onClick={() => handleUpdateTip(tip.id)} variant="primary" size="md" className="gap-1.5">
+                            <Save size={14} />
+                            Save
+                          </Button>
+                          <Button onClick={() => setEditingTipId(null)} variant="ghost" size="md">
+                            Cancel
+                          </Button>
                         </div>
-                      ) : (
-                        <>
-                          <p className="flex-1 text-stone-700 text-sm md:text-base leading-relaxed">{normalizePastedText(tip.text)}</p>
-                          <div className="flex gap-1 flex-shrink-0">
-                            <button
-                              onClick={() => startEditTip(tip)}
-                              className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
-                              title="Edit"
-                            >
-                              <Edit3 size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTip(tip.id)}
-                              className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="flex-1 text-stone-700 text-sm md:text-base leading-relaxed">{normalizePastedText(tip.text)}</p>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => startEditTip(tip)}
+                            className="p-2 rounded-full text-stone-400 hover:text-sage-600 hover:bg-sage-50 cursor-pointer"
+                            title="Edit"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTip(tip.id)}
+                            className="p-2 rounded-full text-stone-400 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))
               )}
-            </section>
-          </>
+            </div>
+          </section>
         )}
       </main>
     </div>
@@ -3328,20 +2722,13 @@ const EntryCard: React.FC<EntryCardProps> = ({
                 ))}
               </div>
               <div className="flex gap-2 mt-3">
-                <button
-                  onClick={onSave}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 transition-colors cursor-pointer"
-                >
+                <Button onClick={onSave} variant="primary" size="md" className="flex-1 sm:flex-none gap-1.5">
                   <Save size={16} />
                   Save
-                </button>
-                <button
-                  onClick={onCancelEdit}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-stone-100 text-stone-600 text-sm font-medium hover:bg-stone-200 transition-colors cursor-pointer"
-                >
-                  <X size={16} />
+                </Button>
+                <Button onClick={onCancelEdit} variant="ghost" size="md" className="flex-1 sm:flex-none gap-1.5">
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -3476,6 +2863,7 @@ interface ShoppingItemFormProps {
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
   submitLabel: string;
+  onCancel?: () => void;
 }
 
 const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
@@ -3495,6 +2883,7 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
   onSubmit,
   isSubmitting,
   submitLabel,
+  onCancel,
 }) => {
   const [showOptional, setShowOptional] = React.useState(true);
   const hasAnyLink = links.some((l) => l.url.trim());
@@ -3542,19 +2931,34 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
           />
         </div>
 
+        {/* Description */}
+        <div>
+          <label htmlFor="item-description" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
+            Description <span className="font-normal text-stone-400">(optional)</span>
+          </label>
+          <input
+            id="item-description"
+            type="text"
+            value={description}
+            onChange={(e) => onDescriptionChange(e.target.value)}
+            className="w-full h-11 px-4 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-base"
+            placeholder="Size, color, styling notes…"
+          />
+        </div>
+
         {/* Toggle for optional fields */}
-        {!showOptional && !hasAnyLink && !description && (
+        {!showOptional && !hasAnyLink && (
           <button
             type="button"
             onClick={() => setShowOptional(true)}
             className="text-sage-600 text-sm hover:text-sage-700 cursor-pointer"
           >
-            + Add link or notes
+            + Add product link
           </button>
         )}
 
         {/* Optional fields */}
-        {(showOptional || hasAnyLink || description) && (
+        {(showOptional || hasAnyLink) && (
           <>
             {/* Product links (multiple) - auto-fetch preview on blur */}
             <div className="space-y-4">
@@ -3619,27 +3023,20 @@ const ShoppingItemForm: React.FC<ShoppingItemFormProps> = ({
               </button>
             </div>
 
-              {/* Notes */}
-              <div>
-                <label htmlFor="item-description" className="block text-xs font-bold text-stone-500 uppercase tracking-widest mb-2">
-                  Notes <span className="font-normal text-stone-400">(optional)</span>
-                </label>
-                <input
-                  id="item-description"
-                  type="text"
-                  value={description}
-                  onChange={(e) => onDescriptionChange(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-stone-200 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-transparent text-base"
-                  placeholder="Size, color, notes…"
-                />
-              </div>
           </>
         )}
       </div>
 
-      <Button type="submit" variant="primary" size="lg" className="mt-4 w-full md:w-auto rounded-full" disabled={!name.trim() || isSubmitting}>
-        {isSubmitting ? 'Adding…' : submitLabel}
-      </Button>
+      <div className="flex gap-2 mt-4">
+        <Button type="submit" variant="primary" size="md" className="flex-1 md:flex-none" disabled={!name.trim() || isSubmitting}>
+          {isSubmitting ? 'Saving…' : submitLabel}
+        </Button>
+        {onCancel && (
+          <Button type="button" onClick={onCancel} variant="ghost" size="md" className="flex-1 md:flex-none">
+            Cancel
+          </Button>
+        )}
+      </div>
     </form>
   );
 };
@@ -3719,6 +3116,7 @@ const ShoppingItemCard: React.FC<ShoppingItemCardProps> = ({
           onSubmit={onSave}
           isSubmitting={false}
           submitLabel="Save Changes"
+          onCancel={onCancelEdit}
         />
       ) : (
         <div className="flex flex-col sm:flex-row gap-3">
