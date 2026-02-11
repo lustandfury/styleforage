@@ -166,7 +166,7 @@ export const ThoughtfulApproach: React.FC = () => {
               >
                 <ClosetOpen className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
               </div>
-              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Closet Reset</h3>
+              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Closet Edit</h3>
               <p className="text-stone-500 text-sm md:text-base leading-relaxed">A strategic in-home edit to help you see what you own differently — and build real outfits from it.</p>
               <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span>View more</span>

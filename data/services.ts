@@ -12,7 +12,7 @@ export const SERVICES: Service[] = [
     description:
       'The full process. We begin with the Closet Reset, then complete your wardrobe by thoughtfully filling the gaps we identified together.',
     longDescription:
-      'Instead of simply knowing what\'s missing — it gets handled. Includes everything in the Closet Reset plus a full personal shopping session, online or in-person.',
+      'Instead of simply knowing what\'s missing — it gets handled. Includes everything in the Closet Edit   plus a full personal shopping session, online or in-person.',
     features: [
       'Closet Reset (3-hour in-home session)',
       'Gap strategy and prioritized plan',
@@ -33,7 +33,7 @@ export const SERVICES: Service[] = [
   },
   {
     id: 'closet-reset',
-    title: 'The Closet Reset',
+    title: 'The Closet Edit',
     description:
       'A strategic, in-home wardrobe edit designed to help you see what you already own differently — and build real outfits from it.',
     longDescription:

@@ -6,10 +6,16 @@ html, body {
 }
 
 @theme {
-  /* Sage (brand mint) – darkened for better contrast and accessibility */
+  /* Sage (brand green) – full scale interpolated between anchors */
   --color-sage-50: #e8efe8;
   --color-sage-100: #d1ddd1;
+  --color-sage-200: #b4c5b4;
+  --color-sage-300: #97ad97;
+  --color-sage-400: #799479;
   --color-sage-500: #5c7c5c;
+  --color-sage-600: #506c50;
+  --color-sage-700: #455c45;
+  --color-sage-800: #394b39;
   --color-sage-900: #2d3b2d;
 
   --color-sand-50: #fdfbf7;
