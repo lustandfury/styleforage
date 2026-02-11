@@ -17,6 +17,8 @@ export interface Service {
   priceVariants?: PriceVariants;
   /** Short explanation of what Online vs In-person means for this service; shown in booking when a variant is selected. */
   variantDescriptions?: { online: string; inPerson: string };
+  /** Optional badge label (e.g. "Most Popular") displayed on the service card. */
+  badge?: string;
 }
 
 export interface TimeSlot {

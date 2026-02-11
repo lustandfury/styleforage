@@ -6,92 +6,72 @@ import type { Service } from '../types';
  */
 export const SERVICES: Service[] = [
   {
-    id: 'closet-edit',
-    title: 'The Closet Edit',
+    id: 'style-upgrade',
+    title: 'The Style Upgrade',
+    badge: 'Most Popular',
     description:
-      "A thoughtful review of your clothes, focused on fit, comfort, and relevance. We go through your wardrobe piece by piece, identify what works and what doesn't, and build a clear edit so you get more wear from fewer pieces and get dressed with confidence.",
+      'The full process. We begin with the Closet Reset, then complete your wardrobe by thoughtfully filling the gaps we identified together.',
     longDescription:
-      "You don't need to overhaul your entire wardrobe—you need a fresh perspective on the one you already have. A Closet Edit is a thoughtful review of your clothes, focused on fit, comfort, and relevance. We edit out pieces that no longer work, create new outfits from what you already own, and pinpoint the missing pieces that will help your wardrobe feel complete and modern.",
+      'Instead of simply knowing what\'s missing — it gets handled. Includes everything in the Closet Reset plus a full personal shopping session, online or in-person.',
     features: [
-      'Review of fit, comfort, and current style',
-      'Editing items that no longer work',
-      'Creating new outfits from existing pieces',
-      'Pinpointing wardrobe gaps',
-      'Fresh perspective on your style',
+      'Closet Reset (3-hour in-home session)',
+      'Gap strategy and prioritized plan',
+      'Personalized selection (8–15 pieces)',
+      'Outfit integration guidance',
+      'Minor adjustments if sizing or availability requires',
     ],
-    price: 350,
-    durationMin: 150,
-    image: '/images/services/closet-edit.webp',
-  },
-  {
-    id: 'full-style-reset',
-    title: 'The Full Style Reset Package',
-    description: 'For clients ready for a meaningful refresh and a wardrobe that feels aligned.',
-    longDescription:
-      'Combines The Closet Edit and Personal Shop. This is for clients ready for a meaningful refresh and a wardrobe that feels aligned, confident, and wearable. We start by clearing the noise and finish by intentionally filling the gaps.',
-    features: [
-      'Full Closet Edit session',
-      'Personal Shopping session (In-person or Online)',
-      'Complete wardrobe alignment',
-      'Confidence building',
-    ],
-    price: 500,
-    priceVariants: { online: 500, inPerson: 600 },
+    price: 1050,
+    priceVariants: { online: 1050, inPerson: 1250 },
     variantDescriptions: {
       online:
-        'Your closet edit happens at your home; your personal shopping is done remotely with a curated list, links, and try-on support so you can shop on your timeline.',
+        'Your closet edit happens at your home; your personal shopping is done remotely with a curated selection of 8–15 pieces, outfit integration guidance, and minor adjustments as needed.',
       inPerson:
-        'Your closet edit happens at your home; then we shop together in person so you can try on pieces and get immediate fit and style feedback.',
+        'Your closet edit happens at your home; then we shop together in-store with a pre-curated selection and 2–3 hours of real-time styling and fit guidance.',
     },
     durationMin: 300,
     image: '/images/services/style-reset.webp',
   },
   {
+    id: 'closet-reset',
+    title: 'The Closet Reset',
+    description:
+      'A strategic, in-home wardrobe edit designed to help you see what you already own differently — and build real outfits from it.',
+    longDescription:
+      'We refine what stays, identify what\'s missing, and create complete combinations so getting dressed feels simple again. Additional time, if required: $100/hour.',
+    features: [
+      '3-hour in-home session',
+      'Edited wardrobe decisions (keep / tailor / release)',
+      'Styled outfits created during the session',
+      'Quick reference photos',
+      'Written gap list with prioritized next steps',
+    ],
+    price: 575,
+    durationMin: 180,
+    image: '/images/services/closet-edit.webp',
+  },
+  {
     id: 'style-refresh',
     title: 'The Style Refresh',
-    description: 'A focused update for a season, event, trip, or life change.',
+    description:
+      'For travel, events, seasonal updates, or focused wardrobe additions. No full closet edit required.',
     longDescription:
-      'A focused update for a season, event, trip, or life change. Ideal if you want a vacation wardrobe, a seasonal update, or a workwear refresh.',
+      'Ideal for weddings, vacations, speaking engagements, or a targeted reset.',
     features: [
-      'In-person or Online Shopping recommendations',
-      'Vacation wardrobe curation',
-      'Seasonal updates',
-      'Workwear refresh',
-      'Event specific styling',
-      'Targeted focus',
+      '30-minute clarity call',
+      'Curated selection aligned to your needs (8–15 pieces)',
+      'Outfit pairing guidance',
+      'Minor adjustments if needed',
     ],
-    price: 150,
-    priceVariants: { online: 150, inPerson: 250 },
+    price: 500,
+    priceVariants: { online: 500, inPerson: 700 },
     variantDescriptions: {
       online:
-        'We work together remotely with a curated list and links; you shop on your timeline and we refine with photos and video as needed.',
+        'We work together remotely with a curated selection and links; you shop on your timeline with pairing guidance and minor adjustments as needed.',
       inPerson:
-        'We hit the stores together so you can try on pieces, get real-time feedback, and leave with items that work.',
+        'We meet in-store with a pre-curated selection; you try pieces on and get real-time styling and fit guidance.',
     },
     durationMin: 120,
     image: '/images/services/style-refresh.webp',
-  },
-  {
-    id: 'personal-shop',
-    title: 'Personal Shop',
-    description: "Intentional shopping, guided by fit, comfort, and what's current.",
-    longDescription:
-      "Intentional shopping, guided by fit, comfort, and what's current. Available as an In-person shop or Online shop. Best paired with a Closet Edit.",
-    features: [
-      'In-person or Online options',
-      'Targeted shopping list',
-      'Budget management',
-    ],
-    price: 150,
-    priceVariants: { online: 150, inPerson: 250 },
-    variantDescriptions: {
-      online:
-        'I send you a tailored list and links; you shop when it suits you and we refine with photos and video as needed.',
-      inPerson:
-        'We shop together in person so you can try everything on and get immediate fit and style feedback.',
-    },
-    durationMin: 180,
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'corporate-workshops',

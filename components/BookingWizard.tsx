@@ -173,7 +173,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                                   <span className="text-red-500 font-semibold">${discountedPrice}</span>
                                 </>
                               ) : (
-                                isCorporate ? 'Custom' : (effectivePrice != null ? `$${effectivePrice}` : '')
+                                (effectivePrice != null ? `$${effectivePrice}` : '')
                               )}
                             </span>
                           </div>
@@ -289,7 +289,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                                   <span className="text-red-500 font-semibold">${discountedPrice}</span>
                                 </>
                               ) : (
-                                isCorporate ? 'Custom' : (effectivePrice != null ? `$${effectivePrice}` : '')
+                                (effectivePrice != null ? `$${effectivePrice}` : '')
                               )}
                             </span>
                           </div>
@@ -366,13 +366,14 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                   <div className="bg-white rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-stone-100 shadow-sm min-w-0 w-full overflow-hidden">
                     <h3 className="font-serif text-xl sm:text-2xl text-stone-900 mb-2">Book Appointment</h3>
                     <p className="mb-4 md:mb-6">
-                      <button
-                        type="button"
+                      <Button
+                        variant="link"
+                        size="sm"
                         onClick={() => setState(s => ({ ...s, step: 'details' }))}
-                        className="text-sage-600 hover:text-sage-700 text-sm font-medium cursor-pointer touch-manipulation"
+                        className="touch-manipulation"
                       >
                         Not sure yet? Pick a date and time later →
-                      </button>
+                      </Button>
                     </p>
                     {/* Select Date */}
                     <div className="mb-6 md:mb-8">
@@ -648,10 +649,9 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
     </div>
   );
 
-  const isCorporate = state.selectedService?.id === 'corporate-workshops';
   const effectivePrice = getEffectivePrice(state.selectedService, state.selectedVariant);
   const discountedPrice =
-    effectivePrice != null && !isCorporate && saleActive
+    effectivePrice != null && saleActive
       ? Math.round(effectivePrice * 0.8)
       : null;
 

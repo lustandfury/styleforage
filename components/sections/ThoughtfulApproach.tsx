@@ -156,18 +156,18 @@ export const ThoughtfulApproach: React.FC = () => {
           <FadeInOnScroll delay={100}>
             <div 
               className="group p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left cursor-pointer hover:shadow-lg"
-              onClick={() => scrollToService('closet-edit')}
+              onClick={() => scrollToService('closet-reset')}
               onMouseEnter={() => handleIconHover(icon1Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon1Ref.current, false)}
             >
-              <div 
+              <div
                 ref={icon1Ref}
                 className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-sage-100 flex items-center justify-center mb-4 md:mb-5"
               >
                 <ClosetOpen className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
               </div>
-              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Closet Edit</h3>
-              <p className="text-stone-500 text-sm md:text-base leading-relaxed">A fresh perspective focused on fit, comfort, and relevance to your life today.</p>
+              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Closet Reset</h3>
+              <p className="text-stone-500 text-sm md:text-base leading-relaxed">A strategic in-home edit to help you see what you own differently — and build real outfits from it.</p>
               <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span>View more</span>
                 <ChevronDown size={16} className="transition-transform duration-300 group-hover:translate-y-0.5" />
@@ -177,18 +177,18 @@ export const ThoughtfulApproach: React.FC = () => {
           <FadeInOnScroll delay={250}>
             <div 
               className="group p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left cursor-pointer hover:shadow-lg"
-              onClick={() => scrollToService('full-style-reset')}
+              onClick={() => scrollToService('style-upgrade')}
               onMouseEnter={() => handleIconHover(icon2Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon2Ref.current, false)}
             >
-              <div 
+              <div
                 ref={icon2Ref}
                 className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-sage-100 flex items-center justify-center mb-4 md:mb-5"
               >
                 <Restart className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
               </div>
-              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">Full Style Reset</h3>
-              <p className="text-stone-500 text-sm md:text-base leading-relaxed">For clients ready for a meaningful refresh and a wardrobe that feels aligned.</p>
+              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Style Upgrade</h3>
+              <p className="text-stone-500 text-sm md:text-base leading-relaxed">Closet Reset plus shopping — so you don't just know what's missing, it gets handled.</p>
               <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span>View more</span>
                 <ChevronDown size={16} className="transition-transform duration-300 group-hover:translate-y-0.5" />
@@ -208,8 +208,8 @@ export const ThoughtfulApproach: React.FC = () => {
               >
                 <MagicWand className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
               </div>
-              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">Style Refresh</h3>
-              <p className="text-stone-500 text-sm md:text-base leading-relaxed">A focused update for a season, event, trip, or specific life change.</p>
+              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Style Refresh</h3>
+              <p className="text-stone-500 text-sm md:text-base leading-relaxed">For travel, events, or seasonal updates. No full closet edit required.</p>
               <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span>View more</span>
                 <ChevronDown size={16} className="transition-transform duration-300 group-hover:translate-y-0.5" />

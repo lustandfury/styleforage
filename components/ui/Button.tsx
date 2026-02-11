@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'light' | 'icon' | 'icon-danger' | 'chip' | 'chip-selected';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'light' | 'icon' | 'icon-danger' | 'chip' | 'chip-selected';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   fullWidth?: boolean;
 }
@@ -14,6 +14,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * - secondary: Sage background (secondary actions)
  * - outline: Bordered, transparent background
  * - ghost: Text only, subtle hover (cancel buttons, tertiary actions)
+ * - link: Inline text link style, sage green, no horizontal padding (inline nav actions)
  * - light: White background, dark text
  * - icon: Icon-only button with subtle hover (edit, preview actions)
  * - icon-danger: Icon-only button with red hover (delete actions)
@@ -40,7 +41,8 @@ export const Button: React.FC<ButtonProps> = ({
     primary: "bg-stone-900 text-white hover:bg-sage-500",
     secondary: "bg-sage-100 text-sage-900 hover:bg-sage-200",
     outline: "border border-stone-200 bg-transparent hover:bg-stone-50 text-stone-900",
-    ghost: "hover:bg-stone-100 text-stone-700",
+    ghost: "text-sage-600 hover:text-sage-700 hover:bg-sage-50",
+    link: "text-sage-600 hover:text-sage-700 !px-0 !bg-transparent",
     light: "bg-white text-stone-900 hover:bg-sage-500 hover:text-white",
     icon: "bg-stone-100 text-stone-500 hover:text-sage-600 hover:bg-sage-50",
     'icon-danger': "bg-stone-100 text-stone-500 hover:text-red-600 hover:bg-red-50",

@@ -24,12 +24,9 @@ export const Services: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-12 gap-6 md:gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-6xl mx-auto">
           {SERVICES.map((service) => {
-            const isFullWidth = service.id === 'closet-edit' || service.id === 'corporate-workshops';
-            const colClass = isFullWidth ? 'sm:col-span-2 lg:col-span-12' : 'sm:col-span-2 lg:col-span-4';
-            const isHorizontal = isFullWidth;
-
+            const isHorizontal = service.id === 'style-upgrade' || service.id === 'corporate-workshops';
             return (
               <article
                 id={`service-${service.id}`}
@@ -38,19 +35,10 @@ export const Services: React.FC = () => {
                 tabIndex={0}
                 onClick={() => handleBookService(service.id)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBookService(service.id); } }}
-                className={`group bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 text-left cursor-pointer ${colClass} ${
-                  isHorizontal ? 'flex flex-col lg:flex-row' : 'flex flex-col'
-                }`}
+                className={`group bg-white rounded-3xl overflow-hidden transition-all duration-500 border border-stone-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 text-left cursor-pointer ${isHorizontal ? 'md:col-span-2 flex flex-col md:flex-row' : 'flex flex-col'}`}
                 aria-label={`View details for ${service.title}`}
               >
-                {/* Image: 1/3 width on left for large cards, full width on top for small */}
-                <div
-                  className={`overflow-hidden bg-stone-100 relative flex-shrink-0 ${
-                    isHorizontal
-                      ? 'aspect-[4/3] lg:w-1/3 lg:aspect-auto lg:min-h-0 lg:self-stretch'
-                      : 'aspect-[4/3]'
-                  }`}
-                >
+                <div className={`overflow-hidden bg-stone-100 relative flex-shrink-0 ${isHorizontal ? 'aspect-[4/3] md:aspect-auto md:w-2/5 md:self-stretch' : 'aspect-[4/3]'}`}>
                   <img
                     src={service.image}
                     alt={service.title}
@@ -60,6 +48,11 @@ export const Services: React.FC = () => {
                   <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition-colors" />
                 </div>
                 <div className="p-6 md:p-8 flex flex-col flex-grow min-w-0">
+                  {service.badge && (
+                    <span className="inline-flex items-center self-start px-3 py-1 rounded-full text-xs font-bold bg-sage-100 text-sage-700 mb-3">
+                      {service.badge}
+                    </span>
+                  )}
                   <h3 className="font-serif font-bold text-xl md:text-2xl text-stone-900 mb-3 md:mb-4 group-hover:text-sage-700 transition-colors">{service.title}</h3>
                   <p className="text-stone-500 text-sm md:text-base mb-4 leading-relaxed">{service.description}</p>
                   {service.features && service.features.length > 0 && (
