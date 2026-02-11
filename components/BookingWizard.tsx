@@ -189,10 +189,16 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                                     type="button"
                                     onClick={() => setState(s => ({ ...s, selectedVariant: v }))}
                                     aria-pressed={isSelected}
-                                    className={`min-h-[36px] px-3 rounded-full text-xs font-medium border-2 transition-colors touch-manipulation cursor-pointer ${
+                                    className={`inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-full text-xs font-medium border-2 transition-colors touch-manipulation cursor-pointer ${
                                       isSelected ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
                                     }`}
                                   >
+                                    <Check
+                                      size={11}
+                                      strokeWidth={3}
+                                      className={`flex-shrink-0 transition-all duration-200 ${isSelected ? 'opacity-100 scale-100 w-[11px]' : 'opacity-0 scale-50 w-0'}`}
+                                      aria-hidden
+                                    />
                                     {label} ${price}
                                   </button>
                                 );
@@ -305,10 +311,16 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                                     type="button"
                                     onClick={() => setState(s => ({ ...s, selectedVariant: v }))}
                                     aria-pressed={isSelected}
-                                    className={`min-h-[40px] px-4 rounded-full text-sm font-medium border-2 transition-colors touch-manipulation cursor-pointer ${
+                                    className={`inline-flex items-center gap-2 min-h-[40px] px-4 rounded-full text-sm font-medium border-2 transition-colors touch-manipulation cursor-pointer ${
                                       isSelected ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
                                     }`}
                                   >
+                                    <Check
+                                      size={13}
+                                      strokeWidth={3}
+                                      className={`flex-shrink-0 transition-all duration-200 ${isSelected ? 'opacity-100 scale-100 w-[13px]' : 'opacity-0 scale-50 w-0'}`}
+                                      aria-hidden
+                                    />
                                     {label} ${price}
                                   </button>
                                 );

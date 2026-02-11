@@ -7,26 +7,27 @@ import type { Service } from '../types';
 export const SERVICES: Service[] = [
   {
     id: 'style-upgrade',
-    title: 'The Style Upgrade',
+    title: 'The Complete Style Upgrade',
     badge: 'Most Popular',
+    combo: 'Closet Edit + Personal Shop',
     description:
-      'The full process. We begin with the Closet Reset, then complete your wardrobe by thoughtfully filling the gaps we identified together.',
+      'The Closet Edit + Personal Shop. The full process — we edit your wardrobe in person, then fill the gaps with a curated shop, online or in-store.',
     longDescription:
-      'Instead of simply knowing what\'s missing — it gets handled. Includes everything in the Closet Edit   plus a full personal shopping session, online or in-person.',
+      'Instead of simply knowing what\'s missing — it gets handled. The closet edit is always in-home. The shop can be done online or in-person.',
     features: [
-      'Closet Reset (3-hour in-home session)',
+      'Closet Edit (3-hour in-home session)',
       'Gap strategy and prioritized plan',
       'Personalized selection (8–15 pieces)',
       'Outfit integration guidance',
       'Minor adjustments if sizing or availability requires',
     ],
-    price: 1050,
-    priceVariants: { online: 1050, inPerson: 1250 },
+    price: 850,
+    priceVariants: { online: 850, inPerson: 1000 },
     variantDescriptions: {
       online:
-        'Your closet edit happens at your home; your personal shopping is done remotely with a curated selection of 8–15 pieces, outfit integration guidance, and minor adjustments as needed.',
+        'Closet edit at your home + personal shopping done remotely. You receive a curated selection of 8–15 pieces with outfit integration guidance and minor adjustments as needed.',
       inPerson:
-        'Your closet edit happens at your home; then we shop together in-store with a pre-curated selection and 2–3 hours of real-time styling and fit guidance.',
+        'Closet edit at your home + we shop together in-store. Pre-curated selection, 2–3 hours of real-time styling and fit guidance.',
     },
     durationMin: 300,
     image: '/images/services/style-reset.webp',
@@ -62,8 +63,8 @@ export const SERVICES: Service[] = [
       'Outfit pairing guidance',
       'Minor adjustments if needed',
     ],
-    price: 500,
-    priceVariants: { online: 500, inPerson: 700 },
+    price: 350,
+    priceVariants: { online: 350, inPerson: 500 },
     variantDescriptions: {
       online:
         'We work together remotely with a curated selection and links; you shop on your timeline with pairing guidance and minor adjustments as needed.',

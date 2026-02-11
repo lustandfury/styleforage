@@ -19,6 +19,8 @@ export interface Service {
   variantDescriptions?: { online: string; inPerson: string };
   /** Optional badge label (e.g. "Most Popular") displayed on the service card. */
   badge?: string;
+  /** Short combo label shown on the card (e.g. "Closet Edit + Personal Shop"). */
+  combo?: string;
 }
 
 export interface TimeSlot {

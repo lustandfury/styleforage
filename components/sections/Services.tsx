@@ -48,11 +48,18 @@ export const Services: React.FC = () => {
                   <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition-colors" />
                 </div>
                 <div className="p-6 md:p-8 flex flex-col flex-grow min-w-0">
-                  {service.badge && (
-                    <span className="inline-flex items-center self-start px-3 py-1 rounded-full text-xs font-bold bg-sage-100 text-sage-700 mb-3">
-                      {service.badge}
-                    </span>
-                  )}
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    {service.badge && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-sage-100 text-sage-700">
+                        {service.badge}
+                      </span>
+                    )}
+                    {service.combo && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-stone-100 text-stone-500">
+                        {service.combo}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="font-serif font-bold text-xl md:text-2xl text-stone-900 mb-3 md:mb-4 group-hover:text-sage-700 transition-colors">{service.title}</h3>
                   <p className="text-stone-500 text-sm md:text-base mb-4 leading-relaxed">{service.description}</p>
                   {service.features && service.features.length > 0 && (
@@ -73,9 +80,16 @@ export const Services: React.FC = () => {
                       <Clock size={16} className="mr-2" aria-hidden="true" />
                       <span>{service.durationMin / 60}h</span>
                     </div>
-                    <span className="font-serif font-bold text-xl md:text-2xl text-stone-900">
-                      {service.id === 'corporate-workshops' ? 'Custom' : service.priceVariants ? `From $${service.price}` : `$${service.price}`}
-                    </span>
+                    {service.id === 'corporate-workshops' ? (
+                      <span className="font-serif font-bold text-xl md:text-2xl text-stone-900">Custom</span>
+                    ) : service.priceVariants ? (
+                      <div className="text-right">
+                        <div className="font-serif font-bold text-xl md:text-2xl text-stone-900">${service.priceVariants.online} <span className="font-sans font-normal text-xs text-stone-400 tracking-wide">online</span></div>
+                        <div className="font-serif font-bold text-xl md:text-2xl text-stone-900">${service.priceVariants.inPerson} <span className="font-sans font-normal text-xs text-stone-400 tracking-wide">in-person</span></div>
+                      </div>
+                    ) : (
+                      <span className="font-serif font-bold text-xl md:text-2xl text-stone-900">${service.price}</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5 font-medium text-stone-500 group-hover:text-stone-900 transition-colors duration-300">
                     <span>View Service Details</span>
