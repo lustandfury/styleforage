@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, ChevronRight, Check } from 'lucide-react';
+import { ChevronRight, Check } from 'lucide-react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
 import { Testimonials } from './Testimonials';
 import { SERVICES } from '../../data/services';
@@ -75,20 +75,23 @@ export const Services: React.FC = () => {
                       </ul>
                     </div>
                   )}
-                  <div className="pt-6 border-t border-stone-100 flex items-center justify-between mb-6 mt-auto">
-                    <div className="flex items-center text-stone-400 font-medium text-sm">
-                      <Clock size={16} className="mr-2" aria-hidden="true" />
-                      <span>{service.durationMin / 60}h</span>
-                    </div>
+                  <div className="pt-6 border-t border-stone-100 flex items-end justify-between mb-6 mt-auto">
+                    {service.footnote ? (
+                      <p className="text-xs text-stone-400 italic max-w-[160px] leading-snug">{service.footnote}</p>
+                    ) : (
+                      <div />
+                    )}
                     {service.id === 'corporate-workshops' ? (
                       <span className="font-serif font-bold text-xl md:text-2xl text-stone-900">Custom</span>
                     ) : service.priceVariants ? (
-                      <div className="text-right">
+                      <div className="text-right min-w-[131px]">
                         <div className="font-serif font-bold text-xl md:text-2xl text-stone-900">${service.priceVariants.online} <span className="font-sans font-normal text-xs text-stone-400 tracking-wide">online</span></div>
                         <div className="font-serif font-bold text-xl md:text-2xl text-stone-900">${service.priceVariants.inPerson} <span className="font-sans font-normal text-xs text-stone-400 tracking-wide">in-person</span></div>
                       </div>
                     ) : (
-                      <span className="font-serif font-bold text-xl md:text-2xl text-stone-900">${service.price}</span>
+                      <div className="text-right min-w-[131px]">
+                        <div className="font-serif font-bold text-xl md:text-2xl text-stone-900">${service.price}{service.priceLabel && <span className="font-sans font-normal text-xs text-stone-400 tracking-wide"> {service.priceLabel}</span>}</div>
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 font-medium text-stone-500 group-hover:text-stone-900 transition-colors duration-300">

@@ -38,7 +38,7 @@ export const SERVICES: Service[] = [
     description:
       'A strategic, in-home wardrobe edit designed to help you see what you already own differently — and build real outfits from it.',
     longDescription:
-      'We refine what stays, identify what\'s missing, and create complete combinations so getting dressed feels simple again. Additional time, if required: $100/hour.',
+      'We refine what stays, identify what\'s missing, and create complete combinations so getting dressed feels simple again. Optional additional time, if required: $100/hour.',
     features: [
       '3-hour in-home session',
       'Edited wardrobe decisions (keep / tailor / release)',
@@ -47,6 +47,8 @@ export const SERVICES: Service[] = [
       'Written gap list with prioritized next steps',
     ],
     price: 575,
+    priceLabel: 'in-person',
+    footnote: '',
     durationMin: 180,
     image: '/images/services/closet-edit.webp',
   },
@@ -54,7 +56,7 @@ export const SERVICES: Service[] = [
     id: 'style-refresh',
     title: 'The Style Refresh',
     description:
-      'For travel, events, seasonal updates, or focused wardrobe additions. No full closet edit required.',
+      'For travel, events, seasonal updates, or focused wardrobe additions. No Closet Edit required.',
     longDescription:
       'Ideal for weddings, vacations, speaking engagements, or a targeted reset.',
     features: [

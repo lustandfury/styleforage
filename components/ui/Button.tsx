@@ -42,7 +42,7 @@ export const Button: React.FC<ButtonProps> = ({
     secondary: "bg-sage-100 text-sage-900 hover:bg-sage-200",
     outline: "border border-stone-200 bg-transparent hover:bg-stone-50 text-stone-900",
     ghost: "text-sage-600 hover:text-sage-700 hover:bg-sage-50",
-    link: "text-sage-600 hover:text-sage-700 !px-0 !bg-transparent",
+    link: "text-sage-500 hover:text-sage-700 !px-0 !bg-transparent",
     light: "bg-white text-stone-900 hover:bg-sage-500 hover:text-white",
     icon: "bg-stone-100 text-stone-500 hover:text-sage-600 hover:bg-sage-50",
     'icon-danger': "bg-stone-100 text-stone-500 hover:text-red-600 hover:bg-red-50",

@@ -188,7 +188,7 @@ export const ThoughtfulApproach: React.FC = () => {
                 <Restart className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
               </div>
               <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Style Upgrade</h3>
-              <p className="text-stone-500 text-sm md:text-base leading-relaxed">Closet Reset plus shopping — so you don't just know what's missing, it gets handled.</p>
+              <p className="text-stone-500 text-sm md:text-base leading-relaxed">Closet Edit plus shopping — so you don't just know what's missing, it gets handled.</p>
               <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span>View more</span>
                 <ChevronDown size={16} className="transition-transform duration-300 group-hover:translate-y-0.5" />
@@ -209,7 +209,7 @@ export const ThoughtfulApproach: React.FC = () => {
                 <MagicWand className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
               </div>
               <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Style Refresh</h3>
-              <p className="text-stone-500 text-sm md:text-base leading-relaxed">For travel, events, or seasonal updates. No full closet edit required.</p>
+              <p className="text-stone-500 text-sm md:text-base leading-relaxed">For travel, events, or seasonal updates. No Closet Edit required.</p>
               <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <span>View more</span>
                 <ChevronDown size={16} className="transition-transform duration-300 group-hover:translate-y-0.5" />

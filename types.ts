@@ -19,6 +19,10 @@ export interface Service {
   variantDescriptions?: { online: string; inPerson: string };
   /** Optional badge label (e.g. "Most Popular") displayed on the service card. */
   badge?: string;
+  /** Optional qualifier shown next to the flat price (e.g. "in-person"). */
+  priceLabel?: string;
+  /** Optional small note shown below the price on the service card. */
+  footnote?: string;
   /** Short combo label shown on the card (e.g. "Closet Edit + Personal Shop"). */
   combo?: string;
 }
