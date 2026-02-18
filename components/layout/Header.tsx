@@ -196,7 +196,7 @@ export const Header: React.FC = () => {
             >
               <Link
                 to="/"
-                className="font-serif text-xl md:text-3xl font-normal tracking-widest text-stone-900 hover:text-stone-700 transition-colors cursor-pointer truncate"
+                className="font-serif text-xl md:text-3xl font-normal tracking-[1px] text-stone-900 hover:text-stone-700 transition-colors cursor-pointer truncate"
               >
                 STYLE FORAGE 
               </Link>
@@ -223,7 +223,7 @@ export const Header: React.FC = () => {
               >
                 <Link
                   to="/"
-                  className="nav-link-item relative px-5 py-2 text-lg font-normal tracking-widest rounded-full cursor-pointer text-stone-900 hover:text-stone-700 font-serif tracking-tight whitespace-nowrap inline-block leading-none"
+                  className="nav-link-item relative px-5 py-2 text-lg font-normal tracking-[0.5px] rounded-full cursor-pointer text-stone-900 hover:text-stone-700 font-serif whitespace-nowrap inline-block leading-none"
                 >
                   STYLE FORAGE
                 </Link>
