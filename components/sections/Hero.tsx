@@ -106,7 +106,7 @@ export const Hero: React.FC = () => {
 
       {/* Left column: container-aligned to match section headers */}
       <div className="container mx-auto px-4 h-full">
-        <div className="flex flex-col justify-between h-screen md:h-auto md:min-h-0 md:justify-start md:gap-20 md:self-center md:w-3/5">
+        <div className="flex flex-col justify-center h-screen gap-4 md:gap-10 md:self-center md:w-3/5">
 
           {/* Top editorial strip */}
           <div
@@ -175,12 +175,12 @@ export const Hero: React.FC = () => {
             ref={textBlurBottomRef}
             className={`hero-rest-in transition-none pb-8 md:pb-12 ${revealDone ? 'hero-rest-visible' : ''}`}
           >
-              <p className="text-stone-600 text-lg md:text-md pt-4 max-w-lg font-sans font-light leading-relaxed">
+              <p className="text-stone-600 text-md max-w-lg font-sans font-light leading-relaxed">
                 Personal styling for working professionals who want to feel confident, current, and completely themselves.
               </p>
               <button
                 onClick={scrollToServices}
-                className="group inline-flex items-center gap-2 text-stone-900 font-sans text-xs uppercase tracking-[0.2em] border-b border-stone-400 pb-0.5 hover:border-sage-500 hover:text-sage-600 transition-colors cursor-pointer whitespace-nowrap"
+                className="group inline-flex items-center gap-2 pt-8 text-stone-900 font-sans text-xs uppercase tracking-[0.2em] border-b border-stone-400 pb-0.5 hover:border-sage-500 hover:text-sage-600 transition-colors cursor-pointer whitespace-nowrap"
               >
                 <span>View Services</span>
                 <span className="transition-transform duration-300 group-hover:translate-y-1" aria-hidden>↓</span>
