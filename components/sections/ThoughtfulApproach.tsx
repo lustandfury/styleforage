@@ -141,78 +141,89 @@ export const ThoughtfulApproach: React.FC = () => {
   return (
     <section className="py-16 md:py-24 bg-white border-b border-stone-100">
       <FadeInOnScroll>
-      <div className="container mx-auto px-4 text-center">
-        <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-4 md:mb-6">A Thoughtful Approach</h2>
-        <img
-          src="/images/roz.png"
-          alt="Roslyn Costanzo, Personal Stylist"
-          className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover mx-auto mb-6 md:mb-8 border-2 border-stone-100 shadow-lg"
-        />
-        <p className="max-w-2xl mx-auto text-stone-600 mb-8 md:mb-12 leading-relaxed text-base md:text-lg px-0">
-          I take a thoughtful, step-by-step approach. Most clients begin with a closet edit,
-          so we can shop intentionally and build a wardrobe that feels cohesive, wearable, and truly theirs.
-        </p>
-        <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto mt-8 md:mt-12">
+      <div className="container mx-auto px-4">
+        {/* Editorial section header */}
+        <div className="flex items-center gap-3 mb-8 md:mb-12">
+          <span className="font-sans text-xs text-stone-400 uppercase tracking-[0.3em]">02</span>
+          <div className="h-px w-8 bg-stone-300" />
+          <span className="font-sans text-xs text-stone-400 uppercase tracking-[0.3em]">The Process</span>
+        </div>
+        <div className="md:flex md:items-end md:justify-between mb-10 md:mb-16">
+          <h2 className="font-serif font-bold text-3xl md:text-5xl text-stone-900 max-w-sm" style={{ fontWeight: 700 }}>A Thoughtful Approach</h2>
+          <p className="max-w-sm text-stone-500 leading-relaxed text-sm md:text-base mt-4 md:mt-0">
+            Most clients begin with a closet edit, so we can shop intentionally and build a wardrobe that feels cohesive, wearable, and truly theirs.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
           <FadeInOnScroll delay={100}>
-            <div 
-              className="group p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left cursor-pointer hover:shadow-lg"
+            <div
+              className="group p-6 md:p-8 bg-sand-50 border border-stone-100 hover:border-stone-300 transition-all text-left cursor-pointer hover:shadow-md"
               onClick={() => scrollToService('closet-reset')}
               onMouseEnter={() => handleIconHover(icon1Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon1Ref.current, false)}
             >
-              <div
-                ref={icon1Ref}
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-sage-100 flex items-center justify-center mb-4 md:mb-5"
-              >
-                <ClosetOpen className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
+              <div className="flex items-start justify-between mb-6">
+                <div
+                  ref={icon1Ref}
+                  className="w-10 h-10 flex items-center justify-center border border-stone-200 group-hover:border-sage-300 transition-colors"
+                >
+                  <ClosetOpen className="w-5 h-5 text-sage-600" strokeWidth={1.5} />
+                </div>
+                <span className="font-sans text-xs text-stone-300 tracking-[0.3em]">01</span>
               </div>
-              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Closet Edit</h3>
+              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-stone-900" style={{ fontWeight: 700 }}>The Closet Edit</h3>
               <p className="text-stone-500 text-sm md:text-base leading-relaxed">A strategic in-home edit to help you see what you own differently — and build real outfits from it.</p>
-              <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="mt-5 pt-4 border-t border-stone-100 group-hover:border-stone-200 transition-colors flex items-center gap-1 text-stone-400 text-xs uppercase tracking-[0.15em] font-sans">
                 <span>View more</span>
-                <ChevronDown size={16} className="transition-transform duration-300 group-hover:translate-y-0.5" />
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </div>
             </div>
           </FadeInOnScroll>
           <FadeInOnScroll delay={250}>
-            <div 
-              className="group p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left cursor-pointer hover:shadow-lg"
+            <div
+              className="group p-6 md:p-8 bg-sand-50 border border-stone-100 hover:border-stone-300 transition-all text-left cursor-pointer hover:shadow-md"
               onClick={() => scrollToService('style-upgrade')}
               onMouseEnter={() => handleIconHover(icon2Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon2Ref.current, false)}
             >
-              <div
-                ref={icon2Ref}
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-sage-100 flex items-center justify-center mb-4 md:mb-5"
-              >
-                <Restart className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
+              <div className="flex items-start justify-between mb-6">
+                <div
+                  ref={icon2Ref}
+                  className="w-10 h-10 flex items-center justify-center border border-stone-200 group-hover:border-sage-300 transition-colors"
+                >
+                  <Restart className="w-5 h-5 text-sage-600" strokeWidth={1.5} />
+                </div>
+                <span className="font-sans text-xs text-stone-300 tracking-[0.3em]">02</span>
               </div>
-              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Style Upgrade</h3>
+              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-stone-900" style={{ fontWeight: 700 }}>The Style Upgrade</h3>
               <p className="text-stone-500 text-sm md:text-base leading-relaxed">Closet Edit plus shopping — so you don't just know what's missing, it gets handled.</p>
-              <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="mt-5 pt-4 border-t border-stone-100 group-hover:border-stone-200 transition-colors flex items-center gap-1 text-stone-400 text-xs uppercase tracking-[0.15em] font-sans">
                 <span>View more</span>
-                <ChevronDown size={16} className="transition-transform duration-300 group-hover:translate-y-0.5" />
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </div>
             </div>
           </FadeInOnScroll>
           <FadeInOnScroll delay={400}>
-            <div 
-              className="group p-6 md:p-10 bg-stone-50 rounded-2xl transition-all text-left cursor-pointer hover:shadow-lg"
+            <div
+              className="group p-6 md:p-8 bg-sand-50 border border-stone-100 hover:border-stone-300 transition-all text-left cursor-pointer hover:shadow-md"
               onClick={() => scrollToService('style-refresh')}
               onMouseEnter={() => handleIconHover(icon3Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon3Ref.current, false)}
             >
-              <div 
-                ref={icon3Ref}
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-sage-100 flex items-center justify-center mb-4 md:mb-5"
-              >
-                <MagicWand className="w-6 h-6 md:w-7 md:h-7 text-sage-600" strokeWidth={1.5} />
+              <div className="flex items-start justify-between mb-6">
+                <div
+                  ref={icon3Ref}
+                  className="w-10 h-10 flex items-center justify-center border border-stone-200 group-hover:border-sage-300 transition-colors"
+                >
+                  <MagicWand className="w-5 h-5 text-sage-600" strokeWidth={1.5} />
+                </div>
+                <span className="font-sans text-xs text-stone-300 tracking-[0.3em]">03</span>
               </div>
-              <h3 className="font-serif text-xl md:text-2xl mb-3 md:mb-4 text-stone-800">The Style Refresh</h3>
+              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-stone-900" style={{ fontWeight: 700 }}>The Style Refresh</h3>
               <p className="text-stone-500 text-sm md:text-base leading-relaxed">For travel, events, or seasonal updates. No Closet Edit required.</p>
-              <div className="mt-4 flex items-center gap-1 text-stone-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="mt-5 pt-4 border-t border-stone-100 group-hover:border-stone-200 transition-colors flex items-center gap-1 text-stone-400 text-xs uppercase tracking-[0.15em] font-sans">
                 <span>View more</span>
-                <ChevronDown size={16} className="transition-transform duration-300 group-hover:translate-y-0.5" />
+                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </div>
             </div>
           </FadeInOnScroll>

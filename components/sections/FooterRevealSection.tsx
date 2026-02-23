@@ -60,12 +60,13 @@ export const FooterRevealSection: React.FC = () => {
   return (
     <section
       id="footer-reveal"
-      className="relative z-20 min-h-[80vh] flex flex-col items-start justify-center px-6 md:px-12 lg:px-20 py-12 bg-stone-50"
+      className="relative z-20 min-h-[80vh] flex flex-col items-start justify-center px-6 md:px-12 lg:px-20 py-12 bg-sand-50 border-t border-stone-100"
       aria-label="Book your consultation"
     >
       <h2
         ref={headingRef}
-        className="relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-medium text-stone-900 tracking-tight leading-[1.2] whitespace-pre-wrap pb-3 pr-8 md:pr-16 text-left max-w-5xl overflow-visible"
+        className="relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-stone-900 tracking-tight leading-[1.1] whitespace-pre-wrap pb-3 pr-8 md:pr-16 text-left max-w-5xl overflow-visible"
+        style={{ fontWeight: 700 }}
         aria-hidden="true"
       >
         <span className="hero-reveal-line bottom-reveal-line block">

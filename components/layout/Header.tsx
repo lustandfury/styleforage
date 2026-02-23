@@ -196,7 +196,8 @@ export const Header: React.FC = () => {
             >
               <Link
                 to="/"
-                className="font-serif text-xl md:text-3xl font-normal tracking-[1px] text-stone-900 hover:text-stone-700 transition-colors cursor-pointer truncate"
+                className="font-serif text-xl md:text-2xl font-bold tracking-[2px] text-stone-900 hover:text-stone-700 transition-colors cursor-pointer truncate uppercase"
+                style={{ fontWeight: 700 }}
               >
                 STYLE FORAGE 
               </Link>
@@ -223,7 +224,8 @@ export const Header: React.FC = () => {
               >
                 <Link
                   to="/"
-                  className="nav-link-item relative px-5 py-2 text-lg font-normal tracking-[0.5px] rounded-full cursor-pointer text-stone-900 hover:text-stone-700 font-serif whitespace-nowrap inline-block leading-none"
+                  className="nav-link-item relative px-5 py-2 text-sm font-bold tracking-[2px] rounded-full cursor-pointer text-stone-900 hover:text-stone-700 font-serif whitespace-nowrap inline-block leading-none uppercase"
+                  style={{ fontWeight: 700 }}
                 >
                   STYLE FORAGE
                 </Link>
@@ -258,7 +260,7 @@ export const Header: React.FC = () => {
                       >
                         <Link
                           to={item.path}
-                          className={`nav-link-item relative px-4 py-1.5 text-sm font-medium rounded-full cursor-pointer block ${
+                          className={`nav-link-item relative px-4 py-1.5 text-xs font-sans uppercase tracking-[0.12em] rounded-full cursor-pointer block ${
                             isActive
                               ? 'nav-link-item--active text-stone-900'
                               : 'text-stone-600 hover:text-stone-800'
@@ -280,7 +282,7 @@ export const Header: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => scrollToAnchor(item.id)}
-                        className={`nav-link-item relative px-5 py-2 text-sm font-medium rounded-full cursor-pointer ${
+                        className={`nav-link-item relative px-4 py-1.5 text-xs font-sans uppercase tracking-[0.12em] rounded-full cursor-pointer ${
                           isActive
                             ? 'nav-link-item--active text-stone-900'
                             : 'text-stone-600 hover:text-stone-800'

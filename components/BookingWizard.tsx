@@ -214,93 +214,93 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
              <div className="grid lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8 min-w-0">
                 {/* Service Summary — on top on mobile (horizontal strip), left column on desktop */}
                 <div className="order-1 lg:col-span-5 space-y-4 md:space-y-6 min-w-0 w-full">
-                  <div className="bg-stone-50 rounded-2xl md:rounded-3xl border border-stone-100 shadow-sm overflow-hidden min-w-0 w-full">
-                    {/* Top: image left, title + selectors right */}
-                    <div className="flex gap-4 p-4 md:p-5 items-start">
-                      {state.selectedService?.image && (
-                        <div className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-stone-200">
-                          <img src={state.selectedService.image} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  <div className="bg-white overflow-hidden min-w-0 w-full border border-stone-200 rounded-2xl">
+                    {/* Full-bleed image */}
+                    {state.selectedService?.image && (
+                      <div className="w-full aspect-[3/2] overflow-hidden">
+                        <img src={state.selectedService.image} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      </div>
+                    )}
+                    <div className="p-5 md:p-6 min-w-0">
+                      {/* Label + price row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] tracking-[0.18em] uppercase text-stone-400 font-medium">Your Selection</span>
+                        <span className="font-serif text-base font-bold text-stone-900">
+                          {discountedPrice != null ? (
+                            <>
+                              <span className="text-stone-300 line-through font-normal mr-1.5 text-sm">${effectivePrice}</span>
+                              <span className="text-red-500">${discountedPrice}</span>
+                            </>
+                          ) : (
+                            effectivePrice != null ? `$${effectivePrice}` : ''
+                          )}
+                        </span>
+                      </div>
+                      {/* Title */}
+                      <h3 className="font-serif text-2xl md:text-3xl text-stone-900 leading-tight mb-4">{state.selectedService?.title}</h3>
+                      {/* Variant selectors */}
+                      {state.selectedService?.priceVariants && (
+                        <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Format">
+                          {(['online', 'inPerson'] as const).map((v) => {
+                            const price = state.selectedService!.priceVariants![v];
+                            const label = v === 'online' ? 'Online' : 'In-person';
+                            const isSelected = state.selectedVariant === v;
+                            return (
+                              <button
+                                key={v}
+                                type="button"
+                                onClick={() => setState(s => ({ ...s, selectedVariant: v }))}
+                                aria-pressed={isSelected}
+                                className={`inline-flex items-center gap-1.5 min-h-[34px] px-4 rounded-full text-xs font-medium border transition-all touch-manipulation cursor-pointer ${
+                                  isSelected ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700'
+                                }`}
+                              >
+                                <Check
+                                  size={11}
+                                  strokeWidth={3}
+                                  className={`flex-shrink-0 transition-all duration-200 ${isSelected ? 'opacity-100 scale-100 w-[11px]' : 'opacity-0 scale-50 w-0'}`}
+                                  aria-hidden
+                                />
+                                {label} ${price}
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sage-600 font-bold uppercase tracking-widest text-[10px] block mb-1">Your Selection</span>
-                        <div className="flex items-baseline justify-between gap-2 min-w-0 mb-2">
-                          <h3 className="font-serif text-base sm:text-lg font-semibold text-stone-900 leading-tight break-words min-w-0">{state.selectedService?.title}</h3>
-                          <span className="font-serif font-bold text-stone-900 text-base sm:text-lg shrink-0">
-                            {discountedPrice != null ? (
-                              <>
-                                <span className="text-stone-400 line-through font-normal mr-1.5">${effectivePrice}</span>
-                                <span className="text-red-500 font-semibold">${discountedPrice}</span>
-                              </>
-                            ) : (
-                              effectivePrice != null ? `$${effectivePrice}` : ''
-                            )}
-                          </span>
-                        </div>
-                        {state.selectedService?.priceVariants && (
-                          <div className="flex flex-wrap gap-2" role="group" aria-label="Format">
-                            {(['online', 'inPerson'] as const).map((v) => {
-                              const price = state.selectedService!.priceVariants![v];
-                              const label = v === 'online' ? 'Online' : 'In-person';
-                              const isSelected = state.selectedVariant === v;
-                              return (
-                                <button
-                                  key={v}
-                                  type="button"
-                                  onClick={() => setState(s => ({ ...s, selectedVariant: v }))}
-                                  aria-pressed={isSelected}
-                                  className={`inline-flex items-center gap-1.5 min-h-[34px] px-3 rounded-full text-xs font-medium border-2 transition-colors touch-manipulation cursor-pointer ${
-                                    isSelected ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'
-                                  }`}
-                                >
-                                  <Check
-                                    size={11}
-                                    strokeWidth={3}
-                                    className={`flex-shrink-0 transition-all duration-200 ${isSelected ? 'opacity-100 scale-100 w-[11px]' : 'opacity-0 scale-50 w-0'}`}
-                                    aria-hidden
-                                  />
-                                  {label} ${price}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                        {saleActive && (
-                          <p className="mt-2" aria-live="polite">
-                            <span className="inline-flex flex-col gap-1.5 rounded-md bg-sage-100 px-3 py-1.5 font-medium text-sage-900 ring-1 ring-sage-500/40 text-[10px]">
-                              <span>{SALE_OFFER_LABEL}</span>
-                              <span className="flex items-center gap-1.5 shrink-0">
-                                <Clock size={12} className="text-sage-600" aria-hidden />
-                                <span className="font-mono tabular-nums">{saleCountdown} left</span>
-                              </span>
+                      {saleActive && (
+                        <p className="mb-4" aria-live="polite">
+                          <span className="inline-flex flex-col gap-1.5 rounded-md bg-sage-100 px-3 py-1.5 font-medium text-sage-900 ring-1 ring-sage-500/40 text-[10px]">
+                            <span>{SALE_OFFER_LABEL}</span>
+                            <span className="flex items-center gap-1.5 shrink-0">
+                              <Clock size={12} className="text-sage-600" aria-hidden />
+                              <span className="font-mono tabular-nums">{saleCountdown} left</span>
                             </span>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {/* Bottom: description + features full width */}
-                    <div className="px-4 md:px-5 pb-4 md:pb-5 border-t border-stone-100 pt-3 space-y-2 min-w-0">
-                      <p className="text-stone-600 text-xs sm:text-sm leading-relaxed break-words min-w-0">
+                          </span>
+                        </p>
+                      )}
+                      {/* Ruled separator */}
+                      <div className="border-t border-stone-100 mb-4" />
+                      {/* Description */}
+                      <p className="text-stone-500 text-sm leading-relaxed break-words min-w-0 mb-3">
                         {state.selectedService?.longDescription}
                       </p>
                       {state.selectedService?.variantDescriptions && state.selectedVariant && (
-                        <p className="text-sage-700 text-xs sm:text-sm leading-relaxed break-words min-w-0 font-medium">
+                        <p className="text-sage-700 text-sm leading-relaxed break-words min-w-0 font-medium mb-3">
                           {state.selectedService.variantDescriptions[state.selectedVariant]}
                         </p>
                       )}
+                      {/* Features */}
                       {state.selectedService?.features && state.selectedService.features.length > 0 && (
-                        <ul className="space-y-1 pt-1">
+                        <ul className="space-y-1.5 mb-5">
                           {state.selectedService.features.map((feature, idx) => (
-                            <li key={idx} className="flex items-start text-xs text-stone-600 break-words min-w-0">
-                              <Check size={12} className="mr-1.5 text-sage-500 flex-shrink-0 mt-0.5" />
+                            <li key={idx} className="flex items-start text-xs text-stone-500 break-words min-w-0">
+                              <span className="mr-2 text-stone-300 select-none" aria-hidden>—</span>
                               <span className="min-w-0">{feature}</span>
                             </li>
                           ))}
                         </ul>
                       )}
-                      <div className="pt-1">
-                        <Button variant="outline" size="sm" className="min-h-[40px] touch-manipulation w-full sm:w-auto" onClick={() => setChangingService(true)}>Change Service</Button>
-                      </div>
+                      <Button variant="link" size="sm" onClick={() => setChangingService(true)}>Change service</Button>
                     </div>
                   </div>
                 </div>

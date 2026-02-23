@@ -22,7 +22,7 @@ export const Home: React.FC = () => {
 
       {/* Hero: fixed, full viewport */}
       <div className="fixed inset-0 z-10 h-screen w-full">
-        <Hero />
+        <Hero variant="split" />
       </div>
 
       {/* Spacer so content starts below viewport */}

@@ -59,27 +59,23 @@ export const About: React.FC = () => {
   }, [isHoveringInstagram, isVideoReady]);
 
   return (
-    <section ref={sectionRef} id="about" className="py-16 md:py-24 bg-white relative overflow-x-hidden">
-       {/* Background Decoration */}
-       <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-sage-50 rounded-full blur-3xl -z-10"></div>
-       
+    <section ref={sectionRef} id="about" className="py-16 md:py-24 bg-sand-50 relative overflow-x-hidden">
        <FadeInOnScroll>
        <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
              <div className="order-2 md:order-1 min-w-0">
-                <div className="mb-4 md:mb-6 text-sage-600 font-medium uppercase tracking-wider text-sm">About the Stylist</div>
-                <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl text-stone-900 leading-tight mb-6 md:mb-8">
+                {/* Editorial section label */}
+                <div className="flex items-center gap-3 mb-6 md:mb-8">
+                  <span className="font-sans text-xs text-stone-400 uppercase tracking-[0.3em]">01</span>
+                  <div className="h-px w-8 bg-stone-300" />
+                  <span className="font-sans text-xs text-stone-400 uppercase tracking-[0.3em]">About the Stylist</span>
+                </div>
+                <h2 className="font-serif font-bold text-4xl md:text-5xl lg:text-6xl text-stone-900 leading-tight mb-6 md:mb-8" style={{ fontWeight: 700 }}>
                 Roslyn Costanzo
                 </h2>
                 <div className="pl-4 md:pl-6 relative">
-                   {/* Left border with gradient animation on hover */}
-                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-stone-900" />
-                   <div 
-                     className={`absolute left-0 bottom-0 w-0.5 transition-all duration-500 ease-out ${
-                       isHoveringInstagram ? 'h-full' : 'h-0'
-                     }`}
-                     style={{ background: 'linear-gradient(to top, #FFDC80, #F77737, #E1306C, #C13584, #833AB4)' }}
-                   />
+                   {/* Left editorial rule */}
+                   <div className="absolute left-0 top-0 bottom-0 w-px bg-stone-200" />
                    <div className="space-y-4 md:space-y-5 text-stone-600 text-sm md:text-base leading-relaxed font-light break-words">
                       <p>
                         Hi, I'm Roz and I've been obsessed with fashion and shopping since I got my first pay cheque in 1992—which I immediately spent at Smart Set. I have also worked as a style editor at two national lifestyle magazines, and most recently, as a wardrobe consultant, helping people like you, find and refine their personal style.
@@ -143,15 +139,8 @@ export const About: React.FC = () => {
                   ref={photoContainerRef}
                   className="relative h-[56vh] min-h-[280px] aspect-[9/16] md:h-[90vh] md:min-h-0"
                 >
-                  {/* Decorative Frame - stays fixed; photo separates from this on scroll */}
-                  <div 
-                    className={`absolute top-4 left-4 w-full h-full rounded-2xl md:rounded-3xl hidden md:block transition-all duration-500 ${
-                      isHoveringInstagram ? '' : 'border-2 border-stone-900'
-                    }`}
-                    style={isHoveringInstagram ? { 
-                      background: 'linear-gradient(to bottom, #833AB4, #C13584, #E1306C, #F77737, #FFDC80)'
-                    } : {}}
-                  />
+                  {/* Decorative Frame - editorial: thin offset border */}
+                  <div className="absolute top-4 left-4 w-full h-full rounded-2xl md:rounded-3xl hidden md:block border border-stone-300" />
                   
                   {/* Image container - lifts off frame and shadow increases on scroll */}
                   <div
@@ -162,7 +151,7 @@ export const About: React.FC = () => {
                     }}
                   >
                     {/* Video - preloaded and always in DOM, visibility toggled */}
-                    <video 
+                    <video
                       ref={videoRef}
                       src="/video/roz-in-capris.mp4"
                       muted
@@ -170,18 +159,18 @@ export const About: React.FC = () => {
                       playsInline
                       preload="auto"
                       onCanPlayThrough={() => setIsVideoReady(true)}
-                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                        isHoveringInstagram && isVideoReady ? 'opacity-100' : 'opacity-0'
+                      className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+                        isHoveringInstagram && isVideoReady ? 'opacity-100 grayscale-0' : 'opacity-0 grayscale'
                       }`}
                     />
-                    {/* Image - always visible underneath */}
-                    <img 
-                      src="roz.png" 
+                    {/* Image: editorial grayscale by default, colorizes on hover */}
+                    <img
+                      src="roz.png"
                       onError={(e) => { e.currentTarget.src = "/images/Roz-closet.avif" }}
-                      alt="Roslyn Costanzo" 
-                      className={`w-full h-full object-cover transition-opacity duration-300 ${
+                      alt="Roslyn Costanzo"
+                      className={`w-full h-full object-cover transition-all duration-700 ${
                         isHoveringInstagram && isVideoReady ? 'opacity-0' : 'opacity-100'
-                      }`}
+                      } grayscale hover:grayscale-0`}
                       loading="lazy"
                       width="800"
                       height="1000"
