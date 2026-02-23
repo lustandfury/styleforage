@@ -13,8 +13,10 @@ export const Hero: React.FC = () => {
   const textBlurTopRef = useRef<HTMLDivElement>(null);
   const textBlurBottomRef = useRef<HTMLDivElement>(null);
   const headingWrapperRef = useRef<HTMLDivElement>(null);
+  const mobileImageRef = useRef<HTMLDivElement>(null);
   const [headingVisible, setHeadingVisible] = useState(false);
   const [revealDone, setRevealDone] = useState(false);
+  const [showAltImage, setShowAltImage] = useState(false);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setHeadingVisible(true));
@@ -49,14 +51,22 @@ export const Hero: React.FC = () => {
       }
       if (headingWrapperRef.current) {
         const vh = window.innerHeight;
-        const fadeRange = 150;
-        let opacity = 1;
-        if (y >= vh) {
-          const fadeProgress = Math.min(1, (y - vh) / fadeRange);
-          opacity = Math.max(0.2, 1 - fadeProgress * 0.8);
-        }
-        headingWrapperRef.current.style.opacity = String(opacity);
+        const fadeStart = vh * 0.25;
+        const fadeEnd = vh * 0.65;
+        const progress = Math.max(0, Math.min(1, (y - fadeStart) / (fadeEnd - fadeStart)));
+        headingWrapperRef.current.style.opacity = String(1 - progress);
+        headingWrapperRef.current.style.transform = `translateY(${-40 * progress}px)`;
       }
+      if (mobileImageRef.current) {
+        const vh = window.innerHeight;
+        const fadeStart = vh * 0.2;
+        const fadeEnd = vh * 0.7;
+        const progress = Math.max(0, Math.min(1, (y - fadeStart) / (fadeEnd - fadeStart)));
+        mobileImageRef.current.style.transform = `translateY(${-160 * progress}px)`;
+      }
+
+      // Switch hero image as About section comes into view
+      setShowAltImage(y >= window.innerHeight * 0.6);
     };
 
     const handleScroll = () => {
@@ -77,25 +87,38 @@ export const Hero: React.FC = () => {
   };
 
   return (
-    <section className="relative h-full min-h-screen overflow-hidden bg-stone-50" aria-label="Hero">
+    <section className="relative h-full min-h-screen bg-stone-50" aria-label="Hero">
       <h1 className="sr-only">{HEADING_LINE1} {HEADING_LINE2}</h1>
 
-      <div className="md:grid md:grid-cols-[3fr_2fr] h-full">
+      {/* Right column: full-bleed image, desktop only, absolutely positioned */}
+      <div className="hidden md:block absolute inset-y-0 right-0 w-2/5 overflow-hidden">
+        <img
+          src="/images/roz-transparent.webp"
+          alt=""
+          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${showAltImage ? 'opacity-0' : 'opacity-100'}`}
+        />
+        <img
+          src="/images/roz-transparent-2.webp"
+          alt=""
+          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${showAltImage ? 'opacity-100' : 'opacity-0'}`}
+        />
+      </div>
 
-        {/* Left column */}
-        <div className="flex flex-col justify-between h-screen md:h-auto md:min-h-0 md:justify-start md:gap-20 md:self-center">
+      {/* Left column: container-aligned to match section headers */}
+      <div className="container mx-auto px-4 h-full">
+        <div className="flex flex-col justify-between h-screen md:h-auto md:min-h-0 md:justify-start md:gap-20 md:self-center md:w-3/5">
 
           {/* Top editorial strip */}
           <div
             ref={textBlurTopRef}
-            className={`hero-rest-in transition-none pt-24 md:pt-28 px-6 md:px-12 lg:px-20 ${revealDone ? 'hero-rest-visible' : ''}`}
+            className={`hero-rest-in transition-none pt-24 md:pt-28 ${revealDone ? 'hero-rest-visible' : ''}`}
           >
             <div className="flex items-center gap-4">
-              <span className="text-stone-500 font-sans text-[10px] uppercase tracking-[0.3em] shrink-0">
+              <span className="text-stone-500 font-sans text-xs uppercase tracking-[0.3em] shrink-0">
                 Personal Styling &amp; Wardrobe
               </span>
               <div className="h-px w-8 bg-stone-200 shrink-0" />
-              <span className="text-stone-500 font-sans text-[10px] uppercase tracking-[0.3em] shrink-0 hidden sm:inline">
+              <span className="text-stone-500 font-sans text-xs uppercase tracking-[0.3em] shrink-0 hidden sm:inline">
                 Toronto, CA
               </span>
               <div className="h-px flex-1 bg-stone-200" />
@@ -105,11 +128,11 @@ export const Hero: React.FC = () => {
           {/* Heading */}
           <div
             ref={headingWrapperRef}
-            className="transition-opacity duration-300 px-6 md:px-12 lg:px-20 py-1"
+            className="py-1"
           >
             <h2
               className={`scroll-fade-in font-serif font-black text-stone-900 leading-[0.92] tracking-tight ${headingVisible ? 'is-visible' : ''}`}
-              style={{ fontWeight: 900, fontSize: 'clamp(2rem, 5.5vw, 6.5rem)' }}
+              style={{ fontWeight: 900, fontSize: 'clamp(3rem, 5.5vw, 6.5rem)' }}
             >
               <span className="hero-reveal-line block whitespace-nowrap">
                 {LINE1_WORDS.map((word, i) => (
@@ -134,22 +157,26 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* Mobile image — flex-1 fills the space between heading and bottom strip */}
-          <div className="md:hidden flex-1 min-h-0 overflow-hidden">
+          <div ref={mobileImageRef} className="md:hidden flex-1 min-h-0 overflow-hidden relative">
             <img
-              src="/images/roz-white-wall.webp"
+              src="/images/roz-transparent.webp"
               alt=""
-              className="w-full h-full object-cover object-top"
+              className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-700 ${showAltImage ? 'opacity-0' : 'opacity-100'}`}
+            />
+            <img
+              src="/images/roz-transparent-2.webp"
+              alt=""
+              className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-700 ${showAltImage ? 'opacity-100' : 'opacity-0'}`}
             />
           </div>
 
           {/* Bottom editorial strip */}
           <div
             ref={textBlurBottomRef}
-            className={`hero-rest-in transition-none px-6 md:px-12 lg:px-20 pb-8 md:pb-12 ${revealDone ? 'hero-rest-visible' : ''}`}
+            className={`hero-rest-in transition-none pb-8 md:pb-12 ${revealDone ? 'hero-rest-visible' : ''}`}
           >
-            <div className="border-t border-stone-200 pt-5 md:pt-6 flex flex-col items-start gap-5">
-              <p className="text-stone-600 text-sm md:text-base max-w-md font-sans font-light leading-relaxed">
-                Personal styling for women and men who want to feel confident, current, and completely themselves.
+              <p className="text-stone-600 text-lg md:text-md pt-4 max-w-lg font-sans font-light leading-relaxed">
+                Personal styling for working professionals who want to feel confident, current, and completely themselves.
               </p>
               <button
                 onClick={scrollToServices}
@@ -158,20 +185,9 @@ export const Hero: React.FC = () => {
                 <span>View Services</span>
                 <span className="transition-transform duration-300 group-hover:translate-y-1" aria-hidden>↓</span>
               </button>
-            </div>
           </div>
 
         </div>
-
-        {/* Right column: full-bleed image, desktop only */}
-        <div className="hidden md:block h-full overflow-hidden">
-          <img
-            src="/images/roz-white-wall.webp"
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        </div>
-
       </div>
     </section>
   );

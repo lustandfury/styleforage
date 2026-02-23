@@ -1,186 +1,204 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Link } from 'react-router-dom';
 import { FadeInOnScroll } from '../FadeInOnScroll';
+import { EditorialSectionLabel } from '../EditorialSectionLabel';
 
-/** Scroll distance (viewport fraction) over which the photo separates from the frame */
-const PHOTO_SCROLL_RANGE = 0.5;
-/** Lift distance (px) and shadow strength at full separation */
-const PHOTO_LIFT_PX = 24;
-const PHOTO_SHADOW_OPACITY_MAX = 0.28;
+// ─── Bio copy (split around inline link in P1) ──────────────────────────────
+const P1_PRE  = "I've been obsessed with fashion since my first paycheque in 1992 — which I promptly spent at Smart Set. Since then, I've built a career around style: serving as a style editor at two national lifestyle magazines, contributing to";
+const P1_POST = "and working one-on-one as a wardrobe consultant to help people define and refine their personal style with confidence.";
+const P2_TEXT = "Because the truth is, when you look good, you feel good and people around you notice.";
+const P3_TEXT = "So if you need a boost and are tired of feeling frustrated every time you get dressed for the day, let's chat!";
+
+const P1_PRE_WORDS  = P1_PRE.split(' ');
+const P1_POST_WORDS = P1_POST.split(' ');
+const P2_WORDS      = P2_TEXT.split(' ');
+const P3_WORDS      = P3_TEXT.split(' ');
+
+// P1 total tokens: pre-words + 1 link token + post-words
+const P1_TOKEN_COUNT = P1_PRE_WORDS.length + 1 + P1_POST_WORDS.length;
+
+const WORD_STAGGER  = 0.022; // seconds per word
+const START_DELAY   = 0.25;
+const P2_START      = START_DELAY + P1_TOKEN_COUNT * WORD_STAGGER + 0.1;
+const P3_START      = P2_START + P2_WORDS.length * WORD_STAGGER + 0.1;
+const LINK_DELAY    = P3_START + P3_WORDS.length * WORD_STAGGER - 0.15;
+
+function wordStyle(inView: boolean, globalIndex: number) {
+  const delay = START_DELAY + globalIndex * WORD_STAGGER;
+  return {
+    opacity: inView ? 1 : 0,
+    transform: inView ? 'none' : 'translateY(5px)',
+    transition: inView
+      ? `opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`
+      : 'none',
+  } as React.CSSProperties;
+}
 
 export const About: React.FC = () => {
-  const [isHoveringInstagram, setIsHoveringInstagram] = useState(false);
-  const [isVideoReady, setIsVideoReady] = useState(false);
-  const [photoProgress, setPhotoProgress] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const sectionRef = useRef<HTMLElement>(null);
-  const photoContainerRef = useRef<HTMLDivElement>(null);
+  const bioRef      = useRef<HTMLDivElement>(null);
+  const hasAnimated = useRef(false);
+  const [inView, setInView] = useState(false);
 
-  // Scroll-driven: photo separates from frame (lift + shadow opacity)
   useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const update = () => {
-      const rect = section.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const range = vh * PHOTO_SCROLL_RANGE;
-      const distFromBottom = rect.top - (vh - range);
-      const progress = Math.max(0, Math.min(1, 1 - distFromBottom / range));
-      setPhotoProgress(progress);
-    };
-
-    window.addEventListener('scroll', update, { passive: true });
-    update();
-    return () => window.removeEventListener('scroll', update);
+    const el = bioRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true;
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
-  // Preload video after page loads
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      video.load();
-    }
-  }, []);
-
-  // Play/pause video based on hover state
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video && isVideoReady) {
-      if (isHoveringInstagram) {
-        video.currentTime = 0;
-        video.play();
-      } else {
-        video.pause();
-      }
-    }
-  }, [isHoveringInstagram, isVideoReady]);
+  const linkHideStyle: React.CSSProperties = {
+    opacity: inView ? 0 : 1,
+    transition: inView ? `opacity 0.7s ease ${LINK_DELAY}s` : 'none',
+  };
+  const linkShowStyle: React.CSSProperties = {
+    opacity: inView ? 1 : 0,
+    transition: inView ? `opacity 0.7s ease ${LINK_DELAY}s` : 'none',
+  };
 
   return (
-    <section ref={sectionRef} id="about" className="py-16 md:py-24 bg-sand-50 relative overflow-x-hidden">
-       <FadeInOnScroll>
-       <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-             <div className="order-2 md:order-1 min-w-0">
-                {/* Editorial section label */}
-                <div className="flex items-center gap-3 mb-6 md:mb-8">
-                  <span className="font-sans text-xs text-stone-400 uppercase tracking-[0.3em]">01</span>
-                  <div className="h-px w-8 bg-stone-300" />
-                  <span className="font-sans text-xs text-stone-400 uppercase tracking-[0.3em]">About the Stylist</span>
-                </div>
-                <h2 className="font-serif font-bold text-4xl md:text-5xl lg:text-6xl text-stone-900 leading-tight mb-6 md:mb-8" style={{ fontWeight: 700 }}>
-                Roslyn Costanzo
-                </h2>
-                <div className="pl-4 md:pl-6 relative">
-                   {/* Left editorial rule */}
-                   <div className="absolute left-0 top-0 bottom-0 w-px bg-stone-200" />
-                   <div className="space-y-4 md:space-y-5 text-stone-600 text-sm md:text-base leading-relaxed font-light break-words">
-                      <p>
-                        Hi, I'm Roz and I've been obsessed with fashion and shopping since I got my first pay cheque in 1992—which I immediately spent at Smart Set. I have also worked as a style editor at two national lifestyle magazines, and most recently, as a wardrobe consultant, helping people like you, find and refine their personal style.
-                      </p>
-                      <p>
-                        Styling is all about helping people feel their best because when you look good, you feel good. If you need a boost and are tired of feeling frustrated every time you get dressed for the day, give me a call!
-                      </p>
-                   </div>
-                   <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3 md:gap-4">
-                      <a 
-                        href="https://www.instagram.com/styleforage/" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="group inline-flex items-center justify-start md:justify-center py-2 font-medium transition-colors"
-                        onMouseEnter={() => setIsHoveringInstagram(true)}
-                        onMouseLeave={() => setIsHoveringInstagram(false)}
+    <section id="about" className="py-16 md:py-24 bg-stone-50 md:bg-transparent relative overflow-x-hidden">
+      <FadeInOnScroll>
+        <div className="container mx-auto px-4">
+          <div className="max-w-xl">
+            <EditorialSectionLabel number="01" label="About the Stylist" className="mb-6 md:mb-8" />
+            <h2 className="font-serif font-bold text-4xl md:text-5xl lg:text-6xl text-stone-900 leading-tight mb-6 md:mb-8" style={{ fontWeight: 700 }}>
+              Roslyn Costanzo
+            </h2>
+            <div ref={bioRef} className="pl-4 md:pl-6 relative">
+              {/* Left editorial rule */}
+              <div className="absolute left-0 top-0 bottom-0 w-px bg-stone-200" />
+
+              <div className="space-y-4 md:space-y-5 text-stone-600 text-sm md:text-base leading-relaxed font-light">
+
+                {/* Para 1 — word-level with inline Globe & Mail link */}
+                <p>
+                  {P1_PRE_WORDS.map((word, i) => (
+                    <span key={i} className="inline-block" style={wordStyle(inView, i)}>
+                      {word}{'\u00A0'}
+                    </span>
+                  ))}
+                  <span className="inline-block" style={wordStyle(inView, P1_PRE_WORDS.length)}>
+                    <a
+                      href="https://www.theglobeandmail.com/business/article-why-empathy-and-adaptability-are-the-new-pillars-of-leadership/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sage-500 italic hover:text-sage-700 transition-colors underline underline-offset-2"
+                    >The Globe &amp; Mail</a>,{'\u00A0'}
+                  </span>
+                  {P1_POST_WORDS.map((word, i) => (
+                    <span key={i} className="inline-block" style={wordStyle(inView, P1_PRE_WORDS.length + 1 + i)}>
+                      {word}{i < P1_POST_WORDS.length - 1 ? '\u00A0' : ''}
+                    </span>
+                  ))}
+                </p>
+
+                {/* Para 2 */}
+                <p>
+                  {P2_WORDS.map((word, i) => {
+                    const delay = P2_START + i * WORD_STAGGER;
+                    return (
+                      <span
+                        key={i}
+                        className="inline-block"
+                        style={{
+                          opacity: inView ? 1 : 0,
+                          transform: inView ? 'none' : 'translateY(5px)',
+                          transition: inView
+                            ? `opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`
+                            : 'none',
+                        }}
                       >
-                        {/* Text with gradient on hover */}
-                        <span className="relative">
-                          <span className="text-stone-700 transition-opacity duration-300 group-hover:opacity-0">
-                            @styleforage on Instagram
-                          </span>
-                          <span 
-                            className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-clip-text text-transparent"
-                            style={{ backgroundImage: 'linear-gradient(to right, #FFDC80, #F77737, #E1306C, #C13584, #833AB4)' }}
-                          >
-                            @styleforage on Instagram
-                          </span>
-                        </span>
-                        {/* Arrow with gradient on hover */}
-                        <span className="relative ml-2 w-4 h-4 flex-shrink-0">
-                          <ArrowRight size={16} className="absolute inset-0 text-stone-700 transition-all duration-300 group-hover:opacity-0 group-hover:translate-x-1"/>
-                          <svg 
-                            className="absolute inset-0 w-4 h-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1"
-                            viewBox="0 0 24 24" 
-                            fill="none"
-                            stroke="url(#instagram-gradient-text)"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <defs>
-                              <linearGradient id="instagram-gradient-text" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#FFDC80" />
-                                <stop offset="25%" stopColor="#F77737" />
-                                <stop offset="50%" stopColor="#E1306C" />
-                                <stop offset="75%" stopColor="#C13584" />
-                                <stop offset="100%" stopColor="#833AB4" />
-                              </linearGradient>
-                            </defs>
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                          </svg>
-                        </span>
-                      </a>
-                   </div>
-                </div>
-             </div>
-             <div className="order-1 md:order-2 flex justify-center">
-                {/* Wrapper for image and frame */}
-                <div
-                  ref={photoContainerRef}
-                  className="relative h-[56vh] min-h-[280px] aspect-[9/16] md:h-[90vh] md:min-h-0"
+                        {word}{i < P2_WORDS.length - 1 ? '\u00A0' : ''}
+                      </span>
+                    );
+                  })}
+                </p>
+
+                {/* Para 3 */}
+                <p>
+                  {P3_WORDS.map((word, i) => {
+                    const delay = P3_START + i * WORD_STAGGER;
+                    return (
+                      <span
+                        key={i}
+                        className="inline-block"
+                        style={{
+                          opacity: inView ? 1 : 0,
+                          transform: inView ? 'none' : 'translateY(5px)',
+                          transition: inView
+                            ? `opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`
+                            : 'none',
+                        }}
+                      >
+                        {word}{i < P3_WORDS.length - 1 ? '\u00A0' : ''}
+                      </span>
+                    );
+                  })}
+                </p>
+              </div>
+
+              {/* Instagram link */}
+              <div className="mt-6 md:mt-8">
+                <a
+                  href="https://www.instagram.com/styleforage/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center justify-start py-2 font-medium"
                 >
-                  {/* Decorative Frame - editorial: thin offset border */}
-                  <div className="absolute top-4 left-4 w-full h-full rounded-2xl md:rounded-3xl hidden md:block border border-stone-300" />
-                  
-                  {/* Image container - lifts off frame and shadow increases on scroll */}
-                  <div
-                    className="relative z-10 w-full h-full rounded-2xl md:rounded-3xl overflow-hidden bg-stone-100 will-change-transform"
-                    style={{
-                      transform: `translateY(${-PHOTO_LIFT_PX * photoProgress}px)`,
-                      boxShadow: `0 ${10 + 20 * photoProgress}px ${25 + 25 * photoProgress}px -12px rgba(0,0,0,${0.04 + PHOTO_SHADOW_OPACITY_MAX * photoProgress})`,
-                    }}
-                  >
-                    {/* Video - preloaded and always in DOM, visibility toggled */}
-                    <video
-                      ref={videoRef}
-                      src="/video/roz-in-capris.mp4"
-                      muted
-                      loop
-                      playsInline
-                      preload="auto"
-                      onCanPlayThrough={() => setIsVideoReady(true)}
-                      className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-                        isHoveringInstagram && isVideoReady ? 'opacity-100' : 'opacity-0'
-                      }`}
-                    />
-                    {/* Image: editorial grayscale by default, colorizes on hover */}
-                    <img
-                      src="roz.png"
-                      onError={(e) => { e.currentTarget.src = "/images/Roz-closet.avif" }}
-                      alt="Roslyn Costanzo"
-                      className={`w-full h-full object-cover transition-all duration-700 ${
-                        isHoveringInstagram && isVideoReady ? 'opacity-0' : 'opacity-100'
-                      }`}
-                      loading="lazy"
-                      width="800"
-                      height="1000"
-                    />
-                  </div>
-                </div>
-             </div>
+                  <span className="relative">
+                    <span className="text-stone-700" style={linkHideStyle}>
+                      Follow @styleforage on Instagram
+                    </span>
+                    <span
+                      className="absolute inset-0 bg-clip-text text-transparent whitespace-nowrap"
+                      style={{
+                        backgroundImage: 'linear-gradient(to right, #FFDC80, #F77737, #E1306C, #C13584, #833AB4)',
+                        ...linkShowStyle,
+                      }}
+                    >
+                      Follow @styleforage on Instagram
+                    </span>
+                  </span>
+                  <span className="relative ml-2 w-4 h-4 flex-shrink-0 transition-transform duration-300 group-hover:translate-x-1">
+                    <ArrowRight size={16} className="absolute inset-0 text-stone-700" style={linkHideStyle} />
+                    <svg
+                      className="absolute inset-0 w-4 h-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="url(#ig-grad)"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={linkShowStyle}
+                    >
+                      <defs>
+                        <linearGradient id="ig-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%"   stopColor="#FFDC80" />
+                          <stop offset="25%"  stopColor="#F77737" />
+                          <stop offset="50%"  stopColor="#E1306C" />
+                          <stop offset="75%"  stopColor="#C13584" />
+                          <stop offset="100%" stopColor="#833AB4" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </a>
+              </div>
+            </div>
           </div>
-       </div>
-       </FadeInOnScroll>
+        </div>
+      </FadeInOnScroll>
     </section>
   );
 };

@@ -84,7 +84,7 @@ export const FooterRevealSection: React.FC = () => {
           {LINE2_CHARS.slice(0, -5).map((char, i) => (
             <span
               key={`l2-${i}`}
-              className={char === ' ' ? 'inline-block italic text-stone-700 transition-opacity duration-150 w-[0.25em]' : 'inline-block italic text-stone-700 transition-opacity duration-150'}
+              className={char === ' ' ? 'inline-block italic sage-700 transition-opacity duration-150 w-[0.25em]' : 'inline-block italic text-sage-600 transition-opacity duration-150'}
               style={{ opacity: letterOpacity(progress, LINE1_CHARS.length + i) }}
             >
               {char === ' ' ? '\u00A0' : char}
@@ -94,7 +94,7 @@ export const FooterRevealSection: React.FC = () => {
             {LINE2_CHARS.slice(-5).map((char, i) => (
               <span
                 key={`l2-tail-${i}`}
-                className={char === ' ' ? 'inline-block italic text-stone-700 transition-opacity duration-150 w-[0.25em]' : 'inline-block italic text-stone-700 transition-opacity duration-150'}
+                className={char === ' ' ? 'inline-block italic sage-700 transition-opacity duration-150 w-[0.25em]' : 'inline-block italic text-sage-600 transition-opacity duration-150'}
                 style={{ opacity: letterOpacity(progress, LINE1_CHARS.length + LINE2_CHARS.length - 5 + i) }}
               >
                 {char === ' ' ? '\u00A0' : char}

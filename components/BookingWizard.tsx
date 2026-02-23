@@ -93,7 +93,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
           <button
             key={service.id}
             type="button"
-            className="w-full bg-white rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border border-stone-100 shadow-sm hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 touch-manipulation active:scale-[0.99]"
+            className="w-full bg-white rounded-sm overflow-hidden cursor-pointer transition-all duration-300 border border-stone-100 shadow-sm hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 touch-manipulation active:scale-[0.99]"
             onClick={() => setState(s => ({
               ...s,
               selectedService: service,
@@ -132,7 +132,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
   );
 
   const renderServicePicker = () => (
-    <div className="bg-white rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-stone-100 shadow-sm animate-fade-in">
+    <div className="bg-white rounded-sm p-4 sm:p-6 md:p-8 border border-stone-100 shadow-sm animate-fade-in">
       <div className="flex items-center justify-between mb-5">
         <h3 className="font-serif text-xl sm:text-2xl text-stone-900">Choose a Service</h3>
         <Button variant="ghost" size="sm" onClick={() => setChangingService(false)}>Cancel</Button>
@@ -152,7 +152,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
                 }));
                 setChangingService(false);
               }}
-              className={`w-full flex items-center gap-4 p-3 sm:p-4 rounded-2xl text-left transition-all duration-200 cursor-pointer border-2 touch-manipulation ${
+              className={`w-full flex items-center gap-4 p-3 sm:p-4 rounded-sm text-left transition-all duration-200 cursor-pointer border-2 touch-manipulation ${
                 isSelected
                   ? 'border-stone-900 bg-stone-50'
                   : 'border-stone-100 hover:border-stone-300 hover:bg-stone-50'
@@ -214,7 +214,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
              <div className="grid lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8 min-w-0">
                 {/* Service Summary — on top on mobile (horizontal strip), left column on desktop */}
                 <div className="order-1 lg:col-span-5 space-y-4 md:space-y-6 min-w-0 w-full">
-                  <div className="bg-white overflow-hidden min-w-0 w-full border border-stone-200 rounded-2xl">
+                  <div className="bg-white overflow-hidden min-w-0 w-full border border-stone-200 rounded-sm">
                     {/* Full-bleed image */}
                     {state.selectedService?.image && (
                       <div className="w-full aspect-[3/2] overflow-hidden">
@@ -307,7 +307,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
 
                 {/* Booking Card — below service on mobile, right column on desktop */}
                 <div className="order-2 lg:col-span-7 min-w-0 w-full">
-                  {changingService ? renderServicePicker() : <div className="bg-white rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-stone-100 shadow-sm min-w-0 w-full overflow-hidden">
+                  {changingService ? renderServicePicker() : <div className="bg-white rounded-sm p-4 sm:p-6 md:p-8 border border-stone-100 shadow-sm min-w-0 w-full overflow-hidden">
                     <h3 className="font-serif text-xl sm:text-2xl text-stone-900 mb-2">Book Appointment</h3>
                     <p className="mb-4 md:mb-6">
                       <Button
@@ -457,7 +457,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
             <p className="text-stone-500 text-sm sm:text-base px-2">Tell me a bit about yourself so we can make the most of our session.</p>
          </div>
          
-         <div className="bg-white p-5 sm:p-8 md:p-14 rounded-2xl md:rounded-3xl border border-stone-100 shadow-xl space-y-6 md:space-y-8">
+         <div className="bg-white p-5 sm:p-8 md:p-14 rounded-sm border border-stone-100 shadow-xl space-y-6 md:space-y-8">
             <div className="space-y-2">
                 <label htmlFor="customer-name" className="text-sm font-bold text-stone-800 uppercase tracking-widest">Full Name</label>
                 <input 
@@ -559,7 +559,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({ initialServiceId }
             <> We&apos;ll be in touch to find a date and time that works for your session.</>
           )}
         </p>
-        <div className="bg-stone-50 p-5 sm:p-8 md:p-10 rounded-2xl md:rounded-3xl border border-stone-100 text-left mb-8 sm:mb-12 space-y-4">
+        <div className="bg-stone-50 p-5 sm:p-8 md:p-10 rounded-sm border border-stone-100 text-left mb-8 sm:mb-12 space-y-4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 border-b border-stone-200 pb-4">
                 <span className="text-stone-400 font-bold uppercase tracking-widest text-xs">Service</span>
                 <span className="text-stone-900 font-bold text-sm sm:text-base">

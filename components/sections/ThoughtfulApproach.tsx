@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
-import { ChevronDown } from 'lucide-react';
+import { EditorialSectionHeader } from '../EditorialSectionHeader';
 import { Restart, MagicWand } from 'iconoir-react';
 import gsap from 'gsap';
 
@@ -50,7 +50,7 @@ export const ThoughtfulApproach: React.FC = () => {
 
   // Pink color for hover animation
   const pinkColor = '#ec4899';
-  const sageColor = '#5a7a5a';
+  const sageColor = '#a8c5a8';
 
   const animateIconDraw = (iconContainer: HTMLDivElement, delay: number) => {
     const paths = iconContainer.querySelectorAll('path, line, circle, polyline, polygon, rect');
@@ -139,41 +139,36 @@ export const ThoughtfulApproach: React.FC = () => {
   }, []);
 
   return (
-    <section className="py-16 md:py-24 bg-white border-b border-stone-100">
+    <section data-nav-theme="dark" className="py-16 md:py-24 mobile-menu-leather border-b border-sage-800">
       <FadeInOnScroll>
       <div className="container mx-auto px-4">
-        {/* Editorial section header */}
-        <div className="flex items-center gap-3 mb-8 md:mb-12">
-          <span className="font-sans text-xs text-stone-400 uppercase tracking-[0.3em]">02</span>
-          <div className="h-px w-8 bg-stone-300" />
-          <span className="font-sans text-xs text-stone-400 uppercase tracking-[0.3em]">The Process</span>
-        </div>
-        <div className="md:flex md:items-end md:justify-between mb-10 md:mb-16">
-          <h2 className="font-serif font-bold text-3xl md:text-5xl text-stone-900 max-w-sm" style={{ fontWeight: 700 }}>A Thoughtful Approach</h2>
-          <p className="max-w-sm text-stone-500 leading-relaxed text-sm md:text-base mt-4 md:mt-0">
-            Most clients begin with a closet edit, so we can shop intentionally and build a wardrobe that feels cohesive, wearable, and truly theirs.
-          </p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
+        <EditorialSectionHeader
+          number="02"
+          label="The Process"
+          heading="A Thoughtful Approach"
+          description="Most clients begin with a closet edit, so we can shop intentionally and build a wardrobe that feels cohesive, wearable, and truly theirs."
+          dark
+        />
+        <div className="grid md:grid-cols-3 gap-6 md:gap-8">
           <FadeInOnScroll delay={100}>
             <div
-              className="group p-6 md:p-8 bg-sand-50 border border-stone-100 hover:border-stone-300 transition-all text-left cursor-pointer hover:shadow-md"
-              onClick={() => scrollToService('closet-reset')}
+              className="group p-6 md:p-8 rounded-sm bg-sage-800/40 border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
+              onClick={() => scrollToService('style-upgrade')}
               onMouseEnter={() => handleIconHover(icon1Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon1Ref.current, false)}
             >
               <div className="flex items-start justify-between mb-6">
                 <div
                   ref={icon1Ref}
-                  className="w-10 h-10 flex items-center justify-center border border-stone-200 group-hover:border-sage-300 transition-colors"
+                  className="w-10 h-10 flex items-center justify-center border border-sage-600 group-hover:border-sage-400 transition-colors"
                 >
-                  <ClosetOpen className="w-5 h-5 text-sage-600" strokeWidth={1.5} />
+                  <MagicWand className="w-5 h-5 text-sage-300" strokeWidth={1.5} />
                 </div>
-                <span className="font-sans text-xs text-stone-300 tracking-[0.3em]">01</span>
+                <span className="font-sans text-xs text-sage-600 tracking-[0.3em]">01</span>
               </div>
-              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-stone-900" style={{ fontWeight: 700 }}>The Closet Edit</h3>
-              <p className="text-stone-500 text-sm md:text-base leading-relaxed">A strategic in-home edit to help you see what you own differently — and build real outfits from it.</p>
-              <div className="mt-5 pt-4 border-t border-stone-100 group-hover:border-stone-200 transition-colors flex items-center gap-1 text-stone-400 text-xs uppercase tracking-[0.15em] font-sans">
+              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-white" style={{ fontWeight: 700 }}>The Style Upgrade</h3>
+              <p className="text-sage-300 text-sm md:text-base leading-relaxed">Closet Edit plus shopping — so you don't just know what's missing, it gets handled.</p>
+              <div className="mt-5 pt-4 border-t border-sage-700 group-hover:border-sage-500 transition-colors flex items-center gap-1 text-sage-400 text-xs uppercase tracking-[0.15em] font-sans">
                 <span>View more</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </div>
@@ -181,23 +176,23 @@ export const ThoughtfulApproach: React.FC = () => {
           </FadeInOnScroll>
           <FadeInOnScroll delay={250}>
             <div
-              className="group p-6 md:p-8 bg-sand-50 border border-stone-100 hover:border-stone-300 transition-all text-left cursor-pointer hover:shadow-md"
-              onClick={() => scrollToService('style-upgrade')}
+              className="group p-6 md:p-8 rounded-sm bg-sage-800/40 border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
+              onClick={() => scrollToService('closet-reset')}
               onMouseEnter={() => handleIconHover(icon2Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon2Ref.current, false)}
             >
               <div className="flex items-start justify-between mb-6">
                 <div
                   ref={icon2Ref}
-                  className="w-10 h-10 flex items-center justify-center border border-stone-200 group-hover:border-sage-300 transition-colors"
+                  className="w-10 h-10 flex items-center justify-center border border-sage-600 group-hover:border-sage-400 transition-colors"
                 >
-                  <Restart className="w-5 h-5 text-sage-600" strokeWidth={1.5} />
+                  <ClosetOpen className="w-5 h-5 text-sage-300" strokeWidth={1.5} />
                 </div>
-                <span className="font-sans text-xs text-stone-300 tracking-[0.3em]">02</span>
+                <span className="font-sans text-xs text-sage-600 tracking-[0.3em]">02</span>
               </div>
-              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-stone-900" style={{ fontWeight: 700 }}>The Style Upgrade</h3>
-              <p className="text-stone-500 text-sm md:text-base leading-relaxed">Closet Edit plus shopping — so you don't just know what's missing, it gets handled.</p>
-              <div className="mt-5 pt-4 border-t border-stone-100 group-hover:border-stone-200 transition-colors flex items-center gap-1 text-stone-400 text-xs uppercase tracking-[0.15em] font-sans">
+              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-white" style={{ fontWeight: 700 }}>The Closet Edit</h3>
+              <p className="text-sage-300 text-sm md:text-base leading-relaxed">A strategic in-home edit to help you see what you own differently — and build real outfits from it.</p>
+              <div className="mt-5 pt-4 border-t border-sage-700 group-hover:border-sage-500 transition-colors flex items-center gap-1 text-sage-400 text-xs uppercase tracking-[0.15em] font-sans">
                 <span>View more</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </div>
@@ -205,7 +200,7 @@ export const ThoughtfulApproach: React.FC = () => {
           </FadeInOnScroll>
           <FadeInOnScroll delay={400}>
             <div
-              className="group p-6 md:p-8 bg-sand-50 border border-stone-100 hover:border-stone-300 transition-all text-left cursor-pointer hover:shadow-md"
+              className="group p-6 md:p-8 rounded-sm bg-sage-800/40 border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
               onClick={() => scrollToService('style-refresh')}
               onMouseEnter={() => handleIconHover(icon3Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon3Ref.current, false)}
@@ -213,15 +208,15 @@ export const ThoughtfulApproach: React.FC = () => {
               <div className="flex items-start justify-between mb-6">
                 <div
                   ref={icon3Ref}
-                  className="w-10 h-10 flex items-center justify-center border border-stone-200 group-hover:border-sage-300 transition-colors"
+                  className="w-10 h-10 flex items-center justify-center border border-sage-600 group-hover:border-sage-400 transition-colors"
                 >
-                  <MagicWand className="w-5 h-5 text-sage-600" strokeWidth={1.5} />
+                  <Restart className="w-5 h-5 text-sage-300" strokeWidth={1.5} />
                 </div>
-                <span className="font-sans text-xs text-stone-300 tracking-[0.3em]">03</span>
+                <span className="font-sans text-xs text-sage-600 tracking-[0.3em]">03</span>
               </div>
-              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-stone-900" style={{ fontWeight: 700 }}>The Style Refresh</h3>
-              <p className="text-stone-500 text-sm md:text-base leading-relaxed">For travel, events, or seasonal updates. No Closet Edit required.</p>
-              <div className="mt-5 pt-4 border-t border-stone-100 group-hover:border-stone-200 transition-colors flex items-center gap-1 text-stone-400 text-xs uppercase tracking-[0.15em] font-sans">
+              <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-white" style={{ fontWeight: 700 }}>The Style Refresh</h3>
+              <p className="text-sage-300 text-sm md:text-base leading-relaxed">For travel, events, or seasonal updates. No Closet Edit required.</p>
+              <div className="mt-5 pt-4 border-t border-sage-700 group-hover:border-sage-500 transition-colors flex items-center gap-1 text-sage-400 text-xs uppercase tracking-[0.15em] font-sans">
                 <span>View more</span>
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </div>

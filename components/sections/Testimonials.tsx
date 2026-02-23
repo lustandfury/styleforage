@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
+import { EditorialSectionHeader } from '../EditorialSectionHeader';
 
 // Match CodePen stacked cards: items = 3 visible, elementsMargin = 10, stackedOptions = 'Top'
 const ITEMS = 3;
@@ -202,11 +203,12 @@ export const Testimonials: React.FC = () => {
     <section id="testimonials" className="pt-16 md:pt-24 pb-4 relative">
       <FadeInOnScroll>
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-12 md:mb-20">
-            <h2 className="font-serif text-3xl md:text-5xl text-stone-900 mb-4 md:mb-6">Client ❤️ Love</h2>
-            <div className="h-1.5 w-24 bg-sage-500 mx-auto rounded-full" />
-            <p className="mt-3 md:mt-4 text-stone-600 text-sm md:text-base">Real stories from real wardrobes.</p>
-          </div>
+          <EditorialSectionHeader
+            number="04"
+            label="Testimonials"
+            heading="Client Love"
+            description="Real stories from real wardrobes."
+          />
 
           <div className="relative max-w-2xl mx-auto">
             <button

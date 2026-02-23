@@ -39,14 +39,14 @@ html, body {
   }
 }
 
-/* Mobile menu: dark sage with leather-like grain texture */
+/* Mobile menu: dark sage with pebbled leather texture */
 .mobile-menu-leather {
   background-color: var(--color-sage-900);
   background-image:
-    radial-gradient(ellipse at 60% 10%, rgba(255,255,255,0.04) 0%, transparent 65%),
-    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.72 0.58' numOctaves='4' seed='12' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='0.13'/></svg>");
-  background-size: auto, 220px 220px;
-  background-repeat: no-repeat, repeat;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='p' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.18 0.14' numOctaves='3' seed='11' stitchTiles='stitch' result='noise'/%3E%3CfeDiffuseLighting in='noise' lighting-color='white' diffuseConstant='0.4' surfaceScale='1.5' result='diffuse'%3E%3CfeDistantLight azimuth='35' elevation='65'/%3E%3C/feDiffuseLighting%3E%3CfeColorMatrix type='matrix' values='0.17 0 0 0 0.09 0.21 0 0 0 0.12 0.17 0 0 0 0.09 0 0 0 0.6 0' in='diffuse'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23p)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.022 0.038' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='800' height='800' filter='url(%23c)' opacity='0.05'/%3E%3C/svg%3E");
+  background-size: 400px 400px, 800px 800px;
+  background-repeat: repeat, repeat;
 }
 
 /* Scroll-triggered fade up and in: only animates once when element enters viewport */

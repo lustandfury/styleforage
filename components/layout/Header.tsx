@@ -1,24 +1,22 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, User, Shirt, MessageCircle, Mail } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 type NavItemBase = {
   id: string;
   label: string;
   description: string;
-  icon: LucideIcon;
 };
 type NavItemAnchor = NavItemBase & { path: string };
 type NavItemButton = NavItemBase & { path?: never };
 type NavItem = NavItemAnchor | NavItemButton;
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'about', label: 'About', description: 'Meet your stylist', icon: User },
-  { id: 'services', label: 'Services', description: 'What we offer', icon: Shirt },
-  { id: 'testimonials', label: 'Testimonials', description: 'What clients say', icon: MessageCircle },
-  { id: 'contact', label: 'Contact', description: 'Get in touch', path: '/contact', icon: Mail },
+  { id: 'about', label: 'About', description: 'Meet your stylist' },
+  { id: 'services', label: 'Services', description: 'What we offer' },
+  { id: 'testimonials', label: 'Testimonials', description: 'What clients say' },
+  { id: 'contact', label: 'Contact', description: 'Get in touch', path: '/contact' },
 ];
 
 const SCROLL_THRESHOLD = 100;
@@ -39,6 +37,7 @@ export const Header: React.FC = () => {
   const [hoveredNavId, setHoveredNavId] = useState<string | null>(null);
   const [aboutSection90InView, setAboutSection90InView] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isNavDark, setIsNavDark] = useState(false);
   const [pillPosition, setPillPosition] = useState<{ left: number; width: number; top: number; height: number } | null>(null);
   const navItemsContainerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLSpanElement | null>>({});
@@ -90,6 +89,16 @@ export const Header: React.FC = () => {
       setAboutSection90InView(
         !!aboutEl && aboutEl.getBoundingClientRect().top <= vh * 0.1
       );
+
+      // Detect if nav is over a dark-background section
+      const NAV_HEIGHT = 80;
+      const darkSections = document.querySelectorAll('[data-nav-theme="dark"]');
+      let overDark = false;
+      darkSections.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < NAV_HEIGHT && rect.bottom > 0) overDark = true;
+      });
+      setIsNavDark(overDark);
     };
 
     const media = window.matchMedia('(max-width: 767px)');
@@ -169,7 +178,7 @@ export const Header: React.FC = () => {
         Skip to main content
       </a>
       <header className="fixed top-0 z-40 w-full border-b border-transparent transition-all duration-300">
-        <div className="w-full px-3 md:px-12 lg:px-20 h-20 grid grid-cols-3 items-center gap-2">
+        <div className="container mx-auto px-4 h-20 grid grid-cols-3 items-center gap-2">
           <div
             className="justify-self-start min-w-0 md:transition-none"
             style={
@@ -196,10 +205,12 @@ export const Header: React.FC = () => {
             >
               <Link
                 to="/"
-                className="font-serif text-xl md:text-2xl font-bold tracking-[2px] text-stone-900 hover:text-stone-700 transition-colors cursor-pointer truncate uppercase"
+                className={`font-serif text-xl md:text-2xl font-bold tracking-[2px] transition-colors duration-300 cursor-pointer truncate uppercase ${
+                  isNavDark && !showPillBg ? 'text-white hover:text-white/80' : 'text-stone-900 hover:text-stone-700'
+                }`}
                 style={{ fontWeight: 700 }}
               >
-                STYLE FORAGE 
+                STYLE FORAGE
               </Link>
             </span>
           </div>
@@ -224,7 +235,9 @@ export const Header: React.FC = () => {
               >
                 <Link
                   to="/"
-                  className="nav-link-item relative px-5 py-2 text-sm font-bold tracking-[2px] rounded-full cursor-pointer text-stone-900 hover:text-stone-700 font-serif whitespace-nowrap inline-block leading-none uppercase"
+                  className={`nav-link-item relative px-5 py-2 text-sm font-bold tracking-[2px] rounded-full cursor-pointer font-serif whitespace-nowrap inline-block leading-none uppercase transition-colors duration-300 ${
+                    isNavDark ? 'text-white hover:text-white/80' : 'text-stone-900 hover:text-stone-700'
+                  }`}
                   style={{ fontWeight: 700 }}
                 >
                   STYLE FORAGE
@@ -260,10 +273,10 @@ export const Header: React.FC = () => {
                       >
                         <Link
                           to={item.path}
-                          className={`nav-link-item relative px-4 py-1.5 text-xs font-sans uppercase tracking-[0.12em] rounded-full cursor-pointer block ${
+                          className={`nav-link-item relative px-4 py-1.5 text-xs font-sans uppercase tracking-[0.12em] rounded-full cursor-pointer block transition-colors duration-300 ${
                             isActive
                               ? 'nav-link-item--active text-stone-900'
-                              : 'text-stone-600 hover:text-stone-800'
+                              : isNavDark ? 'text-white/70 hover:text-white' : 'text-stone-600 hover:text-stone-800'
                           }`}
                         >
                           {item.label}
@@ -282,10 +295,10 @@ export const Header: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => scrollToAnchor(item.id)}
-                        className={`nav-link-item relative px-4 py-1.5 text-xs font-sans uppercase tracking-[0.12em] rounded-full cursor-pointer ${
+                        className={`nav-link-item relative px-4 py-1.5 text-xs font-sans uppercase tracking-[0.12em] rounded-full cursor-pointer transition-colors duration-300 ${
                           isActive
                             ? 'nav-link-item--active text-stone-900'
-                            : 'text-stone-600 hover:text-stone-800'
+                            : isNavDark ? 'text-white/70 hover:text-white' : 'text-stone-600 hover:text-stone-800'
                         }`}
                       >
                         {item.label}
@@ -307,7 +320,11 @@ export const Header: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => scrollToAnchor('services')}
-                  className="nav-link-item relative px-5 py-2 text-sm font-medium rounded-full cursor-pointer bg-stone-900 text-white hover:bg-sage-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-transparent transition-colors whitespace-nowrap inline-block"
+                  className={`nav-link-item relative px-5 py-2 text-sm font-medium rounded-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 focus:ring-offset-transparent transition-colors duration-300 whitespace-nowrap inline-block ${
+                    isNavDark
+                      ? 'bg-white text-stone-900 hover:bg-sage-100'
+                      : 'bg-stone-900 text-white hover:bg-sage-500 hover:text-white'
+                  }`}
                 >
                   Book Now
                 </button>
@@ -320,7 +337,11 @@ export const Header: React.FC = () => {
             {/* Mobile: menu button (top right) */}
             <button
               type="button"
-              className="md:hidden px-3 py-1.5 rounded-full text-stone-700 hover:bg-stone-200/80 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 cursor-pointer transition-colors duration-200 touch-manipulation"
+              className={`md:hidden px-3 py-1.5 rounded-full focus:outline-none focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 cursor-pointer transition-colors duration-300 touch-manipulation ${
+                isNavDark && !showPillBg
+                  ? 'text-white hover:bg-white/10'
+                  : 'text-stone-700 hover:bg-stone-200/80 hover:text-stone-900'
+              }`}
               style={
                 showPillBg
                   ? { backgroundColor: `rgba(255,255,255,${pillBgOpacity * 0.95})` }
@@ -389,27 +410,31 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Nav items — vertically centered, staggered animation */}
-        <nav className="flex-1 flex flex-col justify-center px-4 gap-1" aria-label="Main navigation">
+        <nav className="flex-1 flex flex-col justify-center px-6 md:px-10" aria-label="Main navigation">
           {NAV_ITEMS.map((item, i) => {
             const isActive = 'path' in item ? location.pathname === item.path : activeNav === item.id;
-            const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => handleNavAction(item)}
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-left cursor-pointer touch-manipulation transition-[opacity,transform] duration-500 ${
-                  isActive ? 'bg-sage-800' : 'hover:bg-sage-800 active:bg-sage-800'
-                } ${isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                className={`group w-full flex items-center justify-between py-5 border-b border-sage-700/50 text-left cursor-pointer touch-manipulation transition-[opacity,transform] duration-500 ${
+                  isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
                 style={{ transitionDelay: isMobileMenuOpen ? `${i * 60 + 50}ms` : '0ms' }}
               >
-                <span className="flex shrink-0 w-12 h-12 rounded-full bg-sage-800 items-center justify-center" aria-hidden>
-                  <Icon size={22} className="text-sage-300" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <span className="font-sans text-lg font-medium text-white block">{item.label}</span>
-                  <span className="text-sm text-sage-400 font-sans block mt-0.5">{item.description}</span>
+                <div className="flex items-baseline gap-4 min-w-0">
+                  <span className="font-sans text-[10px] uppercase tracking-[0.3em] text-sage-500 shrink-0 tabular-nums">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <span className={`font-serif block leading-none transition-colors duration-200 ${isActive ? 'text-white' : 'text-white/80 group-hover:text-white'}`}
+                      style={{ fontSize: 'clamp(1.6rem, 6vw, 2.4rem)', fontWeight: 700 }}
+                    >{item.label}</span>
+                    <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-sage-400 block mt-1">{item.description}</span>
+                  </div>
                 </div>
+                <span className="text-sage-500 text-xl transition-transform duration-300 group-hover:translate-x-1 shrink-0 ml-4" aria-hidden>→</span>
               </button>
             );
           })}
@@ -417,14 +442,14 @@ export const Header: React.FC = () => {
 
         {/* Book Now — animates in last */}
         <div
-          className={`px-6 pb-12 shrink-0 transition-[opacity,transform] duration-500 ${
+          className={`px-6 pb-12 pt-8 shrink-0 transition-[opacity,transform] duration-500 ${
             isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
           style={{ transitionDelay: isMobileMenuOpen ? `${NAV_ITEMS.length * 60 + 50}ms` : '0ms' }}
         >
           <button
             type="button"
-            className="w-full rounded-2xl py-4 font-sans text-sm font-medium tracking-wide bg-white text-sage-900 hover:bg-sage-100 transition-colors cursor-pointer"
+            className="w-full py-4 font-sans text-xs uppercase tracking-[0.2em] font-medium border border-white/20 text-white hover:bg-white hover:text-sage-900 transition-colors cursor-pointer"
             onClick={() => {
               closeMobileMenu();
               scrollToAnchor('services');
