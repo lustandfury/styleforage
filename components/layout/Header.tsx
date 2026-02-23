@@ -358,66 +358,80 @@ export const Header: React.FC = () => {
         </div>
       </header>
 
-      {/* Mobile menu: overlay + panel (only visible when open) */}
+      {/* Mobile menu: full-screen overlay */}
       <div
-        className="fixed inset-0 z-30 md:hidden"
+        className={`fixed inset-0 z-50 md:hidden flex flex-col mobile-menu-leather transition-opacity duration-300 ${
+          isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        role="dialog"
+        aria-modal
+        aria-label="Navigation menu"
         aria-hidden={!isMobileMenuOpen}
-        style={{ pointerEvents: isMobileMenuOpen ? undefined : 'none' }}
       >
-        <button
-          type="button"
-          className={`absolute inset-0 bg-stone-900/40 transition-opacity cursor-default ${
-            isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
-          }`}
-          onClick={closeMobileMenu}
-          aria-label="Close menu"
-        />
-        <div
-          className={`absolute top-20 left-4 right-4 rounded-2xl bg-white shadow-xl border border-stone-200 overflow-hidden transition-all duration-200 ${
-            isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-          }`}
-          role="dialog"
-          aria-label="Navigation menu"
-        >
-          <div className="p-3 space-y-0.5">
-            {NAV_ITEMS.map((item) => {
-              const isActive = 'path' in item ? location.pathname === item.path : activeNav === item.id;
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => handleNavAction(item)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-colors cursor-pointer touch-manipulation ${
-                    isActive
-                      ? 'bg-sage-50 text-sage-900'
-                      : 'text-stone-700 hover:bg-stone-100 active:bg-stone-100'
-                  }`}
-                >
-                  <span className="flex shrink-0 w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center" aria-hidden>
-                    <Icon size={20} className="text-stone-600" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-medium text-stone-900 block">{item.label}</span>
-                    <span className="text-sm text-stone-500 block">{item.description}</span>
-                  </div>
-                </button>
-              );
-            })}
-            <div className="pt-3 mt-2 border-t border-stone-200">
-              <Button
-                variant="primary"
-                size="md"
-                className="w-full rounded-xl"
-                onClick={() => {
-                  closeMobileMenu();
-                  scrollToAnchor('services');
-                }}
+        {/* Menu header row: logo + close */}
+        <div className="flex items-center justify-between px-6 h-20 shrink-0 border-b border-sage-700">
+          <Link
+            to="/"
+            onClick={closeMobileMenu}
+            className="font-serif text-xl font-bold tracking-[2px] text-white uppercase cursor-pointer"
+            style={{ fontWeight: 700 }}
+          >
+            STYLE FORAGE
+          </Link>
+          <button
+            type="button"
+            onClick={closeMobileMenu}
+            className="p-2 -mr-1 rounded-full text-sage-300 hover:bg-sage-800 cursor-pointer transition-colors"
+            aria-label="Close menu"
+          >
+            <X size={24} aria-hidden />
+          </button>
+        </div>
+
+        {/* Nav items — vertically centered, staggered animation */}
+        <nav className="flex-1 flex flex-col justify-center px-4 gap-1" aria-label="Main navigation">
+          {NAV_ITEMS.map((item, i) => {
+            const isActive = 'path' in item ? location.pathname === item.path : activeNav === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleNavAction(item)}
+                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-left cursor-pointer touch-manipulation transition-[opacity,transform] duration-500 ${
+                  isActive ? 'bg-sage-800' : 'hover:bg-sage-800 active:bg-sage-800'
+                } ${isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                style={{ transitionDelay: isMobileMenuOpen ? `${i * 60 + 50}ms` : '0ms' }}
               >
-                Book Now
-              </Button>
-            </div>
-          </div>
+                <span className="flex shrink-0 w-12 h-12 rounded-full bg-sage-800 items-center justify-center" aria-hidden>
+                  <Icon size={22} className="text-sage-300" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="font-sans text-lg font-medium text-white block">{item.label}</span>
+                  <span className="text-sm text-sage-400 font-sans block mt-0.5">{item.description}</span>
+                </div>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Book Now — animates in last */}
+        <div
+          className={`px-6 pb-12 shrink-0 transition-[opacity,transform] duration-500 ${
+            isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+          style={{ transitionDelay: isMobileMenuOpen ? `${NAV_ITEMS.length * 60 + 50}ms` : '0ms' }}
+        >
+          <button
+            type="button"
+            className="w-full rounded-2xl py-4 font-sans text-sm font-medium tracking-wide bg-white text-sage-900 hover:bg-sage-100 transition-colors cursor-pointer"
+            onClick={() => {
+              closeMobileMenu();
+              scrollToAnchor('services');
+            }}
+          >
+            Book Now
+          </button>
         </div>
       </div>
     </>

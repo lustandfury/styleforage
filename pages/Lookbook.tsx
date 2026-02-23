@@ -1472,7 +1472,7 @@ const ShoppingListView: React.FC<ShoppingListViewProps> = ({ items, clientName, 
     >
       {/* Link Preview Image */}
       {item.linkPreview?.image && (
-        <div className={`aspect-[16/9] w-full bg-stone-100 ${item.checked ? 'grayscale' : ''}`}>
+        <div className="aspect-[16/9] w-full bg-stone-100">
           <img
             src={item.linkPreview.image}
             alt={item.name}
@@ -1722,7 +1722,7 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
     >
       {/* Link Preview Image */}
       {item.linkPreview?.image && (
-        <div className={`aspect-[16/9] w-full bg-stone-100 ${item.checked ? 'grayscale' : ''}`}>
+        <div className="aspect-[16/9] w-full bg-stone-100">
           <img
             src={item.linkPreview.image}
             alt={item.name}

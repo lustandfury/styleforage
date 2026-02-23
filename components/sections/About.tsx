@@ -160,7 +160,7 @@ export const About: React.FC = () => {
                       preload="auto"
                       onCanPlayThrough={() => setIsVideoReady(true)}
                       className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-                        isHoveringInstagram && isVideoReady ? 'opacity-100 grayscale-0' : 'opacity-0 grayscale'
+                        isHoveringInstagram && isVideoReady ? 'opacity-100' : 'opacity-0'
                       }`}
                     />
                     {/* Image: editorial grayscale by default, colorizes on hover */}
@@ -170,7 +170,7 @@ export const About: React.FC = () => {
                       alt="Roslyn Costanzo"
                       className={`w-full h-full object-cover transition-all duration-700 ${
                         isHoveringInstagram && isVideoReady ? 'opacity-0' : 'opacity-100'
-                      } grayscale hover:grayscale-0`}
+                      }`}
                       loading="lazy"
                       width="800"
                       height="1000"

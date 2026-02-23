@@ -39,6 +39,16 @@ html, body {
   }
 }
 
+/* Mobile menu: dark sage with leather-like grain texture */
+.mobile-menu-leather {
+  background-color: var(--color-sage-900);
+  background-image:
+    radial-gradient(ellipse at 60% 10%, rgba(255,255,255,0.04) 0%, transparent 65%),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.72 0.58' numOctaves='4' seed='12' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='0.13'/></svg>");
+  background-size: auto, 220px 220px;
+  background-repeat: no-repeat, repeat;
+}
+
 /* Scroll-triggered fade up and in: only animates once when element enters viewport */
 .scroll-fade-in {
   opacity: 0;
