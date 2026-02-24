@@ -53,7 +53,7 @@ export const Footer: React.FC = () => {
               Style Forage
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-sage-300">
-              Styleforage is Roslyn Costanzo. I help elevate your everyday style with intention and grace.
+              Style Forage is Roslyn Costanzo. I help elevate your everyday style with intention and grace.
               Book your consultation today and step into your best self.
             </p>
           </div>

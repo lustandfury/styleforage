@@ -13,10 +13,8 @@ export const Hero: React.FC = () => {
   const textBlurTopRef = useRef<HTMLDivElement>(null);
   const textBlurBottomRef = useRef<HTMLDivElement>(null);
   const headingWrapperRef = useRef<HTMLDivElement>(null);
-  const mobileImageRef = useRef<HTMLDivElement>(null);
   const [headingVisible, setHeadingVisible] = useState(false);
   const [revealDone, setRevealDone] = useState(false);
-  const [showAltImage, setShowAltImage] = useState(false);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setHeadingVisible(true));
@@ -57,16 +55,6 @@ export const Hero: React.FC = () => {
         headingWrapperRef.current.style.opacity = String(1 - progress);
         headingWrapperRef.current.style.transform = `translateY(${-40 * progress}px)`;
       }
-      if (mobileImageRef.current) {
-        const vh = window.innerHeight;
-        const fadeStart = vh * 0.2;
-        const fadeEnd = vh * 0.7;
-        const progress = Math.max(0, Math.min(1, (y - fadeStart) / (fadeEnd - fadeStart)));
-        mobileImageRef.current.style.transform = `translateY(${-160 * progress}px)`;
-      }
-
-      // Switch hero image as About section comes into view
-      setShowAltImage(y >= window.innerHeight * 0.6);
     };
 
     const handleScroll = () => {
@@ -87,22 +75,16 @@ export const Hero: React.FC = () => {
   };
 
   return (
-    <section className="relative h-full min-h-screen bg-stone-50" aria-label="Hero">
+    <section className="relative h-full min-h-screen overflow-hidden bg-stone-50" aria-label="Hero">
       <h1 className="sr-only">{HEADING_LINE1} {HEADING_LINE2}</h1>
 
-      {/* Right column: full-bleed image, desktop only, absolutely positioned */}
-      <div className="hidden md:block absolute inset-y-0 right-0 w-2/5 overflow-hidden">
-        <img
-          src="/images/roz-transparent.webp"
-          alt=""
-          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${showAltImage ? 'opacity-0' : 'opacity-100'}`}
-        />
-        <img
-          src="/images/roz-transparent-2.webp"
-          alt=""
-          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${showAltImage ? 'opacity-100' : 'opacity-0'}`}
-        />
-      </div>
+      {/* Full-bleed background image — hidden on mobile */}
+      <img
+        src="/images/clothing rack full width.webp"
+        alt=""
+        aria-hidden="true"
+        className="hidden md:block absolute inset-0 w-full h-full object-cover object-right"
+      />
 
       {/* Left column: container-aligned to match section headers */}
       <div className="container mx-auto px-4 h-full">
@@ -117,11 +99,11 @@ export const Hero: React.FC = () => {
               <span className="text-stone-500 font-sans text-xs uppercase tracking-[0.3em] shrink-0">
                 Personal Styling &amp; Wardrobe
               </span>
-              <div className="h-px w-8 bg-stone-200 shrink-0" />
+              <div className="h-px w-8 bg-stone-400 shrink-0 hidden sm:inline" />
               <span className="text-stone-500 font-sans text-xs uppercase tracking-[0.3em] shrink-0 hidden sm:inline">
                 Toronto, CA
               </span>
-              <div className="h-px flex-1 bg-stone-200" />
+              <div className="h-px flex-1 bg-stone-400" />
             </div>
           </div>
 
@@ -154,20 +136,6 @@ export const Hero: React.FC = () => {
                 </span>
               </span>
             </h2>
-          </div>
-
-          {/* Mobile image — flex-1 fills the space between heading and bottom strip */}
-          <div ref={mobileImageRef} className="md:hidden flex-1 min-h-0 overflow-hidden relative">
-            <img
-              src="/images/roz-transparent.webp"
-              alt=""
-              className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-700 ${showAltImage ? 'opacity-0' : 'opacity-100'}`}
-            />
-            <img
-              src="/images/roz-transparent-2.webp"
-              alt=""
-              className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-700 ${showAltImage ? 'opacity-100' : 'opacity-0'}`}
-            />
           </div>
 
           {/* Bottom editorial strip */}

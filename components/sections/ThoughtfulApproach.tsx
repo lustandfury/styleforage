@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
-import { EditorialSectionHeader } from '../EditorialSectionHeader';
+import { EditorialSectionLabel } from '../EditorialSectionLabel';
 import { Restart, MagicWand } from 'iconoir-react';
 import gsap from 'gsap';
 
@@ -49,7 +49,7 @@ export const ThoughtfulApproach: React.FC = () => {
   const hasAnimated = useRef(false);
 
   // Pink color for hover animation
-  const pinkColor = '#ec4899';
+  const pinkColor = '#FDD245';
   const sageColor = '#a8c5a8';
 
   const animateIconDraw = (iconContainer: HTMLDivElement, delay: number) => {
@@ -142,17 +142,35 @@ export const ThoughtfulApproach: React.FC = () => {
     <section data-nav-theme="dark" className="py-16 md:py-24 mobile-menu-leather border-b border-sage-800">
       <FadeInOnScroll>
       <div className="container mx-auto px-4">
-        <EditorialSectionHeader
-          number="02"
-          label="The Process"
-          heading="A Thoughtful Approach"
-          description="Most clients begin with a closet edit, so we can shop intentionally and build a wardrobe that feels cohesive, wearable, and truly theirs."
-          dark
-        />
+        {/* Header — inlined to place illustration beside description */}
+        <div className="mb-10 md:mb-16">
+          <EditorialSectionLabel number="02" label="The Process" dark className="mb-8 md:mb-12" />
+          <div className="md:flex md:items-end gap-4">
+            <h2
+              className="font-serif font-bold text-3xl md:text-5xl max-w-sm text-white"
+              style={{ fontWeight: 700 }}
+            >
+              A Thoughtful Approach
+            </h2>
+            <div className="flex items-end gap-4 mt-4 md:mt-0">
+              <p className="max-w-sm leading-relaxed text-sm md:text-base text-sage-300">
+                Most clients begin with a closet edit, so we can shop intentionally and build a wardrobe that feels cohesive, wearable, and truly theirs.
+              </p>
+              <img
+                src="/images/illustrations/pick-the-ripe-apple.svg"
+                alt=""
+                aria-hidden="true"
+                className="flex-shrink-0 w-12 md:w-14 h-auto opacity-90"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Cards — full width */}
         <div className="grid md:grid-cols-3 gap-6 md:gap-8">
           <FadeInOnScroll delay={100}>
             <div
-              className="group p-6 md:p-8 rounded-sm bg-sage-800/40 border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
+              className="group p-6 md:p-8 rounded-sm bg-[#1e3a2d] border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
               onClick={() => scrollToService('style-upgrade')}
               onMouseEnter={() => handleIconHover(icon1Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon1Ref.current, false)}
@@ -164,7 +182,7 @@ export const ThoughtfulApproach: React.FC = () => {
                 >
                   <MagicWand className="w-5 h-5 text-sage-300" strokeWidth={1.5} />
                 </div>
-                <span className="font-sans text-xs text-sage-600 tracking-[0.3em]">01</span>
+                <span className="font-sans text-xs text-[#FDD245] tracking-[0.3em]">01</span>
               </div>
               <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-white" style={{ fontWeight: 700 }}>The Style Upgrade</h3>
               <p className="text-sage-300 text-sm md:text-base leading-relaxed">Closet Edit plus shopping — so you don't just know what's missing, it gets handled.</p>
@@ -176,7 +194,7 @@ export const ThoughtfulApproach: React.FC = () => {
           </FadeInOnScroll>
           <FadeInOnScroll delay={250}>
             <div
-              className="group p-6 md:p-8 rounded-sm bg-sage-800/40 border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
+              className="group p-6 md:p-8 rounded-sm bg-[#1e3a2d] border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
               onClick={() => scrollToService('closet-reset')}
               onMouseEnter={() => handleIconHover(icon2Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon2Ref.current, false)}
@@ -188,7 +206,7 @@ export const ThoughtfulApproach: React.FC = () => {
                 >
                   <ClosetOpen className="w-5 h-5 text-sage-300" strokeWidth={1.5} />
                 </div>
-                <span className="font-sans text-xs text-sage-600 tracking-[0.3em]">02</span>
+                <span className="font-sans text-xs text-[#FDD245] tracking-[0.3em]">02</span>
               </div>
               <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-white" style={{ fontWeight: 700 }}>The Closet Edit</h3>
               <p className="text-sage-300 text-sm md:text-base leading-relaxed">A strategic in-home edit to help you see what you own differently — and build real outfits from it.</p>
@@ -200,7 +218,7 @@ export const ThoughtfulApproach: React.FC = () => {
           </FadeInOnScroll>
           <FadeInOnScroll delay={400}>
             <div
-              className="group p-6 md:p-8 rounded-sm bg-sage-800/40 border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
+              className="group p-6 md:p-8 rounded-sm bg-[#1e3a2d] border border-sage-700 hover:border-sage-500 transition-all text-left cursor-pointer hover:shadow-lg hover:shadow-black/20"
               onClick={() => scrollToService('style-refresh')}
               onMouseEnter={() => handleIconHover(icon3Ref.current, true)}
               onMouseLeave={() => handleIconHover(icon3Ref.current, false)}
@@ -212,7 +230,7 @@ export const ThoughtfulApproach: React.FC = () => {
                 >
                   <Restart className="w-5 h-5 text-sage-300" strokeWidth={1.5} />
                 </div>
-                <span className="font-sans text-xs text-sage-600 tracking-[0.3em]">03</span>
+                <span className="font-sans text-xs text-[#FDD245] tracking-[0.3em]">03</span>
               </div>
               <h3 className="font-serif font-bold text-xl md:text-2xl mb-3 text-white" style={{ fontWeight: 700 }}>The Style Refresh</h3>
               <p className="text-sage-300 text-sm md:text-base leading-relaxed">For travel, events, or seasonal updates. No Closet Edit required.</p>

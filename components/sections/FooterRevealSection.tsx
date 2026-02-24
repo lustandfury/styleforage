@@ -60,13 +60,12 @@ export const FooterRevealSection: React.FC = () => {
   return (
     <section
       id="footer-reveal"
-      className="relative z-20 min-h-[80vh] flex flex-col items-start justify-center px-6 md:px-12 lg:px-20 py-12 bg-sand-50 border-t border-stone-100"
+      className="relative z-20 min-h-[80vh] flex flex-col items-start justify-center px-6 md:px-12 lg:px-20 py-12 bg-stone-50"
       aria-label="Book your consultation"
     >
       <h2
         ref={headingRef}
-        className="relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-stone-900 tracking-tight leading-[1.1] whitespace-pre-wrap pb-3 pr-8 md:pr-16 text-left max-w-5xl overflow-visible"
-        style={{ fontWeight: 700 }}
+        className="relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-medium text-stone-900 tracking-tight leading-[1.2] whitespace-pre-wrap pb-3 pr-8 md:pr-16 text-left max-w-5xl overflow-visible"
         aria-hidden="true"
       >
         <span className="hero-reveal-line bottom-reveal-line block">
@@ -81,26 +80,15 @@ export const FooterRevealSection: React.FC = () => {
           ))}
         </span>
         <span className="hero-reveal-line bottom-reveal-line block">
-          {LINE2_CHARS.slice(0, -5).map((char, i) => (
+          {LINE2_CHARS.map((char, i) => (
             <span
               key={`l2-${i}`}
-              className={char === ' ' ? 'inline-block italic sage-700 transition-opacity duration-150 w-[0.25em]' : 'inline-block italic text-sage-600 transition-opacity duration-150'}
+              className={char === ' ' ? 'inline-block italic text-stone-700 transition-opacity duration-150 w-[0.25em]' : 'inline-block italic text-stone-700 transition-opacity duration-150'}
               style={{ opacity: letterOpacity(progress, LINE1_CHARS.length + i) }}
             >
               {char === ' ' ? '\u00A0' : char}
             </span>
           ))}
-          <span className="whitespace-nowrap inline">
-            {LINE2_CHARS.slice(-5).map((char, i) => (
-              <span
-                key={`l2-tail-${i}`}
-                className={char === ' ' ? 'inline-block italic sage-700 transition-opacity duration-150 w-[0.25em]' : 'inline-block italic text-sage-600 transition-opacity duration-150'}
-                style={{ opacity: letterOpacity(progress, LINE1_CHARS.length + LINE2_CHARS.length - 5 + i) }}
-              >
-                {char === ' ' ? '\u00A0' : char}
-              </span>
-            ))}
-          </span>
         </span>
       </h2>
     </section>

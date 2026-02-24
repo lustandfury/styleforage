@@ -39,7 +39,7 @@ html, body {
   }
 }
 
-/* Mobile menu: dark sage with pebbled leather texture */
+/* Dark sage dotted pattern — used on ThoughtfulApproach section, footer, mobile menu */
 .mobile-menu-leather {
   background-color: var(--color-sage-900);
   background-image:
