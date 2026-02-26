@@ -144,7 +144,7 @@ export const Hero: React.FC = () => {
             className={`hero-rest-in transition-none pb-8 md:pb-12 ${revealDone ? 'hero-rest-visible' : ''}`}
           >
               <p className="text-stone-600 text-md max-w-lg font-sans font-light leading-relaxed">
-                Personal styling for working professionals who want to feel confident, current, and completely themselves.
+              The boardroom, the weekend, the trip you haven’t packed for yet. Consider it handled.
               </p>
               <button
                 onClick={scrollToServices}

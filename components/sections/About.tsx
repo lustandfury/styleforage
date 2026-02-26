@@ -3,28 +3,23 @@ import { ArrowRight } from 'lucide-react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
 import { EditorialSectionLabel } from '../EditorialSectionLabel';
 
-// ─── Bio copy (split around inline link in P1) ──────────────────────────────
-const P1_PRE  = "I've been obsessed with fashion since my first paycheque in 1992 — which I promptly spent at Smart Set. Since then, I've built a career around style: serving as a style editor at two national lifestyle magazines, contributing to";
-const P1_POST = "and working one-on-one as a wardrobe consultant to help people define and refine their personal style with confidence.";
-const P2_TEXT = "Because the truth is, when you look good, you feel good and people around you notice.";
-const P3_TEXT = "So if you need a boost and are tired of feeling frustrated every time you get dressed for the day, let's chat!";
+// ─── Bio copy ───────────────────────────────────────────────────────────────
+const P1_TEXT = "I've spent my career developing an eye for what works. As an editorial stylist at national magazines, a fashion writer for luxury publications, and a PR strategist for leading lifestyle brands, I learned to move through the industry with precision, identifying quality, spotting potential, and knowing when something is exactly right.";
+const P2_TEXT = "With a graduate degree in art history, I bring a curator's sensibility to the personal work of building wardrobes that actually function. For real bodies, real schedules, and lives that refuse to sit still.";
+const P3_TEXT = "I founded Style Forage to offer the kind of attentive, dedicated wardrobe and lifestyle partnership that's usually reserved for those with teams of people behind them. Made personal, considered, and accessible.";
 
-const P1_PRE_WORDS  = P1_PRE.split(' ');
-const P1_POST_WORDS = P1_POST.split(' ');
-const P2_WORDS      = P2_TEXT.split(' ');
-const P3_WORDS      = P3_TEXT.split(' ');
+const P1_WORDS = P1_TEXT.split(' ');
+const P2_WORDS = P2_TEXT.split(' ');
+const P3_WORDS = P3_TEXT.split(' ');
 
-// P1 total tokens: pre-words + 1 link token + post-words
-const P1_TOKEN_COUNT = P1_PRE_WORDS.length + 1 + P1_POST_WORDS.length;
+const WORD_STAGGER = 0.022; // seconds per word
+const START_DELAY  = 0.25;
+const P2_START     = START_DELAY + P1_WORDS.length * WORD_STAGGER + 0.1;
+const P3_START     = P2_START + P2_WORDS.length * WORD_STAGGER + 0.1;
+const LINK_DELAY   = P3_START + P3_WORDS.length * WORD_STAGGER - 0.15;
 
-const WORD_STAGGER  = 0.022; // seconds per word
-const START_DELAY   = 0.25;
-const P2_START      = START_DELAY + P1_TOKEN_COUNT * WORD_STAGGER + 0.1;
-const P3_START      = P2_START + P2_WORDS.length * WORD_STAGGER + 0.1;
-const LINK_DELAY    = P3_START + P3_WORDS.length * WORD_STAGGER - 0.15;
-
-function wordStyle(inView: boolean, globalIndex: number) {
-  const delay = START_DELAY + globalIndex * WORD_STAGGER;
+function wordStyle(inView: boolean, globalIndex: number, startDelay: number = START_DELAY) {
+  const delay = startDelay + globalIndex * WORD_STAGGER;
   return {
     opacity: inView ? 1 : 0,
     transform: inView ? 'none' : 'translateY(5px)',
@@ -80,70 +75,31 @@ export const About: React.FC = () => {
 
               <div className="space-y-4 md:space-y-5 text-stone-600 text-sm md:text-base leading-relaxed font-light">
 
-                {/* Para 1 — word-level with inline Globe & Mail link */}
+                {/* Para 1 */}
                 <p>
-                  {P1_PRE_WORDS.map((word, i) => (
+                  {P1_WORDS.map((word, i) => (
                     <span key={i} className="inline-block" style={wordStyle(inView, i)}>
-                      {word}{'\u00A0'}
-                    </span>
-                  ))}
-                  <span className="inline-block" style={wordStyle(inView, P1_PRE_WORDS.length)}>
-                    <a
-                      href="https://www.theglobeandmail.com/business/article-why-empathy-and-adaptability-are-the-new-pillars-of-leadership/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sage-500 italic hover:text-sage-700 transition-colors underline underline-offset-2"
-                    >The Globe &amp; Mail</a>,{'\u00A0'}
-                  </span>
-                  {P1_POST_WORDS.map((word, i) => (
-                    <span key={i} className="inline-block" style={wordStyle(inView, P1_PRE_WORDS.length + 1 + i)}>
-                      {word}{i < P1_POST_WORDS.length - 1 ? '\u00A0' : ''}
+                      {word}{i < P1_WORDS.length - 1 ? '\u00A0' : ''}
                     </span>
                   ))}
                 </p>
 
                 {/* Para 2 */}
                 <p>
-                  {P2_WORDS.map((word, i) => {
-                    const delay = P2_START + i * WORD_STAGGER;
-                    return (
-                      <span
-                        key={i}
-                        className="inline-block"
-                        style={{
-                          opacity: inView ? 1 : 0,
-                          transform: inView ? 'none' : 'translateY(5px)',
-                          transition: inView
-                            ? `opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`
-                            : 'none',
-                        }}
-                      >
-                        {word}{i < P2_WORDS.length - 1 ? '\u00A0' : ''}
-                      </span>
-                    );
-                  })}
+                  {P2_WORDS.map((word, i) => (
+                    <span key={i} className="inline-block" style={wordStyle(inView, i, P2_START)}>
+                      {word}{i < P2_WORDS.length - 1 ? '\u00A0' : ''}
+                    </span>
+                  ))}
                 </p>
 
                 {/* Para 3 */}
                 <p>
-                  {P3_WORDS.map((word, i) => {
-                    const delay = P3_START + i * WORD_STAGGER;
-                    return (
-                      <span
-                        key={i}
-                        className="inline-block"
-                        style={{
-                          opacity: inView ? 1 : 0,
-                          transform: inView ? 'none' : 'translateY(5px)',
-                          transition: inView
-                            ? `opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`
-                            : 'none',
-                        }}
-                      >
-                        {word}{i < P3_WORDS.length - 1 ? '\u00A0' : ''}
-                      </span>
-                    );
-                  })}
+                  {P3_WORDS.map((word, i) => (
+                    <span key={i} className="inline-block" style={wordStyle(inView, i, P3_START)}>
+                      {word}{i < P3_WORDS.length - 1 ? '\u00A0' : ''}
+                    </span>
+                  ))}
                 </p>
               </div>
 
