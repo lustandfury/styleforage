@@ -110,6 +110,28 @@ html, body {
 .hero-rest-in.hero-rest-visible {
   opacity: 1;
 }
+@keyframes hero-caret-blink {
+  0%, 49% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+.hero-type-caret {
+  display: inline-block;
+  width: 1px;
+  height: 0.95em;
+  margin-left: 0.08em;
+  vertical-align: -0.12em;
+  background-color: currentColor;
+  animation: hero-caret-blink 1.1s steps(1, end) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-type-caret {
+    animation: none;
+  }
+}
 
 /* Nav pill: totally transparent on load (before first scroll) */
 .nav-pill-flat {
