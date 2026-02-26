@@ -140,7 +140,7 @@ export const Hero: React.FC = () => {
             className="py-1"
           >
             <h2
-              className={`scroll-fade-in font-serif font-black text-stone-900 leading-[0.92] tracking-tight text-[clamp(1.9rem,8.8vw,3.1rem)] md:text-[clamp(3rem,5.5vw,6.5rem)] ${headingVisible ? 'is-visible' : ''}`}
+              className={`hero-heading-in font-serif font-black text-stone-900 leading-[0.92] tracking-tight text-[clamp(1.9rem,8.8vw,3.1rem)] md:text-[clamp(3rem,5.5vw,6.5rem)] ${headingVisible ? 'is-visible' : ''}`}
               style={{ fontWeight: 900 }}
             >
               <span className="hero-reveal-line block whitespace-normal sm:whitespace-nowrap">

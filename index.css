@@ -85,9 +85,22 @@ html, body {
   animation: hero-word-reveal 0.6s cubic-bezier(0.2, 0, 0.2, 1) forwards;
   opacity: 0;
 }
+@keyframes hero-fade-up-in {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .hero-heading-in {
   opacity: 0;
-  animation: hero-fade-up-in 0.6s ease-out forwards;
+  transform: translateY(48px);
+}
+.hero-heading-in.is-visible {
+  animation: hero-fade-up-in 0.7s cubic-bezier(0.2, 0, 0.2, 1) 0.2s forwards;
 }
 /* Other hero text: opacity transition when typewriter finishes (class added by Hero) */
 .hero-rest-in {
