@@ -12,9 +12,9 @@
     "skipLibCheck": true,
     "types": [
       "node",
-      "react",
-      "react-dom"
-    ],
+       "react",
+       "react-dom"
+      ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
