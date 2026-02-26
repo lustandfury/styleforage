@@ -148,9 +148,12 @@ export const Hero: React.FC = () => {
                   <span
                     key={i}
                     className="hero-reveal-word"
-                    style={{ animationDelay: `${REVEAL_START_DELAY + i * WORD_STAGGER}s` }}
+                    style={{
+                      animationDelay: `${REVEAL_START_DELAY + i * WORD_STAGGER}s`,
+                      marginRight: i < LINE1_WORDS.length - 1 ? '0.28em' : undefined,
+                    }}
                   >
-                    {word}{i < LINE1_WORDS.length - 1 ? ' ' : ''}
+                    {word}
                   </span>
                 ))}
               </span>
