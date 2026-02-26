@@ -65,7 +65,7 @@ export const FooterRevealSection: React.FC = () => {
     >
       <h2
         ref={headingRef}
-        className="relative font-serif text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-medium text-stone-900 tracking-tight leading-[1.2] whitespace-pre-wrap pb-3 pr-8 md:pr-16 text-left max-w-5xl overflow-visible"
+        className="relative font-serif text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-medium text-stone-900 tracking-tight leading-[1.2] whitespace-pre-wrap pb-3 pr-8 md:pr-16 text-left max-w-5xl overflow-visible"
         aria-hidden="true"
       >
         <span className="hero-reveal-line bottom-reveal-line block">
