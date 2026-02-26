@@ -21,6 +21,8 @@
         "npm:@stripe/stripe-js@^8.7.0",
         "npm:@tailwindcss/postcss@^4.1.18",
         "npm:@types/node@^22.14.0",
+        "npm:@types/react-dom@^19.2.3",
+        "npm:@types/react@^19.2.14",
         "npm:@vitejs/plugin-react@5",
         "npm:autoprefixer@^10.4.23",
         "npm:date-fns@3.3.1",
