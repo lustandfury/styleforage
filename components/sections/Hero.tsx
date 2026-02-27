@@ -9,8 +9,20 @@ const REVEAL_START_DELAY = 0.35;
 const SCROLL_DEAD_ZONE = 5;
 const SCROLL_BLUR_RANGE = 200;
 const HERO_SUBHEADING = "The boardroom, the weekend, the trip you haven't packed for yet. Consider it handled.";
-const SUBHEADING_TYPE_START_DELAY = 160;
-const SUBHEADING_TYPE_SPEED = 24;
+const HERO_SUBHEADING_WORDS = HERO_SUBHEADING.split(' ');
+const SUBHEADING_WORD_STAGGER = 0.022; // Match About section word cadence
+const SUBHEADING_START_DELAY = 0.25;
+
+function subheadingWordStyle(inView: boolean, globalIndex: number) {
+  const delay = SUBHEADING_START_DELAY + globalIndex * SUBHEADING_WORD_STAGGER;
+  return {
+    opacity: inView ? 1 : 0,
+    transform: inView ? 'none' : 'translateY(5px)',
+    transition: inView
+      ? `opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`
+      : 'none',
+  } as React.CSSProperties;
+}
 
 export const Hero: React.FC = () => {
   const textBlurTopRef    = useRef<HTMLDivElement>(null);
@@ -20,7 +32,6 @@ export const Hero: React.FC = () => {
   const winterImg2Ref     = useRef<HTMLImageElement>(null);
   const [headingVisible, setHeadingVisible] = useState(false);
   const [revealDone, setRevealDone]         = useState(false);
-  const [typedSubheading, setTypedSubheading] = useState('');
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setHeadingVisible(true));
@@ -34,36 +45,6 @@ export const Hero: React.FC = () => {
     const t = setTimeout(() => setRevealDone(true), doneAt);
     return () => clearTimeout(t);
   }, []);
-
-  useEffect(() => {
-    if (!revealDone) return;
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) {
-      setTypedSubheading(HERO_SUBHEADING);
-      return;
-    }
-
-    setTypedSubheading('');
-    let index = 0;
-    let typeIntervalId: number | undefined;
-
-    const typeStartId = window.setTimeout(() => {
-      typeIntervalId = window.setInterval(() => {
-        index += 1;
-        setTypedSubheading(HERO_SUBHEADING.slice(0, index));
-
-        if (index >= HERO_SUBHEADING.length && typeIntervalId !== undefined) {
-          window.clearInterval(typeIntervalId);
-        }
-      }, SUBHEADING_TYPE_SPEED);
-    }, SUBHEADING_TYPE_START_DELAY);
-
-    return () => {
-      window.clearTimeout(typeStartId);
-      if (typeIntervalId !== undefined) window.clearInterval(typeIntervalId);
-    };
-  }, [revealDone]);
 
   useEffect(() => {
     let rafId: number | null = null;
@@ -123,8 +104,6 @@ export const Hero: React.FC = () => {
   const scrollToServices = () => {
     document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  const isSubheadingTypingDone = typedSubheading.length >= HERO_SUBHEADING.length;
 
   return (
     <section className="relative h-full min-h-screen overflow-hidden bg-stone-50" aria-label="Hero">
@@ -209,15 +188,12 @@ export const Hero: React.FC = () => {
             ref={textBlurBottomRef}
             className={`hero-rest-in transition-none pb-8 md:pb-12 ${revealDone ? 'hero-rest-visible' : ''}`}
           >
-              <p className="relative text-stone-600 text-md max-w-lg font-sans font-light leading-relaxed">
-                <span className="invisible block" aria-hidden="true">
-                  {HERO_SUBHEADING}
-                </span>
-                <span className="absolute inset-0" aria-hidden="true">
-                  {typedSubheading}
-                  {!isSubheadingTypingDone && typedSubheading.length > 0 && <span className="hero-type-caret" />}
-                </span>
-                <span className="sr-only">{HERO_SUBHEADING}</span>
+              <p className="text-stone-600 text-md max-w-lg font-sans font-light leading-relaxed">
+                {HERO_SUBHEADING_WORDS.map((word, i) => (
+                  <span key={i} className="inline-block" style={subheadingWordStyle(revealDone, i)}>
+                    {word}{i < HERO_SUBHEADING_WORDS.length - 1 ? '\u00A0' : ''}
+                  </span>
+                ))}
               </p>
               <button
                 onClick={scrollToServices}
