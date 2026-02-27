@@ -1,11 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Hero } from '../components/sections/Hero';
 import { About } from '../components/sections/About';
-import { ThoughtfulApproach } from '../components/sections/ThoughtfulApproach';
-import { Services } from '../components/sections/Services';
-import { Testimonials } from '../components/sections/Testimonials';
-import { FooterRevealSection } from '../components/sections/FooterRevealSection';
+
+const ThoughtfulApproach = lazy(() =>
+  import('../components/sections/ThoughtfulApproach').then((module) => ({ default: module.ThoughtfulApproach }))
+);
+const Services = lazy(() =>
+  import('../components/sections/Services').then((module) => ({ default: module.Services }))
+);
+const FooterRevealSection = lazy(() =>
+  import('../components/sections/FooterRevealSection').then((module) => ({ default: module.FooterRevealSection }))
+);
 
 export const Home: React.FC = () => {
   // On load/refresh, always start at top so hero animation plays from the beginning
@@ -31,10 +37,16 @@ export const Home: React.FC = () => {
       {/* Content scrolls over hero */}
       <div className="relative z-20">
         <About />
-        <ThoughtfulApproach />
-        <Services />
+        <Suspense fallback={<section aria-hidden="true" className="py-16 md:py-24" />}>
+          <ThoughtfulApproach />
+        </Suspense>
+        <Suspense fallback={<section aria-hidden="true" className="py-20 md:py-32" />}>
+          <Services />
+        </Suspense>
         {/* Section anchored above footer: letter-by-letter reveal CTA */}
-        <FooterRevealSection />
+        <Suspense fallback={<section aria-hidden="true" className="py-16 md:py-24" />}>
+          <FooterRevealSection />
+        </Suspense>
       </div>
     </div>
   );

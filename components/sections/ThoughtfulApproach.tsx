@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { FadeInOnScroll } from '../FadeInOnScroll';
 import { EditorialSectionLabel } from '../EditorialSectionLabel';
 import { Restart, MagicWand } from 'iconoir-react';
-import gsap from 'gsap';
+
+type GsapInstance = typeof import('gsap').default;
 
 // Custom Closet Open icon - based on Iconoir Closet with right door wide open
 const ClosetOpen: React.FC<{ className?: string; strokeWidth?: number }> = ({ 
@@ -47,12 +48,20 @@ export const ThoughtfulApproach: React.FC = () => {
   const icon2Ref = useRef<HTMLDivElement>(null);
   const icon3Ref = useRef<HTMLDivElement>(null);
   const hasAnimated = useRef(false);
+  const gsapRef = useRef<GsapInstance | null>(null);
 
   // Pink color for hover animation
   const pinkColor = '#FDD245';
   const sageColor = '#a8c5a8';
 
-  const animateIconDraw = (iconContainer: HTMLDivElement, delay: number) => {
+  const loadGsap = async (): Promise<GsapInstance> => {
+    if (gsapRef.current) return gsapRef.current;
+    const module = await import('gsap');
+    gsapRef.current = module.default;
+    return gsapRef.current;
+  };
+
+  const animateIconDraw = (iconContainer: HTMLDivElement, delay: number, gsap: GsapInstance) => {
     const paths = iconContainer.querySelectorAll('path, line, circle, polyline, polygon, rect');
     
     paths.forEach((path) => {
@@ -76,6 +85,8 @@ export const ThoughtfulApproach: React.FC = () => {
 
   const handleIconHover = (iconContainer: HTMLDivElement | null, isEntering: boolean) => {
     if (!iconContainer) return;
+    const gsap = gsapRef.current;
+    if (!gsap) return;
     
     const paths = iconContainer.querySelectorAll('path, line, circle, polyline, polygon, rect');
     
@@ -116,17 +127,21 @@ export const ThoughtfulApproach: React.FC = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasAnimated.current) {
             hasAnimated.current = true;
-            
-            // Wait for fade-in to complete before drawing icons
-            // FadeInOnScroll delays (100ms, 250ms, 400ms) + CSS delay (500ms) + CSS duration (500ms)
-            if (icon1Ref.current) animateIconDraw(icon1Ref.current, 1.1);  // 100ms + 1000ms
-            if (icon2Ref.current) animateIconDraw(icon2Ref.current, 1.25); // 250ms + 1000ms
-            if (icon3Ref.current) animateIconDraw(icon3Ref.current, 1.4);  // 400ms + 1000ms
+
+            void loadGsap().then((gsap) => {
+              if (!isMounted) return;
+              // Wait for fade-in to complete before drawing icons
+              // FadeInOnScroll delays (100ms, 250ms, 400ms) + CSS delay (500ms) + CSS duration (500ms)
+              if (icon1Ref.current) animateIconDraw(icon1Ref.current, 1.1, gsap);  // 100ms + 1000ms
+              if (icon2Ref.current) animateIconDraw(icon2Ref.current, 1.25, gsap); // 250ms + 1000ms
+              if (icon3Ref.current) animateIconDraw(icon3Ref.current, 1.4, gsap);  // 400ms + 1000ms
+            });
           }
         });
       },
@@ -135,7 +150,10 @@ export const ThoughtfulApproach: React.FC = () => {
 
     if (icon1Ref.current) observer.observe(icon1Ref.current);
 
-    return () => observer.disconnect();
+    return () => {
+      isMounted = false;
+      observer.disconnect();
+    };
   }, []);
 
   return (
