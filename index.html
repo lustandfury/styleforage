@@ -57,60 +57,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Style Forage" id="apple-title" />
 
-    <!-- PWA Manifest - dynamically created as blob URL for lookbook pages -->
+    <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" id="pwamanifest" />
-    <script>
-      (function() {
-        var match = /^\/lookbook\/([^/?#]+)/.exec(window.location.pathname);
-        if (!match) return;
-        
-        var slug = match[1];
-        var title = slug.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
-        var startUrl = '/lookbook/' + slug;
-        
-        // Detect iOS
-        var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        
-        if (isIOS) {
-          // On iOS: Remove apple-mobile-web-app-capable so Safari creates a simple
-          // bookmark that opens the exact current URL, not a PWA with cached start_url
-          var appleCapable = document.getElementById('apple-capable');
-          if (appleCapable) appleCapable.remove();
-          
-          // Update the title for the home screen icon
-          var appleTitle = document.getElementById('apple-title');
-          if (appleTitle) appleTitle.content = title;
-          
-          // Remove manifest - iOS doesn't use it reliably for bookmarks anyway
-          var link = document.getElementById('pwamanifest');
-          if (link) link.remove();
-        } else {
-          // On desktop/Android: Use blob manifest with correct start_url for PWA install
-          var manifest = {
-            id: 'styleforage-lookbook-' + slug,
-            name: 'Lookbook - ' + title,
-            short_name: title,
-            description: 'Your personalized style lookbook by Roz',
-            start_url: startUrl,
-            scope: startUrl,
-            display: 'standalone',
-            background_color: '#FAF9F7',
-            theme_color: '#1c1917',
-            orientation: 'portrait-primary',
-            icons: [
-              { src: '/images/favicon.png', sizes: '32x32', type: 'image/png' },
-              { src: '/images/app-icon.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' }
-            ]
-          };
-          
-          var blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-          var manifestUrl = URL.createObjectURL(blob);
-          
-          var link = document.getElementById('pwamanifest');
-          if (link) link.href = manifestUrl;
-        }
-      })();
-    </script>
 
     <!-- Sitemap (SEO) -->
     <link rel="sitemap" type="application/xml" href="https://styleforage.com/sitemap.xml" />
@@ -119,10 +67,26 @@
     <meta name="theme-color" content="#1c1917" />
     <meta name="msapplication-TileColor" content="#1c1917" />
     
-    <!-- Preconnect for fonts (performance optimization) -->
+    <!-- Webfont delivery: preconnect + non-blocking stylesheet load -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&display=swap" rel="stylesheet" />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500&display=swap"
+      />
+    </noscript>
     
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
@@ -219,6 +183,60 @@
       <input type="text" name="bot-field" />
     </form>
     <div id="root"></div>
+    <script>
+      (function() {
+        if (!window.location.pathname.startsWith('/lookbook/')) return;
+
+        var match = /^\/lookbook\/([^/?#]+)/.exec(window.location.pathname);
+        if (!match) return;
+
+        var slug = match[1];
+        var title = slug.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+        var startUrl = '/lookbook/' + slug;
+
+        // Detect iOS
+        var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+        if (isIOS) {
+          // On iOS: Remove apple-mobile-web-app-capable so Safari creates a simple
+          // bookmark that opens the exact current URL, not a PWA with cached start_url
+          var appleCapable = document.getElementById('apple-capable');
+          if (appleCapable) appleCapable.remove();
+
+          // Update the title for the home screen icon
+          var appleTitle = document.getElementById('apple-title');
+          if (appleTitle) appleTitle.content = title;
+
+          // Remove manifest - iOS doesn't use it reliably for bookmarks anyway
+          var link = document.getElementById('pwamanifest');
+          if (link) link.remove();
+        } else {
+          // On desktop/Android: Use blob manifest with correct start_url for PWA install
+          var manifest = {
+            id: 'styleforage-lookbook-' + slug,
+            name: 'Lookbook - ' + title,
+            short_name: title,
+            description: 'Your personalized style lookbook by Roz',
+            start_url: startUrl,
+            scope: startUrl,
+            display: 'standalone',
+            background_color: '#FAF9F7',
+            theme_color: '#1c1917',
+            orientation: 'portrait-primary',
+            icons: [
+              { src: '/images/favicon.png', sizes: '32x32', type: 'image/png' },
+              { src: '/images/app-icon.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' }
+            ]
+          };
+
+          var blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+          var manifestUrl = URL.createObjectURL(blob);
+
+          var link = document.getElementById('pwamanifest');
+          if (link) link.href = manifestUrl;
+        }
+      })();
+    </script>
     <!-- Defer analytics boot so LCP/FCP render first -->
     <script>
       (function() {
