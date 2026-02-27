@@ -8,6 +8,7 @@ const WORD_STAGGER = 0.08;
 const REVEAL_START_DELAY = 0.35;
 const SCROLL_DEAD_ZONE = 5;
 const SCROLL_BLUR_RANGE = 200;
+const DESKTOP_MEDIA_QUERY = '(min-width: 768px)';
 const HERO_SUBHEADING = "The boardroom, the weekend, the trip you haven't packed for yet. Consider it handled.";
 const HERO_SUBHEADING_WORDS = HERO_SUBHEADING.split(' ');
 const SUBHEADING_WORD_STAGGER = 0.022; // Match About section word cadence
@@ -32,6 +33,9 @@ export const Hero: React.FC = () => {
   const winterImg2Ref     = useRef<HTMLImageElement>(null);
   const [headingVisible, setHeadingVisible] = useState(false);
   const [revealDone, setRevealDone]         = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia(DESKTOP_MEDIA_QUERY).matches
+  );
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setHeadingVisible(true));
@@ -44,6 +48,15 @@ export const Hero: React.FC = () => {
     const doneAt = (lastWordDelay + WORD_REVEAL_DURATION) * 1000;
     const t = setTimeout(() => setRevealDone(true), doneAt);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia(DESKTOP_MEDIA_QUERY);
+    const updateBreakpoint = () => setIsDesktop(media.matches);
+    updateBreakpoint();
+
+    media.addEventListener('change', updateBreakpoint);
+    return () => media.removeEventListener('change', updateBreakpoint);
   }, []);
 
   useEffect(() => {
@@ -110,23 +123,31 @@ export const Hero: React.FC = () => {
       <h1 className="sr-only">{HEADING_LINE1} {HEADING_LINE2}</h1>
 
       {/* Right-side editorial images — crossfade on scroll, desktop only */}
-      <div className="hidden md:block absolute right-0 top-0 h-full w-2/5 pointer-events-none">
-        <img
-          ref={winterImg1Ref}
-          src="/images/styleforage-black-winter1.webp"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-top"
-        />
-        <img
-          ref={winterImg2Ref}
-          src="/images/styleforage-black-winter2.webp"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-top"
-          style={{ opacity: 0 }}
-        />
-      </div>
+      {isDesktop && (
+        <div className="absolute right-0 top-0 h-full w-2/5 pointer-events-none">
+          <img
+            ref={winterImg1Ref}
+            src="/images/styleforage-black-winter1.webp"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
+          <img
+            ref={winterImg2Ref}
+            src="/images/styleforage-black-winter2.webp"
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+            style={{ opacity: 0 }}
+            loading="lazy"
+            fetchPriority="low"
+            decoding="async"
+          />
+        </div>
+      )}
 
       {/* Left column: container-aligned to match section headers */}
       <div className="container mx-auto px-4 h-full">
@@ -205,14 +226,19 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* Mobile image — stacked below text */}
-          <div className="md:hidden w-full -mx-4" style={{ width: 'calc(100% + 2rem)' }}>
-            <img
-              src="/images/styleforage-black-winter2.webp"
-              alt=""
-              aria-hidden="true"
-              className="w-full object-cover object-top"
-            />
-          </div>
+          {!isDesktop && (
+            <div className="w-full -mx-4" style={{ width: 'calc(100% + 2rem)' }}>
+              <img
+                src="/images/styleforage-black-winter2.webp"
+                alt=""
+                aria-hidden="true"
+                className="w-full object-cover object-top"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+              />
+            </div>
+          )}
 
         </div>
       </div>
