@@ -30,6 +30,7 @@ export const Hero: React.FC = () => {
   const headingWrapperRef = useRef<HTMLDivElement>(null);
   const winterImg1Ref     = useRef<HTMLImageElement>(null);
   const winterImg2Ref     = useRef<HTMLImageElement>(null);
+  const winterImg3Ref     = useRef<HTMLImageElement>(null);
   const [headingVisible, setHeadingVisible] = useState(false);
   const [revealDone, setRevealDone]         = useState(false);
 
@@ -77,15 +78,6 @@ export const Hero: React.FC = () => {
         headingWrapperRef.current.style.transform = `translateY(${-40 * headingProgress}px)`;
       }
 
-      // Right-side image crossfade: winter1 → winter2 as About section scrolls in
-      if (winterImg1Ref.current && winterImg2Ref.current) {
-        const vh = window.innerHeight;
-        const fadeStart = vh * 0.55;
-        const fadeEnd   = vh * 0.9;
-        const imgProgress = Math.max(0, Math.min(1, (y - fadeStart) / (fadeEnd - fadeStart)));
-        winterImg1Ref.current.style.opacity = String(1 - imgProgress);
-        winterImg2Ref.current.style.opacity = String(imgProgress);
-      }
     };
 
     const handleScroll = () => {
@@ -99,6 +91,31 @@ export const Hero: React.FC = () => {
       window.removeEventListener('scroll', handleScroll);
       if (rafId) cancelAnimationFrame(rafId);
     };
+  }, []);
+
+  useEffect(() => {
+    const showImage = (index: 0 | 1 | 2) => {
+      const refs = [winterImg1Ref, winterImg2Ref, winterImg3Ref];
+      refs.forEach((ref, i) => {
+        if (ref.current) ref.current.style.opacity = i === index ? '1' : '0';
+      });
+    };
+
+    const observe = (id: string, onEnter: () => void, onLeave: () => void) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const obs = new IntersectionObserver(
+        ([entry]) => { entry.isIntersecting ? onEnter() : onLeave(); },
+        { threshold: 0.15 }
+      );
+      obs.observe(el);
+      return obs;
+    };
+
+    const obs1 = observe('about',       () => showImage(1), () => showImage(0));
+    const obs2 = observe('who-are-you', () => showImage(2), () => showImage(1));
+
+    return () => { obs1?.disconnect(); obs2?.disconnect(); };
   }, []);
 
   const scrollToServices = () => {
@@ -117,6 +134,7 @@ export const Hero: React.FC = () => {
           alt=""
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-top"
+          style={{ opacity: 1, transition: 'opacity 0.8s ease' }}
         />
         <img
           ref={winterImg2Ref}
@@ -124,7 +142,15 @@ export const Hero: React.FC = () => {
           alt=""
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-top"
-          style={{ opacity: 0 }}
+          style={{ opacity: 0, transition: 'opacity 0.8s ease' }}
+        />
+        <img
+          ref={winterImg3Ref}
+          src="/images/styleforage-black-winter3.webp"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-top"
+          style={{ opacity: 0, transition: 'opacity 0.8s ease' }}
         />
       </div>
 

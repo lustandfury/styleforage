@@ -65,7 +65,7 @@ export const About: React.FC = () => {
       <FadeInOnScroll>
         <div className="container mx-auto px-4">
           <div className="max-w-xl">
-            <EditorialSectionLabel number="01" label="About the Stylist" className="mb-6 md:mb-8" />
+            <EditorialSectionLabel number="01" label="Editor-in-Chief" className="mb-6 md:mb-8" />
             <h2 className="font-serif font-bold text-4xl md:text-5xl lg:text-6xl text-stone-900 leading-tight mb-6 md:mb-8" style={{ fontWeight: 700 }}>
               Roslyn Costanzo
             </h2>
@@ -150,6 +150,20 @@ export const About: React.FC = () => {
                     </svg>
                   </span>
                 </a>
+              </div>
+            </div>
+
+            {/* Who are you? */}
+            <div id="who-are-you" className="mt-16 md:mt-20">
+              <EditorialSectionLabel number="02" label="Who are you?" className="mb-6 md:mb-8" />
+              <h2 className="font-serif font-bold text-4xl md:text-5xl lg:text-6xl text-stone-900 leading-tight mb-6 md:mb-8" style={{ fontWeight: 700 }}>Your life is full by design.</h2>
+              <div className="pl-4 md:pl-6 relative">
+                <div className="absolute left-0 top-0 bottom-0 w-px bg-stone-200" />
+                <div className="space-y-4 text-stone-600 text-sm md:text-base leading-relaxed font-light">
+                  <p><span className="text-stone-900 font-medium">Catch up.</span> Somewhere between the promotion, the move, the kids, the new chapter, your wardrobe fell behind. Half of it belongs to a version of you that no longer exists. You know it. You just haven't had a free Saturday to deal with it.</p>
+                  <p><span className="text-stone-900 font-medium">Keep up.</span> Even when you find something that works, life moves again. A new season, a body change, a different kind of event on the calendar. What worked in March doesn't work in September. Staying current takes more attention than you have to give.</p>
+                  <p><span className="text-stone-900 font-medium">Dress for the moment.</span> Then come the moments that matter. The presentation. The gala. The family photo. The trip. And instead of feeling ready, you're scrambling, settling, or showing up in something that's fine but not right.</p>
+                </div>
               </div>
             </div>
           </div>
