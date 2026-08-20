@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Lock, Image as ImageIcon, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, Check, Square, CheckSquare, SlidersHorizontal, Lightbulb, Share, Plus, MoreVertical, Smartphone } from 'lucide-react';
+import { Lock, Image as ImageIcon, X, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ShoppingBag, ExternalLink, Check, Square, CheckSquare, SlidersHorizontal, Lightbulb, Share, Plus, MoreVertical, Smartphone, Download } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { normalizePastedText } from '../utils/normalizeText';
 
@@ -14,6 +14,15 @@ const SEASON_LABELS: Record<Season, string> = {
 };
 
 const SEASON_ORDER: Season[] = ['spring', 'summer', 'fall', 'winter'];
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || 'look';
+}
 
 // Device detection for Add to Home Screen instructions
 type DeviceType = 'ios' | 'android' | 'desktop';
@@ -623,7 +632,8 @@ export const Lookbook: React.FC = () => {
         lookbookDescription={lookbookDescription}
         currentSeason={currentSeason}
         relatedLookbooks={relatedLookbooks}
-        shoppingItemsCount={shoppingItems.length}
+        hasShoppingItems={shoppingItems.length > 0}
+        shoppingItemsCount={shoppingItems.filter(item => !item.checked).length}
         tipsCount={tips.length}
         captionExpanded={captionExpanded}
         setCaptionExpanded={setCaptionExpanded}
@@ -723,12 +733,23 @@ interface ImageLightboxProps {
   imageUrls: string[];
   initialIndex: number;
   onClose: () => void;
+  filenamePrefix?: string;
 }
 
-const ImageLightbox: React.FC<ImageLightboxProps> = ({ imageUrls, initialIndex, onClose }) => {
+const ImageLightbox: React.FC<ImageLightboxProps> = ({ imageUrls, initialIndex, onClose, filenamePrefix = 'style-forage-look' }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const touchStartX = useRef<number | null>(null);
   const hasMultiple = imageUrls.length > 1;
+
+  const handleDownload = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const a = document.createElement('a');
+    a.href = imageUrls[currentIndex];
+    a.download = hasMultiple ? `${filenamePrefix}-${currentIndex + 1}.jpg` : `${filenamePrefix}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, [imageUrls, currentIndex, hasMultiple, filenamePrefix]);
 
   const goNext = useCallback(() => {
     if (hasMultiple) setCurrentIndex((i) => (i + 1) % imageUrls.length);
@@ -778,6 +799,17 @@ const ImageLightbox: React.FC<ImageLightboxProps> = ({ imageUrls, initialIndex, 
         aria-label="Close lightbox"
       >
         <X size={24} />
+      </Button>
+
+      {/* Download button */}
+      <Button
+        onClick={handleDownload}
+        variant="ghost"
+        size="icon"
+        className="absolute top-4 right-16 z-10 bg-white/10 text-white hover:bg-white/20 safe-top"
+        aria-label="Download image"
+      >
+        <Download size={24} />
       </Button>
 
       {/* Image counter */}
@@ -834,6 +866,7 @@ interface StoryViewProps {
   lookbookDescription: string | null;
   currentSeason?: Season;
   relatedLookbooks: RelatedLookbook[];
+  hasShoppingItems: boolean;
   shoppingItemsCount: number;
   tipsCount: number;
   captionExpanded: boolean;
@@ -842,13 +875,14 @@ interface StoryViewProps {
   onShowTips: () => void;
 }
 
-const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, shoppingItemsCount, tipsCount, captionExpanded, setCaptionExpanded, onShowShoppingList, onShowTips }) => {
+const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientName, lookbookTitle, lookbookDescription, currentSeason, relatedLookbooks, hasShoppingItems, shoppingItemsCount, tipsCount, captionExpanded, setCaptionExpanded, onShowShoppingList, onShowTips }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<Season | 'all'>('all');
   const [showSeasonMenu, setShowSeasonMenu] = useState(false);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Close Read more panel when changing slides
@@ -857,12 +891,56 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
   }, [currentIndex, setCaptionExpanded]);
 
   // Filter entries by selected season
-  const filteredEntries = selectedSeason === 'all' 
-    ? entries 
+  const filteredEntries = selectedSeason === 'all'
+    ? entries
     : entries.filter(e => e.season === selectedSeason);
 
   // Check if any entries have seasons assigned
   const hasSeasonedEntries = entries.some(e => e.season);
+
+  const handleDownloadAll = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isDownloadingAll) return;
+    setIsDownloadingAll(true);
+    try {
+      const { default: JSZip } = await import('jszip');
+      const zip = new JSZip();
+      const headers = { 'X-View-Passcode': passcode };
+
+      for (let entryIndex = 0; entryIndex < filteredEntries.length; entryIndex++) {
+        const entry = filteredEntries[entryIndex];
+        const imageKeys = (entry.imageKeys && entry.imageKeys.length > 0) ? entry.imageKeys : [entry.imageKey];
+        const baseName = `${entryIndex + 1}-${entry.caption ? slugify(entry.caption) : 'look'}`;
+
+        await Promise.all(
+          imageKeys.map(async (key, imgIndex) => {
+            const res = await fetch(
+              `/.netlify/functions/cms-image?key=${encodeURIComponent(key)}&slug=${slug}`,
+              { headers }
+            );
+            if (!res.ok) return;
+            const blob = await res.blob();
+            const filename = imageKeys.length > 1 ? `${baseName}-${imgIndex + 1}.jpg` : `${baseName}.jpg`;
+            zip.file(filename, blob);
+          })
+        );
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug}-lookbook.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Silently ignore - download all is a convenience feature
+    } finally {
+      setIsDownloadingAll(false);
+    }
+  }, [filteredEntries, slug, passcode, isDownloadingAll]);
 
   // Reset currentIndex when filter changes
   useEffect(() => {
@@ -973,12 +1051,54 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
       </div>
 
       {/* Desktop: Header */}
-      <div className="hidden md:flex absolute top-0 left-0 right-0 z-20 items-center justify-between px-8 py-6 bg-gradient-to-b from-sage-400 to-transparent">
+      <div className="hidden md:flex absolute top-0 left-0 right-0 z-20 items-center justify-between px-8 py-6">
         <div className="flex flex-col">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="font-serif text-stone-900 text-2xl">
               {lookbookTitle || (clientName ? `${clientName}'s Lookbook` : 'Style Forage')}
             </span>
+            {/* Season switcher */}
+            {relatedLookbooks.length > 1 && (
+              <div className="flex gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1" onClick={(e) => e.stopPropagation()}>
+                {relatedLookbooks.filter(l => l.season).map((lookbook) => (
+                  <Link
+                    key={lookbook.slug}
+                    to={`/lookbook/${lookbook.slug}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      lookbook.slug === slug
+                        ? 'bg-sage-500 text-white'
+                        : 'text-stone-600 hover:bg-stone-100'
+                    }`}
+                  >
+                    {lookbook.season ? SEASON_LABELS[lookbook.season] : 'View'}
+                  </Link>
+                ))}
+              </div>
+            )}
+            {/* Season filter for entries */}
+            {hasSeasonedEntries && (
+              <div className="flex gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1" onClick={(e) => e.stopPropagation()}>
+                <Button
+                  onClick={() => setSelectedSeason('all')}
+                  variant={selectedSeason === 'all' ? 'chip-selected' : 'chip'}
+                  size="sm"
+                  className="px-3 py-1.5 text-xs h-auto"
+                >
+                  All
+                </Button>
+                {SEASON_ORDER.map((season) => (
+                  <Button
+                    key={season}
+                    onClick={() => setSelectedSeason(season)}
+                    variant={selectedSeason === season ? 'chip-selected' : 'chip'}
+                    size="sm"
+                    className="px-3 py-1.5 text-xs h-auto"
+                  >
+                    {SEASON_LABELS[season]}
+                  </Button>
+                ))}
+              </div>
+            )}
             <span className="text-stone-500 text-sm font-medium">
               {currentIndex + 1} of {filteredEntries.length}
             </span>
@@ -990,36 +1110,20 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
           )}
         </div>
         <div className="flex items-center gap-4">
-          {/* Season switcher */}
-          {relatedLookbooks.length > 1 && (
-            <div className="flex gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1" onClick={(e) => e.stopPropagation()}>
-              {relatedLookbooks.filter(l => l.season).map((lookbook) => (
-                <Link
-                  key={lookbook.slug}
-                  to={`/lookbook/${lookbook.slug}`}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    lookbook.slug === slug
-                      ? 'bg-sage-500 text-white'
-                      : 'text-stone-600 hover:bg-stone-100'
-                  }`}
-                >
-                  {lookbook.season ? SEASON_LABELS[lookbook.season] : 'View'}
-                </Link>
-              ))}
-            </div>
-          )}
-          {shoppingItemsCount > 0 && (
+          {hasShoppingItems && (
             <Button
               onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
               variant="outline"
               size="md"
-              className="gap-2"
+              className="gap-2 text-xs bg-white/80 backdrop-blur-sm hover:bg-white"
             >
               <ShoppingBag size={16} />
               Shopping List
-              <span className="rounded-full bg-stone-300 px-2 py-0.5 text-xs font-medium text-stone-600">
-                {shoppingItemsCount}
-              </span>
+              {shoppingItemsCount > 0 && (
+                <span className="rounded-full bg-sage-500 px-2 py-0.5 text-xs font-medium text-white">
+                  {shoppingItemsCount}
+                </span>
+              )}
             </Button>
           )}
           {tipsCount > 0 && (
@@ -1027,45 +1131,35 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
               onClick={(e) => { e.stopPropagation(); onShowTips(); }}
               variant="outline"
               size="md"
-              className="gap-2"
+              className="gap-2 text-xs bg-white/80 backdrop-blur-sm hover:bg-white"
             >
               <Lightbulb size={16} />
               Tips
-              <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
-                {tipsCount}
-              </span>
             </Button>
           )}
-          {/* Season filter for entries */}
-          {hasSeasonedEntries && (
-            <div className="flex gap-1 bg-white/80 backdrop-blur-sm rounded-full p-1" onClick={(e) => e.stopPropagation()}>
-              <Button
-                onClick={() => setSelectedSeason('all')}
-                variant={selectedSeason === 'all' ? 'chip-selected' : 'chip'}
-                size="sm"
-                className="px-3 py-1.5 text-xs h-auto"
-              >
-                All
-              </Button>
-              {SEASON_ORDER.map((season) => (
-                <Button
-                  key={season}
-                  onClick={() => setSelectedSeason(season)}
-                  variant={selectedSeason === season ? 'chip-selected' : 'chip'}
-                  size="sm"
-                  className="px-3 py-1.5 text-xs h-auto"
-                >
-                  {SEASON_LABELS[season]}
-                </Button>
-              ))}
-            </div>
+          {filteredEntries.length > 0 && (
+            <Button
+              onClick={handleDownloadAll}
+              disabled={isDownloadingAll}
+              variant="outline"
+              size="md"
+              className="gap-2 text-xs bg-white/80 backdrop-blur-sm hover:bg-white"
+              aria-label="Download all images"
+            >
+              {isDownloadingAll ? (
+                <span className="h-4 w-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Download size={16} />
+              )}
+              {isDownloadingAll ? 'Preparing...' : 'Download All'}
+            </Button>
           )}
         </div>
       </div>
 
       {/* Mobile: Top buttons - z-[60] so they stay above Read more ActionSheet (z-50) */}
       <div className="md:hidden absolute top-12 right-4 z-[60] flex flex-col items-end gap-2">
-        {shoppingItemsCount > 0 && (
+        {hasShoppingItems && (
           <Button
             onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
             variant="ghost"
@@ -1093,10 +1187,26 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
             onClick={(e) => { e.stopPropagation(); setShowSeasonMenu(true); }}
             variant={selectedSeason !== 'all' ? 'primary' : 'ghost'}
             size="icon"
-            className={selectedSeason !== 'all' ? '' : 'bg-white/20 text-white hover:bg-white/30'}
+            className={selectedSeason !== 'all' ? '' : 'bg-black/30 backdrop-blur-sm text-white hover:bg-black/40'}
             aria-label="Filter by season"
           >
             <SlidersHorizontal size={24} />
+          </Button>
+        )}
+        {filteredEntries.length > 0 && (
+          <Button
+            onClick={handleDownloadAll}
+            disabled={isDownloadingAll}
+            variant="ghost"
+            size="icon"
+            className="bg-black/30 backdrop-blur-sm text-white hover:bg-black/40"
+            aria-label="Download all images"
+          >
+            {isDownloadingAll ? (
+              <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Download size={24} />
+            )}
           </Button>
         )}
       </div>
@@ -1331,6 +1441,7 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
                     src={url}
                     alt={entry.caption ? `${entry.caption} ${i + 1}` : 'Curated outfit'}
                     className="bg-stone-900"
+                    onClick={(e) => { e.stopPropagation(); setLightboxIndex(i); }}
                   />
                 ))}
               </div>
@@ -1445,6 +1556,7 @@ const StorySlide: React.FC<StorySlideProps> = ({ entry, slug, passcode, isActive
           imageUrls={imageUrls}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
+          filenamePrefix={`${slug}-${entry.caption ? slugify(entry.caption) : 'look'}`}
         />
       )}
     </>
@@ -1760,32 +1872,32 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
             {item.links && item.links.length > 0 && (
               <div className="mt-2 space-y-2">
                 {item.links.map((link, index) => (
-                  <div key={index} className="border-t border-stone-200 pt-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-stone-400 text-xs">
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`group block border-t border-stone-200 -mx-2 px-2 pt-2 pb-1.5 rounded-lg transition-colors ${
+                      item.checked ? 'text-stone-400' : 'text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 min-w-0">
                         {link.linkPreview?.favicon && (
                           <img
                             src={link.linkPreview.favicon}
                             alt=""
-                            className="w-3 h-3"
+                            className="w-3.5 h-3.5 flex-shrink-0"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         )}
-                        <span className="truncate max-w-[120px]">
+                        <span className={`truncate text-sm font-medium ${item.checked ? '' : 'group-hover:text-sage-700'}`}>
                           {link.linkPreview?.siteName || (() => {
                             try { return new URL(link.url).hostname.replace('www.', ''); } catch { return 'Shop'; }
                           })()}
                         </span>
-                      </div>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-1 text-xs text-sage-600 hover:text-sage-700"
-                      >
-                        <ExternalLink size={10} />
-                        Shop
-                      </a>
+                      </span>
+                      <ExternalLink size={14} className={`flex-shrink-0 ${item.checked ? 'text-stone-300' : 'text-stone-400 group-hover:text-sage-600'}`} />
                     </div>
                     {/* Link description */}
                     {link.description && (
@@ -1793,11 +1905,11 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
                         {link.description}
                       </p>
                     )}
-                    {/* Full URL display */}
-                    <p className="text-xs text-stone-400 break-all">
+                    {/* URL display, truncated to one line */}
+                    <p className="text-xs text-stone-400 truncate">
                       {link.url}
                     </p>
-                  </div>
+                  </a>
                 ))}
               </div>
             )}
@@ -1809,10 +1921,32 @@ const ShoppingListContent: React.FC<ShoppingListContentProps> = ({ items, onTogg
                   href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-2 text-xs text-sage-600 hover:text-sage-700"
+                  className={`group block mt-2 border-t border-stone-200 -mx-2 px-2 pt-2 pb-1.5 rounded-lg transition-colors ${
+                    item.checked ? 'text-stone-400' : 'text-stone-700 hover:bg-stone-100'
+                  }`}
                 >
-                  <ExternalLink size={12} />
-                  Shop
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 min-w-0">
+                      {item.linkPreview?.favicon && (
+                        <img
+                          src={item.linkPreview.favicon}
+                          alt=""
+                          className="w-3.5 h-3.5 flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      )}
+                      <span className={`truncate text-sm font-medium ${item.checked ? '' : 'group-hover:text-sage-700'}`}>
+                        {item.linkPreview?.siteName || (() => {
+                          try { return new URL(item.link).hostname.replace('www.', ''); } catch { return 'Shop'; }
+                        })()}
+                      </span>
+                    </span>
+                    <ExternalLink size={14} className={`flex-shrink-0 ${item.checked ? 'text-stone-300' : 'text-stone-400 group-hover:text-sage-600'}`} />
+                  </div>
+                  {/* URL display, truncated to one line */}
+                  <p className="text-xs text-stone-400 truncate">
+                    {item.link}
+                  </p>
                 </a>
               )
             ) : null}
