@@ -1044,18 +1044,19 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
       return e;
     }));
     try {
-      await Promise.all([
-        fetch('/.netlify/functions/cms-update', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-          body: JSON.stringify({ slug, id: entry.id, order: prev.order }),
-        }),
-        fetch('/.netlify/functions/cms-update', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-          body: JSON.stringify({ slug, id: prev.id, order: entry.order }),
-        }),
-      ]);
+      // Sequential, not Promise.all: cms-update re-reads the list right before
+      // writing, so concurrent PATCHes to the same entries list can race and
+      // clobber each other's order change.
+      await fetch('/.netlify/functions/cms-update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: JSON.stringify({ slug, id: entry.id, order: prev.order }),
+      });
+      await fetch('/.netlify/functions/cms-update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: JSON.stringify({ slug, id: prev.id, order: entry.order }),
+      });
     } catch {
       setError('Failed to reorder');
       await fetchEntries();
@@ -1072,18 +1073,17 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
       return e;
     }));
     try {
-      await Promise.all([
-        fetch('/.netlify/functions/cms-update', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-          body: JSON.stringify({ slug, id: entry.id, order: next.order }),
-        }),
-        fetch('/.netlify/functions/cms-update', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-          body: JSON.stringify({ slug, id: next.id, order: entry.order }),
-        }),
-      ]);
+      // Sequential, not Promise.all: see comment in moveEntryUp.
+      await fetch('/.netlify/functions/cms-update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: JSON.stringify({ slug, id: entry.id, order: next.order }),
+      });
+      await fetch('/.netlify/functions/cms-update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: JSON.stringify({ slug, id: next.id, order: entry.order }),
+      });
     } catch {
       setError('Failed to reorder');
       await fetchEntries();
@@ -1092,15 +1092,14 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
   const handleEntryReorder = async (orderedIds: string[]) => {
     try {
-      await Promise.all(
-        orderedIds.map((id, order) =>
-          fetch('/.netlify/functions/cms-update', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-            body: JSON.stringify({ slug, id, order }),
-          })
-        )
-      );
+      // Sequential, not Promise.all: see comment in moveEntryUp.
+      for (let order = 0; order < orderedIds.length; order++) {
+        await fetch('/.netlify/functions/cms-update', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: orderedIds[order], order }),
+        });
+      }
       await fetchEntries();
     } catch {
       setError('Failed to reorder');
@@ -1419,18 +1418,19 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
     if (idx <= 0) return;
     const prev = sortedShoppingItems[idx - 1];
     try {
-      await Promise.all([
-        fetch('/.netlify/functions/cms-shopping', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-          body: JSON.stringify({ slug, id: item.id, order: prev.order }),
-        }),
-        fetch('/.netlify/functions/cms-shopping', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-          body: JSON.stringify({ slug, id: prev.id, order: item.order }),
-        }),
-      ]);
+      // Sequential, not Promise.all: cms-shopping re-reads the list right
+      // before writing, so concurrent PATCHes to the same list can race and
+      // clobber each other's order change.
+      await fetch('/.netlify/functions/cms-shopping', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: JSON.stringify({ slug, id: item.id, order: prev.order }),
+      });
+      await fetch('/.netlify/functions/cms-shopping', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: JSON.stringify({ slug, id: prev.id, order: item.order }),
+      });
       await fetchShoppingItems();
     } catch {
       setError('Failed to reorder');
@@ -1441,18 +1441,17 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
     if (idx < 0 || idx >= sortedShoppingItems.length - 1) return;
     const next = sortedShoppingItems[idx + 1];
     try {
-      await Promise.all([
-        fetch('/.netlify/functions/cms-shopping', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-          body: JSON.stringify({ slug, id: item.id, order: next.order }),
-        }),
-        fetch('/.netlify/functions/cms-shopping', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-          body: JSON.stringify({ slug, id: next.id, order: item.order }),
-        }),
-      ]);
+      // Sequential, not Promise.all: see comment in moveShoppingItemUp.
+      await fetch('/.netlify/functions/cms-shopping', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: JSON.stringify({ slug, id: item.id, order: next.order }),
+      });
+      await fetch('/.netlify/functions/cms-shopping', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+        body: JSON.stringify({ slug, id: next.id, order: item.order }),
+      });
       await fetchShoppingItems();
     } catch {
       setError('Failed to reorder');
@@ -1461,15 +1460,14 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
   const handleShoppingReorder = async (orderedIds: string[]) => {
     try {
-      await Promise.all(
-        orderedIds.map((id, order) =>
-          fetch('/.netlify/functions/cms-shopping', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
-            body: JSON.stringify({ slug, id, order }),
-          })
-        )
-      );
+      // Sequential, not Promise.all: see comment in moveShoppingItemUp.
+      for (let order = 0; order < orderedIds.length; order++) {
+        await fetch('/.netlify/functions/cms-shopping', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
+          body: JSON.stringify({ slug, id: orderedIds[order], order }),
+        });
+      }
       await fetchShoppingItems();
     } catch {
       setError('Failed to reorder');
