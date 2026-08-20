@@ -926,6 +926,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
     try {
       const total = uploadFiles.length;
       let entryId: string | null = null;
+      let finalEntry: EditorialEntry | null = null;
 
       for (let i = 0; i < total; i++) {
         setUploadProgress(total > 1 ? `Uploading ${i + 1} of ${total}…` : null);
@@ -963,12 +964,24 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
         }
 
         const data = await res.json();
+        finalEntry = data;
         if (!entryId) {
           entryId = data.id;
         }
       }
 
-      await fetchEntries();
+      // Merge the entry the server just returned directly into state
+      // rather than re-fetching the list: Netlify Blobs uses eventual
+      // consistency, so a fresh GET right after this write can still
+      // return the pre-upload snapshot.
+      if (finalEntry) {
+        const savedEntry = finalEntry;
+        setEntries((current) =>
+          current.some((e) => e.id === savedEntry.id)
+            ? current.map((e) => (e.id === savedEntry.id ? savedEntry : e))
+            : [...current, savedEntry]
+        );
+      }
       resetUploadForm();
     } catch {
       setError('Upload failed. Please try again.');
@@ -1092,7 +1105,11 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
 
   const handleEntryReorder = async (orderedIds: string[]) => {
     try {
-      // Sequential, not Promise.all: see comment in moveEntryUp.
+      // Sequential, not Promise.all: see comment in moveEntryUp. No
+      // fetchEntries() on success: the caller already applied the new
+      // order optimistically, and a fresh GET here can return a stale
+      // pre-write snapshot (Netlify Blobs is eventually consistent),
+      // making the drag appear to revert.
       for (let order = 0; order < orderedIds.length; order++) {
         await fetch('/.netlify/functions/cms-update', {
           method: 'PATCH',
@@ -1100,7 +1117,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
           body: JSON.stringify({ slug, id: orderedIds[order], order }),
         });
       }
-      await fetchEntries();
     } catch {
       setError('Failed to reorder');
       await fetchEntries();
@@ -1208,7 +1224,21 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
       );
 
       if (res.ok) {
-        await fetchEntries();
+        // Update locally instead of re-fetching: Netlify Blobs is
+        // eventually consistent, so a fresh GET right after this delete
+        // can still return the pre-delete snapshot.
+        setEntries((current) => {
+          const target = current.find((e) => e.id === entryId);
+          if (!target) return current;
+          const keys = (target.imageKeys && target.imageKeys.length > 0) ? target.imageKeys : [target.imageKey];
+          const newKeys = keys.filter((k) => k !== imageKey);
+          if (newKeys.length === 0) {
+            return current.filter((e) => e.id !== entryId);
+          }
+          return current.map((e) =>
+            e.id === entryId ? { ...e, imageKeys: newKeys, imageKey: newKeys[0] } : e
+          );
+        });
       } else {
         setError('Failed to remove photo');
       }
@@ -1417,10 +1447,19 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
     const idx = sortedShoppingItems.findIndex((i) => i.id === item.id);
     if (idx <= 0) return;
     const prev = sortedShoppingItems[idx - 1];
+    // Optimistic update
+    setShoppingItems((current) => current.map((i) => {
+      if (i.id === item.id) return { ...i, order: prev.order };
+      if (i.id === prev.id) return { ...i, order: item.order };
+      return i;
+    }));
     try {
       // Sequential, not Promise.all: cms-shopping re-reads the list right
       // before writing, so concurrent PATCHes to the same list can race and
-      // clobber each other's order change.
+      // clobber each other's order change. No fetchShoppingItems() on
+      // success: local state is already correct, and a fresh GET here can
+      // return a stale pre-write snapshot (Netlify Blobs is eventually
+      // consistent), making the reorder appear to revert.
       await fetch('/.netlify/functions/cms-shopping', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
@@ -1431,15 +1470,21 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
         headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
         body: JSON.stringify({ slug, id: prev.id, order: item.order }),
       });
-      await fetchShoppingItems();
     } catch {
       setError('Failed to reorder');
+      await fetchShoppingItems();
     }
   };
   const moveShoppingItemDown = async (item: ShoppingItem) => {
     const idx = sortedShoppingItems.findIndex((i) => i.id === item.id);
     if (idx < 0 || idx >= sortedShoppingItems.length - 1) return;
     const next = sortedShoppingItems[idx + 1];
+    // Optimistic update
+    setShoppingItems((current) => current.map((i) => {
+      if (i.id === item.id) return { ...i, order: next.order };
+      if (i.id === next.id) return { ...i, order: item.order };
+      return i;
+    }));
     try {
       // Sequential, not Promise.all: see comment in moveShoppingItemUp.
       await fetch('/.netlify/functions/cms-shopping', {
@@ -1452,15 +1497,19 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
         headers: { 'Content-Type': 'application/json', 'X-Admin-Passcode': sessionStorage.getItem(PASSCODE_KEY) || '' },
         body: JSON.stringify({ slug, id: next.id, order: item.order }),
       });
-      await fetchShoppingItems();
     } catch {
       setError('Failed to reorder');
+      await fetchShoppingItems();
     }
   };
 
   const handleShoppingReorder = async (orderedIds: string[]) => {
     try {
-      // Sequential, not Promise.all: see comment in moveShoppingItemUp.
+      // Sequential, not Promise.all: see comment in moveShoppingItemUp. No
+      // fetchShoppingItems() on success: the caller already applied the new
+      // order optimistically, and a fresh GET here can return a stale
+      // pre-write snapshot (Netlify Blobs is eventually consistent),
+      // making the drag appear to revert.
       for (let order = 0; order < orderedIds.length; order++) {
         await fetch('/.netlify/functions/cms-shopping', {
           method: 'PATCH',
@@ -1468,7 +1517,6 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
           body: JSON.stringify({ slug, id: orderedIds[order], order }),
         });
       }
-      await fetchShoppingItems();
     } catch {
       setError('Failed to reorder');
       await fetchShoppingItems();
