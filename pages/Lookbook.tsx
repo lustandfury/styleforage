@@ -1070,7 +1070,7 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
             onClick={(e) => { e.stopPropagation(); onShowShoppingList(); }}
             variant="ghost"
             size="icon"
-            className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
+            className="bg-black/30 backdrop-blur-sm text-white hover:bg-black/40"
             aria-label="View shopping list"
           >
             <ShoppingBag size={24} />
@@ -1081,7 +1081,7 @@ const StoryView: React.FC<StoryViewProps> = ({ entries, slug, passcode, clientNa
             onClick={(e) => { e.stopPropagation(); onShowTips(); }}
             variant="ghost"
             size="icon"
-            className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30"
+            className="bg-black/30 backdrop-blur-sm text-white hover:bg-black/40"
             aria-label="View tips"
           >
             <Lightbulb size={24} />
