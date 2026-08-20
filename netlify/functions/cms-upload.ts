@@ -44,12 +44,17 @@ interface EditorialEntry {
 /**
  * Parse multipart form data
  */
-function parseMultipart(body: string, boundary: string): { fields: Record<string, string>; files: { name: string; filename: string; contentType: string; data: Buffer }[] } {
+function parseMultipart(
+  body: string,
+  boundary: string,
+  isBase64Encoded: boolean
+): { fields: Record<string, string>; files: { name: string; filename: string; contentType: string; data: Buffer }[] } {
   const fields: Record<string, string> = {};
   const files: { name: string; filename: string; contentType: string; data: Buffer }[] = [];
 
-  // Handle base64 encoded body
-  const bodyBuffer = Buffer.from(body, 'base64');
+  const bodyBuffer = isBase64Encoded
+    ? Buffer.from(body, 'base64')
+    : Buffer.from(body, 'latin1');
   const bodyStr = bodyBuffer.toString('binary');
   
   const parts = bodyStr.split(`--${boundary}`);
@@ -129,7 +134,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     const boundary = (boundaryMatch[1] || boundaryMatch[2] || '').trim();
 
     // Parse multipart form data
-    const { fields, files } = parseMultipart(event.body || '', boundary);
+    const { fields, files } = parseMultipart(event.body || '', boundary, !!event.isBase64Encoded);
     
     const imageFile = files.find(f => f.name === 'file');
     const title = (fields.title || '').trim();
