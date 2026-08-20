@@ -163,7 +163,9 @@ export function getStorage(storeName: string, lambdaEvent?: unknown): Store {
     if (lambdaEvent != null) {
       connectLambda(lambdaEvent);
     }
-    const netlifyStore = getStore(storeName);
+    // Strong consistency ensures reads immediately reflect prior writes
+    // (default 'eventual' consistency can serve stale data for seconds).
+    const netlifyStore = getStore({ name: storeName, consistency: 'strong' });
 
     console.log(`[Storage] Using Netlify Blobs for "${storeName}"`);
 
