@@ -163,9 +163,15 @@ export function getStorage(storeName: string, lambdaEvent?: unknown): Store {
     if (lambdaEvent != null) {
       connectLambda(lambdaEvent);
     }
-    // Strong consistency ensures reads immediately reflect prior writes
-    // (default 'eventual' consistency can serve stale data for seconds).
-    const netlifyStore = getStore({ name: storeName, consistency: 'strong' });
+    // NOTE: consistency: 'strong' is NOT usable here. It requires an
+    // 'uncachedEdgeURL' in the environment context, but connectLambda()
+    // never populates that field (confirmed in @netlify/blobs source,
+    // v8 through v11), so every read throws BlobsConsistencyError in
+    // production. Stick with the default 'eventual' consistency and
+    // handle read-after-write staleness at the call site instead
+    // (e.g. use a mutation's response body directly rather than
+    // re-fetching the list right after writing).
+    const netlifyStore = getStore(storeName);
 
     console.log(`[Storage] Using Netlify Blobs for "${storeName}"`);
 
