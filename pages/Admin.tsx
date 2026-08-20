@@ -771,6 +771,11 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Guards against a double-tap creating duplicate entries: the disabled
+  // state on the submit button is async (React re-render), so a fast
+  // second tap can fire handleUpload again before the button visually
+  // disables. This ref is checked synchronously, before any state update.
+  const isUploadingRef = useRef(false);
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -919,6 +924,8 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (uploadFiles.length === 0) return;
+    if (isUploadingRef.current) return;
+    isUploadingRef.current = true;
 
     setIsUploading(true);
     setError('');
@@ -988,6 +995,7 @@ const LookbookEditor: React.FC<LookbookEditorProps> = ({ slug, initialTab }) => 
     } finally {
       setUploadProgress(null);
       setIsUploading(false);
+      isUploadingRef.current = false;
     }
   };
 
