@@ -60,6 +60,7 @@ export const ThoughtfulApproach: React.FC = () => {
             alt=""
             aria-hidden="true"
             className="hidden md:block flex-shrink-0 w-32 h-auto opacity-90"
+            loading="lazy"
           />
         </div>
 

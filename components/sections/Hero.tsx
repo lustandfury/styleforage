@@ -124,8 +124,6 @@ export const Hero: React.FC = () => {
 
   return (
     <section className="relative h-full min-h-screen overflow-hidden bg-stone-50" aria-label="Hero">
-      <h1 className="sr-only">{HEADING_LINE1} {HEADING_LINE2}</h1>
-
       {/* Right-side editorial images — crossfade on scroll, desktop only */}
       <div className="hidden md:block absolute right-0 top-0 h-full w-2/5 pointer-events-none">
         <img
@@ -135,6 +133,8 @@ export const Hero: React.FC = () => {
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-top"
           style={{ opacity: 1, transition: 'opacity 0.8s ease' }}
+          loading="eager"
+          fetchPriority="high"
         />
         <img
           ref={winterImg2Ref}
@@ -143,6 +143,7 @@ export const Hero: React.FC = () => {
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-top"
           style={{ opacity: 0, transition: 'opacity 0.8s ease' }}
+          loading="lazy"
         />
         <img
           ref={winterImg3Ref}
@@ -151,6 +152,7 @@ export const Hero: React.FC = () => {
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-top"
           style={{ opacity: 0, transition: 'opacity 0.8s ease' }}
+          loading="lazy"
         />
       </div>
 
@@ -180,7 +182,7 @@ export const Hero: React.FC = () => {
             ref={headingWrapperRef}
             className="py-1"
           >
-            <h2
+            <h1
               className={`hero-heading-in font-serif font-black text-stone-900 leading-[0.92] tracking-tight text-[clamp(1.9rem,8.8vw,3.1rem)] md:text-[clamp(3rem,5.5vw,6.5rem)] ${headingVisible ? 'is-visible' : ''}`}
               style={{ fontWeight: 900 }}
             >
@@ -206,7 +208,7 @@ export const Hero: React.FC = () => {
                   {HEADING_LINE2}
                 </span>
               </span>
-            </h2>
+            </h1>
           </div>
 
           {/* Bottom editorial strip */}

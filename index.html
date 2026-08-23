@@ -39,24 +39,18 @@
     <meta name="keywords" content="personal stylist, wardrobe consultation, closet edit, personal shopping, fashion consultant, Toronto stylist" />
     <meta name="author" content="Roslyn Costanzo" />
     <meta name="robots" content="index, follow" />
+    <!-- Route-specific canonical/og:url/og:title/og:description/twitter:* are set per-page via react-helmet-async -->
     <link rel="canonical" href="https://styleforage.com/" />
-    
-    <!-- Open Graph / Facebook -->
+
+    <!-- Open Graph / Facebook (safe defaults only; og:url/title/description overridden per route) -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://styleforage.com/" />
-    <meta property="og:title" content="Style Forage | Personal Styling & Wardrobe Consultation" />
-    <meta property="og:description" content="Curating confidence in every detail. Personal styling services including closet edits, wardrobe consultations, and personal shopping." />
     <meta property="og:image" content="https://styleforage.com/images/meta-image.webp" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Style Forage" />
-    
-    <!-- Twitter -->
+
+    <!-- Twitter (card type only; url/title/description/image overridden per route) -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://styleforage.com/" />
-    <meta property="twitter:title" content="Style Forage | Personal Styling & Wardrobe Consultation" />
-    <meta property="twitter:description" content="Curating confidence in every detail. Personal styling services including closet edits, wardrobe consultations, and personal shopping." />
-    <meta property="twitter:image" content="https://styleforage.com/images/meta-image.webp" />
-    
+
     <!-- App icons (favicon + Apple touch icon) -->
     <link rel="icon" type="image/png" href="/images/app-icon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/images/app-icon.png" />
@@ -132,7 +126,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&display=swap" rel="stylesheet" />
-    
+
+    <!-- Preload the Hero's likely LCP image (desktop only, matches Hero.tsx's `hidden md:block`) -->
+    <link rel="preload" as="image" href="/images/styleforage-black-winter1.webp" media="(min-width: 768px)" />
+
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
@@ -141,8 +138,8 @@
       "name": "Style Forage",
       "description": "Personal styling and wardrobe consultation services",
       "url": "https://styleforage.com",
-      "logo": "https://styleforage.com/images/roz.png",
-      "image": "https://styleforage.com/images/roz.png",
+      "logo": "https://styleforage.com/images/roz.webp",
+      "image": "https://styleforage.com/images/roz.webp",
       "priceRange": "$$",
       "address": {
         "@type": "PostalAddress",

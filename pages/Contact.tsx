@@ -44,6 +44,15 @@ export const Contact: React.FC = () => {
       <Helmet>
         <title>Contact | Style Forage</title>
         <meta name="description" content="Get in touch with Style Forage. Personal styling and wardrobe consultation in Toronto." />
+        <link rel="canonical" href="https://styleforage.com/contact" />
+        <meta property="og:url" content="https://styleforage.com/contact" />
+        <meta property="og:title" content="Contact | Style Forage" />
+        <meta property="og:description" content="Get in touch with Style Forage. Personal styling and wardrobe consultation in Toronto." />
+        <meta property="og:image" content="https://styleforage.com/images/meta-image.webp" />
+        <meta property="twitter:url" content="https://styleforage.com/contact" />
+        <meta property="twitter:title" content="Contact | Style Forage" />
+        <meta property="twitter:description" content="Get in touch with Style Forage. Personal styling and wardrobe consultation in Toronto." />
+        <meta property="twitter:image" content="https://styleforage.com/images/meta-image.webp" />
       </Helmet>
 
       <section className="bg-sand-50 py-20 md:py-32 border-t border-stone-100">
@@ -54,6 +63,7 @@ export const Contact: React.FC = () => {
               label="Contact"
               heading="Get in Touch"
               description="Have a question or ready to book? Send a message below or reach out on Instagram."
+              level="h1"
             />
 
             <div className="grid md:grid-cols-3 gap-6 md:gap-8 items-start">
